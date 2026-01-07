@@ -1,0 +1,4 @@
+// Export all custom hooks from a central location
+export { useLocalStorage } from './use-local-storage';
+export { useDebounce } from './use-debounce';
+export { useMediaQuery } from './use-media-query';
