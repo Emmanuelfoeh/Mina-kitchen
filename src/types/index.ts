@@ -199,3 +199,87 @@ export interface CheckoutForm {
   specialInstructions?: string;
   paymentMethod: string;
 }
+
+// State Management Interfaces
+export interface CartStore {
+  items: CartItem[];
+  isOpen: boolean;
+  addItem: (item: CartItem) => void;
+  removeItem: (itemId: string) => void;
+  updateQuantity: (itemId: string, quantity: number) => void;
+  updateCustomizations: (
+    itemId: string,
+    customizations: SelectedCustomization[]
+  ) => void;
+  clearCart: () => void;
+  toggleCart: () => void;
+  getTotalItems: () => number;
+  getSubtotal: () => number;
+  getTotal: () => number;
+}
+
+export interface UserStore {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  updateProfile: (updates: Partial<User>) => Promise<void>;
+  addAddress: (address: Omit<Address, 'id'>) => Promise<void>;
+  setDefaultAddress: (addressId: string) => Promise<void>;
+}
+
+export interface AdminFilters {
+  status?: OrderStatus[];
+  dateRange?: {
+    start: Date;
+    end: Date;
+  };
+  searchQuery?: string;
+  category?: string;
+}
+
+export interface AdminStore {
+  selectedOrders: string[];
+  filters: AdminFilters;
+  setFilters: (filters: Partial<AdminFilters>) => void;
+  selectOrder: (orderId: string) => void;
+  deselectOrder: (orderId: string) => void;
+  selectAllOrders: (orderIds: string[]) => void;
+  clearSelection: () => void;
+  bulkUpdateStatus: (status: OrderStatus) => Promise<void>;
+}
+
+// Utility Types
+export interface PaginationParams {
+  page: number;
+  limit: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface SearchParams {
+  query?: string;
+  category?: string;
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+// Action Result Types
+export interface ActionResult<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  errors?: Record<string, string[]>;
+}

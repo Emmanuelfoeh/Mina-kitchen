@@ -1,0 +1,254 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// User and Authentication Models
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  phone     String?
+  role      UserRole @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  addresses Address[]
+  orders    Order[]
+
+  @@map("users")
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  street     String
+  unit       String?
+  city       String
+  province   String
+  postalCode String
+  isDefault  Boolean @default(false)
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Used for delivery addresses in orders
+  deliveryOrders Order[]
+
+  @@map("addresses")
+}
+
+// Menu and Product Models
+model MenuCategory {
+  id           String  @id @default(cuid())
+  name         String  @unique
+  description  String
+  displayOrder Int     @default(0)
+  isActive     Boolean @default(true)
+
+  // Relations
+  menuItems MenuItem[]
+
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id          String     @id @default(cuid())
+  name        String
+  description String
+  basePrice   Float
+  image       String
+  status      ItemStatus @default(ACTIVE)
+  tags        String // JSON array stored as string
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  categoryId String
+  category   MenuCategory @relation(fields: [categoryId], references: [id])
+
+  customizations Customization[]
+  nutritionalInfo NutritionalInfo?
+  orderItems     OrderItem[]
+  packageItems   PackageItem[]
+
+  @@map("menu_items")
+}
+
+model Customization {
+  id            String            @id @default(cuid())
+  name          String
+  type          CustomizationType
+  required      Boolean           @default(false)
+  maxSelections Int?
+
+  // Relations
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  options CustomizationOption[]
+
+  @@map("customizations")
+}
+
+model CustomizationOption {
+  id            String  @id @default(cuid())
+  name          String
+  priceModifier Float   @default(0)
+  isAvailable   Boolean @default(true)
+
+  // Relations
+  customizationId String
+  customization   Customization @relation(fields: [customizationId], references: [id], onDelete: Cascade)
+
+  @@map("customization_options")
+}
+
+model NutritionalInfo {
+  id       String @id @default(cuid())
+  calories Int
+  protein  Float
+  carbs    Float
+  fat      Float
+  fiber    Float?
+  sodium   Float?
+
+  // Relations
+  menuItemId String   @unique
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@map("nutritional_info")
+}
+
+// Package Models
+model Package {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  type        PackageType
+  price       Float
+  image       String
+  isActive    Boolean     @default(true)
+  features    String // JSON array stored as string
+
+  // Relations
+  includedItems PackageItem[]
+
+  @@map("packages")
+}
+
+model PackageItem {
+  id       String @id @default(cuid())
+  quantity Int    @default(1)
+  includedCustomizations String // JSON array stored as string
+
+  // Relations
+  packageId  String
+  package    Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("package_items")
+}
+
+// Order Models
+model Order {
+  id                   String        @id @default(cuid())
+  orderNumber          String        @unique
+  subtotal             Float
+  tax                  Float
+  deliveryFee          Float
+  tip                  Float         @default(0)
+  total                Float
+  status               OrderStatus   @default(PENDING)
+  deliveryType         DeliveryType
+  scheduledFor         DateTime?
+  estimatedDelivery    DateTime?
+  paymentStatus        PaymentStatus @default(PENDING)
+  specialInstructions  String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  // Relations
+  customerId        String
+  customer          User     @relation(fields: [customerId], references: [id])
+  deliveryAddressId String?
+  deliveryAddress   Address? @relation(fields: [deliveryAddressId], references: [id])
+
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id                  String @id @default(cuid())
+  quantity            Int
+  unitPrice           Float
+  totalPrice          Float
+  customizations      String // JSON stored as string for SelectedCustomization[]
+  specialInstructions String?
+
+  // Relations
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("order_items")
+}
+
+// Enums
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum ItemStatus {
+  ACTIVE
+  INACTIVE
+  SOLD_OUT
+  LOW_STOCK
+}
+
+enum CustomizationType {
+  RADIO
+  CHECKBOX
+  TEXT
+}
+
+enum PackageType {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum DeliveryType {
+  DELIVERY
+  PICKUP
+}
