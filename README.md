@@ -18,7 +18,7 @@ A comprehensive food ordering web application for authentic West African cuisine
 - **Styling**: Tailwind CSS 4 with shadcn/ui components
 - **State Management**: Zustand with persistence
 - **Testing**: Jest, React Testing Library, fast-check (property-based testing)
-- **Code Quality**: ESLint, Prettier, Husky
+- **Code Quality**: ESLint, Prettier
 
 ## Getting Started
 

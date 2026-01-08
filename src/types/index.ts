@@ -20,6 +20,8 @@ export interface Address {
   province: string;
   postalCode: string;
   isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Menu and Product Models

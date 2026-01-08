@@ -73,7 +73,6 @@ graph TB
 
 - ESLint 9 for code quality and consistency
 - Prettier for code formatting
-- Husky for git hooks and pre-commit validation
 
 ## Components and Interfaces
 
