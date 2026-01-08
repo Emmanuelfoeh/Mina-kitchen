@@ -5,11 +5,11 @@ import { ShoppingCart, User } from 'lucide-react';
 import { ResponsiveNav } from '@/components/ui/responsive-nav';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCartStore } from '@/stores/cart-store';
+import { useCartSafe } from '@/components/cart';
 import { useUserStore } from '@/stores/user-store';
 
 export function MainNav() {
-  const { getTotalItems, toggleCart } = useCartStore();
+  const { getTotalItems, toggleCart } = useCartSafe();
   const { user, isAuthenticated } = useUserStore();
   const totalItems = getTotalItems();
 

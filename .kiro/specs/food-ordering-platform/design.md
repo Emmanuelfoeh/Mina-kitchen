@@ -231,6 +231,9 @@ type PaymentStatus =
 
 - `HomePage` - Hero section, featured dishes, packages preview
 - `MenuPage` - Menu browsing with filtering and search
+- `PackagesPage` - Detailed package offerings and selection
+- `AboutPage` - Chef story, restaurant information, and values
+- `ContactPage` - Contact information, location, and inquiry form
 - `CartPage` - Cart management and order review
 - `CheckoutPage` - Multi-step checkout process
 - `OrderConfirmationPage` - Order success and tracking
@@ -355,6 +358,15 @@ GET /api/menu/items/:id
 GET /api/menu/categories
 GET /api/menu/packages
 
+// Packages
+GET /api/packages
+GET /api/packages/:id
+POST /api/packages/subscribe
+
+// Contact
+POST /api/contact/inquiry
+GET /api/contact/info
+
 // Cart & Orders
 POST /api/orders
 GET /api/orders/:id
@@ -369,6 +381,9 @@ GET /api/admin/users
 POST /api/admin/menu/items
 PATCH /api/admin/menu/items/:id
 DELETE /api/admin/menu/items/:id
+POST /api/admin/packages
+PATCH /api/admin/packages/:id
+DELETE /api/admin/packages/:id
 ```
 
 **Server Actions:**

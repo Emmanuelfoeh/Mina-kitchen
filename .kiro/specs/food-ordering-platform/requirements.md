@@ -160,7 +160,46 @@ A comprehensive food ordering web application for an African chef based in Canad
 5. WHEN updating user accounts, THE System SHALL enable status changes (Active, Suspended, Pending)
 6. WHEN adding new users, THE System SHALL provide "Add New User" functionality with role assignment
 
-### Requirement 12: Responsive Design and Accessibility
+### Requirement 14: Package Management and Display
+
+**User Story:** As a customer, I want to view detailed information about meal packages and subscribe to them, so that I can choose convenient meal plans that fit my needs.
+
+#### Acceptance Criteria
+
+1. WHEN accessing the packages page, THE System SHALL display Daily, Weekly, and Monthly package options with detailed descriptions
+2. WHEN viewing packages, THE System SHALL show included meals, nutritional information, and pricing details
+3. WHEN selecting packages, THE System SHALL allow customers to customize package contents within available options
+4. WHEN subscribing to packages, THE System SHALL provide subscription management and scheduling options
+5. WHEN displaying packages, THE System SHALL show package benefits, savings compared to individual orders, and customer testimonials
+6. THE System SHALL allow customers to pause, modify, or cancel package subscriptions
+
+### Requirement 15: About Page and Restaurant Information
+
+**User Story:** As a customer, I want to learn about the chef, restaurant story, and values, so that I can connect with the brand and understand the authenticity of the cuisine.
+
+#### Acceptance Criteria
+
+1. WHEN accessing the about page, THE System SHALL display the chef's story and background in West African cuisine
+2. WHEN viewing restaurant information, THE System SHALL show the mission, values, and commitment to authentic African cooking
+3. WHEN reading about the restaurant, THE System SHALL display information about ingredient sourcing and cooking methods
+4. WHEN on the about page, THE System SHALL show high-quality images of the chef, kitchen, and cooking process
+5. WHEN viewing restaurant details, THE System SHALL include awards, certifications, and customer testimonials
+6. THE System SHALL provide information about the restaurant's commitment to community and cultural authenticity
+
+### Requirement 16: Contact Page and Customer Communication
+
+**User Story:** As a customer, I want to easily contact the restaurant for inquiries, feedback, or special requests, so that I can get personalized service and support.
+
+#### Acceptance Criteria
+
+1. WHEN accessing the contact page, THE System SHALL display restaurant address, phone number, and email contact information
+2. WHEN viewing contact information, THE System SHALL show business hours and availability for different services
+3. WHEN contacting the restaurant, THE System SHALL provide a contact form for inquiries, feedback, and special requests
+4. WHEN submitting contact forms, THE System SHALL validate input and send confirmation to customers
+5. WHEN displaying location information, THE System SHALL include an embedded map showing restaurant location
+6. WHEN customers need support, THE System SHALL provide FAQ section addressing common questions about orders, delivery, and menu items
+
+### Requirement 17: Responsive Design and Accessibility
 
 **User Story:** As a user, I want the application to work seamlessly across all devices and be accessible to users with disabilities, so that everyone can use the platform effectively.
 
@@ -172,7 +211,7 @@ A comprehensive food ordering web application for an African chef based in Canad
 4. WHEN displaying content, THE System SHALL maintain proper color contrast ratios for accessibility
 5. THE System SHALL provide SEO-optimized structure with proper meta tags and structured data
 
-### Requirement 13: Performance and Security
+### Requirement 18: Performance and Security
 
 **User Story:** As a user, I want the application to load quickly and securely handle my personal and payment information, so that I can trust the platform with my data.
 

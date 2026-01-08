@@ -15,11 +15,15 @@ interface CartStore {
   ) => void;
   clearCart: () => void;
   toggleCart: () => void;
+  openCart: () => void;
+  closeCart: () => void;
   getTotalItems: () => number;
   getSubtotal: () => number;
   getTax: () => number;
   getDeliveryFee: () => number;
   getTotal: () => number;
+  hasItems: () => boolean;
+  getItemById: (itemId: string) => CartItem | undefined;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -95,6 +99,14 @@ export const useCartStore = create<CartStore>()(
         set(state => ({ isOpen: !state.isOpen }));
       },
 
+      openCart: () => {
+        set({ isOpen: true });
+      },
+
+      closeCart: () => {
+        set({ isOpen: false });
+      },
+
       getTotalItems: () => {
         return get().items.reduce((total, item) => total + item.quantity, 0);
       },
@@ -117,10 +129,30 @@ export const useCartStore = create<CartStore>()(
         const deliveryFee = get().getDeliveryFee();
         return subtotal + tax + deliveryFee;
       },
+
+      hasItems: () => {
+        return get().items.length > 0;
+      },
+
+      getItemById: (itemId: string) => {
+        return get().items.find(item => item.id === itemId);
+      },
     }),
     {
       name: 'cart-storage',
-      partialize: state => ({ items: state.items }),
+      partialize: state => ({
+        items: state.items,
+        // Don't persist isOpen state - should always start closed
+      }),
+      version: 1,
+      // Handle migration if needed in the future
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0) {
+          // Migration logic for version 0 to 1 if needed
+          return persistedState;
+        }
+        return persistedState;
+      },
     }
   )
 );
