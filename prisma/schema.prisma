@@ -99,6 +99,7 @@ model Customization {
 
   options CustomizationOption[]
 
+  @@unique([menuItemId, name])
   @@map("customizations")
 }
 
