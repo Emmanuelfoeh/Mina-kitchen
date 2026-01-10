@@ -8,9 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { useCartSafe } from '@/components/cart';
 import { useUserStore } from '@/stores/user-store';
 
+import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
+// ... existing imports
+
 export function MainNav() {
   const { getTotalItems, toggleCart } = useCartSafe();
   const { user, isAuthenticated } = useUserStore();
+  const pathname = usePathname();
   const totalItems = getTotalItems();
 
   const navLinks = [
@@ -78,15 +83,26 @@ export function MainNav() {
       }
     >
       {/* Navigation Links */}
-      {navLinks.map(link => (
-        <Link
-          key={link.href}
-          href={link.href}
-          className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:text-orange-600"
-        >
-          {link.label}
-        </Link>
-      ))}
+      {navLinks.map(link => {
+        const isActive =
+          pathname === link.href ||
+          (link.href !== '/' && pathname?.startsWith(link.href));
+
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={cn(
+              'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-primary',
+              isActive
+                ? 'text-primary font-bold bg-primary/5'
+                : 'text-gray-700 hover:bg-neutral-100 dark:text-gray-300 dark:hover:bg-neutral-800'
+            )}
+          >
+            {link.label}
+          </Link>
+        );
+      })}
     </ResponsiveNav>
   );
 }

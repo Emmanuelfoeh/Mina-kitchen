@@ -3,7 +3,23 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
+@theme {
+  /* Custom Design System Colors */
+  --color-accent-gold: #d4a017;
+  --color-earth-tone: #5d4037;
+  --color-background-light: #fcf9f8;
+  --color-background-dark: #221310;
+  --color-text-dark: #1c100d;
+  --color-text-muted: #9c5749;
+  --color-surface-light: #ffffff;
+  --color-surface-dark: #2d1a16;
+  --color-neutral-light: #f4e9e7;
+  --color-neutral-dark: #3a2520;
+
+  /* Custom Fonts */
+  --font-display: var(--font-plus-jakarta), "Plus Jakarta Sans", sans-serif;
+
+  /* Existing theme updates */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
