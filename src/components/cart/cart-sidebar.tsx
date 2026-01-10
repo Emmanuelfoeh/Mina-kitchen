@@ -106,17 +106,57 @@ interface CartItemCardProps {
 }
 
 function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
+  // Try to find the menu item from mock data to get better display info
+  const getMenuItemInfo = (menuItemId: string) => {
+    // For now, we'll create a simple display name from the ID
+    // In a real app, this would fetch from the menu items data
+    if (menuItemId.startsWith('package-')) {
+      return {
+        name: menuItemId
+          .replace('package-', '')
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase()),
+        image:
+          'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=300&q=80',
+        isPackage: true,
+      };
+    } else if (menuItemId.startsWith('side-')) {
+      return {
+        name: menuItemId
+          .replace('side-', '')
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase()),
+        image:
+          'https://images.unsplash.com/photo-1606491956689-2ea866880c84?auto=format&fit=crop&w=300&q=80',
+        isPackage: false,
+      };
+    } else {
+      return {
+        name: `Menu Item ${menuItemId}`,
+        image:
+          'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=300&q=80',
+        isPackage: false,
+      };
+    }
+  };
+
+  const menuItemInfo = getMenuItemInfo(item.menuItemId);
+
   return (
     <Card className="p-4">
       <div className="flex gap-3">
-        {/* Item Image Placeholder */}
-        <div className="h-16 w-16 flex-shrink-0 rounded-md bg-gray-200" />
+        {/* Item Image */}
+        <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-gray-200">
+          <img
+            src={menuItemInfo.image}
+            alt={menuItemInfo.name}
+            className="h-full w-full object-cover"
+          />
+        </div>
 
         {/* Item Details */}
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-medium">
-            Menu Item {item.menuItemId}
-          </h3>
+          <h3 className="truncate text-sm font-medium">{menuItemInfo.name}</h3>
           <p className="mt-1 text-xs text-gray-500">
             {formatCurrency(item.unitPrice)} each
           </p>
@@ -124,22 +164,52 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
           {/* Customizations */}
           {item.selectedCustomizations.length > 0 && (
             <div className="mt-2">
-              <p className="text-xs text-gray-600">Customizations:</p>
-              {item.selectedCustomizations.map(
-                (customization: SelectedCustomization, index: number) => (
-                  <p key={index} className="text-xs text-gray-500">
-                    • {customization.customizationId}
-                  </p>
-                )
-              )}
+              <p className="text-xs font-medium text-gray-600">
+                Customizations:
+              </p>
+              <div className="mt-1 space-y-1">
+                {item.selectedCustomizations.map(
+                  (customization: SelectedCustomization, index: number) => (
+                    <div key={index} className="text-xs text-gray-500">
+                      <span className="font-medium">
+                        {customization.customizationId}:
+                      </span>
+                      {customization.optionIds.length > 0 && (
+                        <span className="ml-1">
+                          {customization.optionIds.join(', ')}
+                        </span>
+                      )}
+                      {customization.textValue && (
+                        <span className="ml-1 italic">
+                          "{customization.textValue}"
+                        </span>
+                      )}
+                    </div>
+                  )
+                )}
+              </div>
             </div>
           )}
 
           {/* Special Instructions */}
           {item.specialInstructions && (
-            <p className="mt-1 text-xs text-gray-500">
-              Note: {item.specialInstructions}
-            </p>
+            <div className="mt-2">
+              <p className="text-xs font-medium text-gray-600">
+                Special Instructions:
+              </p>
+              <p className="mt-1 text-xs text-gray-500 italic">
+                {item.specialInstructions}
+              </p>
+            </div>
+          )}
+
+          {/* Package indicator */}
+          {menuItemInfo.isPackage && (
+            <div className="mt-1">
+              <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                Package Deal
+              </span>
+            </div>
           )}
         </div>
 

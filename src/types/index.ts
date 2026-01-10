@@ -32,10 +32,18 @@ export interface MenuItem {
   basePrice: number;
   category: MenuCategory;
   image: string;
+  images?: string[]; // Multiple product images for gallery
+  slug?: string; // SEO-friendly URL slug
+  seoTitle?: string; // Custom page title
+  seoDescription?: string; // Meta description
+  chefNotes?: string; // Chef's recommendations
+  preparationTime?: number; // Estimated prep time in minutes
+  allergens?: string[]; // Allergen information
   status: 'active' | 'inactive' | 'sold_out' | 'low_stock';
   customizations: Customization[];
   nutritionalInfo?: NutritionalInfo;
   tags: string[];
+  relatedItemIds?: string[]; // Related product IDs
   createdAt: Date;
   updatedAt: Date;
 }
@@ -82,8 +90,15 @@ export interface Package {
   price: number;
   includedItems: PackageItem[];
   image: string;
+  images?: string[]; // Multiple product images for gallery
+  slug?: string; // SEO-friendly URL slug
+  seoTitle?: string; // Custom page title
+  seoDescription?: string; // Meta description
+  savingsAmount?: number; // Calculated savings
+  originalPrice?: number; // Sum of individual items
   isActive: boolean;
   features: string[];
+  relatedPackageIds?: string[]; // Related package IDs
 }
 
 export interface PackageItem {

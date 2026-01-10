@@ -50,12 +50,14 @@ export default function Home() {
                     Order Now
                   </Button>
                 </Link>
-                <Button
-                  variant="outline"
-                  className="flex h-12 min-w-[140px] cursor-pointer items-center justify-center rounded-lg border border-[#e6dbd9] bg-white px-6 text-base font-bold text-[#1c100d] transition-all hover:bg-gray-50"
-                >
-                  View Packages
-                </Button>
+                <Link href="/packages">
+                  <Button
+                    variant="outline"
+                    className="flex h-12 min-w-[140px] cursor-pointer items-center justify-center rounded-lg border border-[#e6dbd9] bg-white px-6 text-base font-bold text-[#1c100d] transition-all hover:bg-gray-50"
+                  >
+                    View Packages
+                  </Button>
+                </Link>
               </div>
               {/* Trust Signals */}
               <div className="mt-4 flex items-center gap-6 text-sm font-medium text-[#5c4a45]">
@@ -305,12 +307,14 @@ export default function Home() {
                   Free Delivery
                 </li>
               </ul>
-              <Button
-                variant="outline"
-                className="mt-auto w-full rounded-lg border border-[#f2330d] py-3 text-sm font-bold text-[#f2330d] transition-colors hover:bg-[#f2330d]/5"
-              >
-                Select Plan
-              </Button>
+              <Link href="/packages">
+                <Button
+                  variant="outline"
+                  className="mt-auto w-full rounded-lg border border-[#f2330d] py-3 text-sm font-bold text-[#f2330d] transition-colors hover:bg-[#f2330d]/5"
+                >
+                  Select Plan
+                </Button>
+              </Link>
             </Card>
 
             {/* Package 2 (Highlighted) */}
@@ -350,9 +354,11 @@ export default function Home() {
                   Priority Delivery
                 </li>
               </ul>
-              <Button className="mt-auto w-full rounded-lg bg-[#f2330d] py-3 text-sm font-bold text-white shadow-lg transition-colors hover:bg-[#d12b0a]">
-                Select Plan
-              </Button>
+              <Link href="/packages">
+                <Button className="mt-auto w-full rounded-lg bg-[#f2330d] py-3 text-sm font-bold text-white shadow-lg transition-colors hover:bg-[#d12b0a]">
+                  Select Plan
+                </Button>
+              </Link>
             </Card>
 
             {/* Package 3 */}
@@ -386,12 +392,14 @@ export default function Home() {
                   Weekend Special Treat
                 </li>
               </ul>
-              <Button
-                variant="outline"
-                className="mt-auto w-full rounded-lg border border-[#f2330d] py-3 text-sm font-bold text-[#f2330d] transition-colors hover:bg-[#f2330d]/5"
-              >
-                Select Plan
-              </Button>
+              <Link href="/packages">
+                <Button
+                  variant="outline"
+                  className="mt-auto w-full rounded-lg border border-[#f2330d] py-3 text-sm font-bold text-[#f2330d] transition-colors hover:bg-[#f2330d]/5"
+                >
+                  Select Plan
+                </Button>
+              </Link>
             </Card>
           </div>
         </div>

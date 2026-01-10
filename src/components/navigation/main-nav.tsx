@@ -16,7 +16,7 @@ export function MainNav() {
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/menu', label: 'Menu' },
-    { href: '#packages', label: 'Packages' },
+    { href: '/packages', label: 'Packages' },
     { href: '/about', label: 'About' },
     { href: '/contact', label: 'Contact' },
   ];
@@ -54,11 +54,16 @@ export function MainNav() {
 
           {/* User Menu */}
           {isAuthenticated ? (
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/profile" aria-label="User profile">
-                <User className="h-5 w-5" />
-              </Link>
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/subscriptions">Subscriptions</Link>
+              </Button>
+              <Button variant="ghost" size="icon" asChild>
+                <Link href="/profile" aria-label="User profile">
+                  <User className="h-5 w-5" />
+                </Link>
+              </Button>
+            </div>
           ) : (
             <div className="flex items-center space-x-2">
               <Button variant="ghost" size="sm" asChild>

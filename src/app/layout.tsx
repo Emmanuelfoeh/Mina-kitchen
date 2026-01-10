@@ -2,7 +2,13 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { MainNav } from '@/components/navigation/main-nav';
+import { NavigationTracker } from '@/components/navigation/navigation-tracker';
 import { CartSidebar } from '@/components/cart';
+import {
+  AnalyticsProvider,
+  AnalyticsScript,
+} from '@/components/analytics/analytics-provider';
+import { AnalyticsDebugPanel } from '@/components/analytics/analytics-debug-panel';
 import './globals.css';
 
 const geistSans = Geist({
@@ -27,14 +33,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <AnalyticsScript />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <MainNav />
-          {children}
-          <CartSidebar />
-        </AuthProvider>
+        <AnalyticsProvider>
+          <AuthProvider>
+            <NavigationTracker />
+            <MainNav />
+            {children}
+            <CartSidebar />
+            <AnalyticsDebugPanel />
+          </AuthProvider>
+        </AnalyticsProvider>
       </body>
     </html>
   );

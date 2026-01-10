@@ -1,25 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { MenuFilters } from './menu-filters';
 import { MenuGrid } from './menu-grid';
-import { MealCustomizationModal } from './meal-customization-modal';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, generateId } from '@/utils';
+import { generateSlug } from '@/lib/utils';
 import { useCartStore } from '@/stores/cart-store';
 import type { MenuItem, MenuCategory, CartItem } from '@/types';
 
 export function MenuBrowser() {
+  const router = useRouter();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(
-    null
-  );
-  const [isCustomizationModalOpen, setIsCustomizationModalOpen] =
-    useState(false);
 
   const { addItem } = useCartStore();
 
@@ -70,13 +67,8 @@ export function MenuBrowser() {
   }, [selectedCategory, searchQuery]);
 
   const handleCustomizeClick = (menuItem: MenuItem) => {
-    setSelectedMenuItem(menuItem);
-    setIsCustomizationModalOpen(true);
-  };
-
-  const handleCloseCustomization = () => {
-    setSelectedMenuItem(null);
-    setIsCustomizationModalOpen(false);
+    const slug = menuItem.slug || generateSlug(menuItem.name);
+    router.push(`/menu/items/${slug}`);
   };
 
   // Handler for adding packages to cart
@@ -407,14 +399,6 @@ export function MenuBrowser() {
             </div>
           </div>
         </section>
-      )}
-
-      {selectedMenuItem && (
-        <MealCustomizationModal
-          menuItem={selectedMenuItem}
-          isOpen={isCustomizationModalOpen}
-          onClose={handleCloseCustomization}
-        />
       )}
     </div>
   );

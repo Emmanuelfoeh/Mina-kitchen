@@ -1,5 +1,6 @@
 // Mock data for testing the meal customization modal
-import type { MenuItem, MenuCategory, Customization } from '@/types';
+import type { MenuItem, MenuCategory, Customization, Package } from '@/types';
+import { generateSlug, ensureUniqueSlug } from '@/lib/utils';
 
 export const mockCategories: MenuCategory[] = [
   {
@@ -90,6 +91,11 @@ export const mockMenuItems: MenuItem[] = [
     category: mockCategories[0],
     image:
       'https://images.unsplash.com/photo-1546833999-b9f581a1996d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1546833999-b9f581a1996d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80',
+      'https://images.unsplash.com/photo-1585032226651-759b368d7246?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    ],
     status: 'active',
     customizations: mockCustomizations,
     nutritionalInfo: {
@@ -101,6 +107,7 @@ export const mockMenuItems: MenuItem[] = [
       sodium: 890,
     },
     tags: ['spicy', 'popular', 'chicken'],
+    relatedItemIds: ['12', '3', '13', '17'], // Fried Plantain, Beef Suya, Coconut Rice, Chicken Wings
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -148,6 +155,7 @@ export const mockMenuItems: MenuItem[] = [
       sodium: 720,
     },
     tags: ['fish', 'healthy', 'grilled'],
+    relatedItemIds: ['13', '16', '12', '15'], // Coconut Rice, Steamed Vegetables, Fried Plantain, Moi Moi
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -310,6 +318,7 @@ export const mockMenuItems: MenuItem[] = [
       sodium: 1200,
     },
     tags: ['traditional', 'soup', 'meat'],
+    relatedItemIds: ['14', '15', '6', '7'], // Yam Porridge, Moi Moi, Goat Meat Stew, Beef & Okra Stew
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -778,6 +787,11 @@ export const mockMenuItems: MenuItem[] = [
     category: mockCategories[3],
     image:
       'https://images.unsplash.com/photo-1529042410759-befb1204b468?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1529042410759-befb1204b468?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1574484284002-952d92456975?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    ],
     status: 'active',
     customizations: [
       {
@@ -833,6 +847,7 @@ export const mockMenuItems: MenuItem[] = [
       sodium: 650,
     },
     tags: ['spicy', 'grilled', 'beef', 'popular'],
+    relatedItemIds: ['1', '17', '20', '21'], // Smokey Jollof Rice, Chicken Wings, Puff Puff, Chin Chin
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -1137,3 +1152,233 @@ export const mockMenuItems: MenuItem[] = [
     updatedAt: new Date(),
   },
 ];
+
+// Mock Packages
+export const mockPackages: Package[] = [
+  {
+    id: 'daily-package',
+    name: 'Daily Meal Package',
+    description:
+      'Perfect for trying our authentic African cuisine with a complete meal for one day.',
+    type: 'daily',
+    price: 35.0,
+    includedItems: [
+      {
+        menuItemId: '1', // Smokey Jollof Rice
+        quantity: 1,
+        includedCustomizations: ['pepper-level:medium'],
+      },
+      {
+        menuItemId: '12', // Fried Plantain
+        quantity: 1,
+        includedCustomizations: ['plantain-style:regular'],
+      },
+      {
+        menuItemId: '3', // Beef Suya Platter
+        quantity: 1,
+        includedCustomizations: ['spice-level-suya:medium'],
+      },
+    ],
+    image:
+      'https://images.unsplash.com/photo-1546833999-b9f581a1996d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80',
+    isActive: true,
+    features: [
+      'Complete meal for one person',
+      'Authentic West African flavors',
+      'Includes main dish, side, and starter',
+      'Perfect portion sizes',
+      'Ready in 30 minutes',
+    ],
+    relatedPackageIds: ['weekly-package'], // Suggest weekly package as upgrade
+  },
+  {
+    id: 'weekly-package',
+    name: 'Weekly Meal Package',
+    description:
+      "A week's worth of delicious African meals with variety and convenience.",
+    type: 'weekly',
+    price: 220.0,
+    includedItems: [
+      {
+        menuItemId: '1', // Smokey Jollof Rice
+        quantity: 2,
+        includedCustomizations: ['pepper-level:medium'],
+      },
+      {
+        menuItemId: '4', // Grilled Tilapia & Rice
+        quantity: 2,
+        includedCustomizations: [
+          'fish-preparation:grilled',
+          'pepper-level:medium',
+        ],
+      },
+      {
+        menuItemId: '5', // Pepper Chicken & Plantain
+        quantity: 2,
+        includedCustomizations: ['pepper-level:medium'],
+      },
+      {
+        menuItemId: '2', // Egusi Soup & Yam
+        quantity: 1,
+        includedCustomizations: ['spice-level:medium'],
+      },
+      {
+        menuItemId: '12', // Fried Plantain
+        quantity: 3,
+        includedCustomizations: ['plantain-style:regular'],
+      },
+      {
+        menuItemId: '13', // Coconut Rice
+        quantity: 2,
+        includedCustomizations: ['rice-portion:regular'],
+      },
+      {
+        menuItemId: '3', // Beef Suya Platter
+        quantity: 1,
+        includedCustomizations: ['spice-level-suya:medium'],
+      },
+    ],
+    image:
+      'https://images.unsplash.com/photo-1585032226651-759b368d7246?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    isActive: true,
+    features: [
+      '7 complete meals for the week',
+      'Variety of main dishes and sides',
+      'Includes traditional soups',
+      'Save 15% compared to individual orders',
+      'Meal planning made easy',
+      'Fresh ingredients daily',
+    ],
+    relatedPackageIds: ['daily-package', 'monthly-package'], // Suggest downgrade and upgrade
+  },
+  {
+    id: 'monthly-package',
+    name: 'Monthly Meal Package',
+    description:
+      'The ultimate African cuisine experience with a full month of diverse, authentic meals.',
+    type: 'monthly',
+    price: 850.0,
+    includedItems: [
+      {
+        menuItemId: '1', // Smokey Jollof Rice
+        quantity: 4,
+        includedCustomizations: ['pepper-level:medium'],
+      },
+      {
+        menuItemId: '4', // Grilled Tilapia & Rice
+        quantity: 4,
+        includedCustomizations: [
+          'fish-preparation:grilled',
+          'pepper-level:medium',
+        ],
+      },
+      {
+        menuItemId: '5', // Pepper Chicken & Plantain
+        quantity: 4,
+        includedCustomizations: ['pepper-level:medium'],
+      },
+      {
+        menuItemId: '6', // Goat Meat Stew & Yam
+        quantity: 3,
+        includedCustomizations: [
+          'pepper-level:medium',
+          'yam-preparation:boiled',
+        ],
+      },
+      {
+        menuItemId: '7', // Beef & Okra Stew
+        quantity: 3,
+        includedCustomizations: ['pepper-level:medium', 'starch-choice:rice'],
+      },
+      {
+        menuItemId: '2', // Egusi Soup & Yam
+        quantity: 4,
+        includedCustomizations: ['spice-level:medium'],
+      },
+      {
+        menuItemId: '8', // Bitter Leaf Soup
+        quantity: 2,
+        includedCustomizations: ['pepper-level:medium'],
+      },
+      {
+        menuItemId: '9', // Pepper Soup
+        quantity: 2,
+        includedCustomizations: [
+          'protein-choice:goat-meat',
+          'heat-level:medium',
+        ],
+      },
+      {
+        menuItemId: '12', // Fried Plantain
+        quantity: 8,
+        includedCustomizations: ['plantain-style:regular'],
+      },
+      {
+        menuItemId: '13', // Coconut Rice
+        quantity: 6,
+        includedCustomizations: ['rice-portion:regular'],
+      },
+      {
+        menuItemId: '14', // Yam Porridge
+        quantity: 4,
+        includedCustomizations: ['pepper-level:medium'],
+      },
+      {
+        menuItemId: '15', // Moi Moi
+        quantity: 4,
+        includedCustomizations: ['pepper-level:medium'],
+      },
+      {
+        menuItemId: '3', // Beef Suya Platter
+        quantity: 2,
+        includedCustomizations: ['spice-level-suya:medium'],
+      },
+      {
+        menuItemId: '17', // Chicken Wings
+        quantity: 2,
+        includedCustomizations: [
+          'wing-quantity:6-pieces',
+          'pepper-level:medium',
+        ],
+      },
+    ],
+    image:
+      'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+    isActive: true,
+    features: [
+      '30 complete meals for the month',
+      'Maximum variety with all menu categories',
+      'Includes soups, mains, sides, and starters',
+      'Save 25% compared to individual orders',
+      'Priority delivery scheduling',
+      'Customizable meal rotation',
+      'Dedicated customer support',
+      'Free delivery included',
+    ],
+    relatedPackageIds: ['weekly-package'], // Suggest weekly as downgrade option
+  },
+];
+
+// Generate slugs for menu items and packages
+function generateSlugsForMockData() {
+  const existingSlugs: string[] = [];
+
+  // Generate slugs for menu items
+  mockMenuItems.forEach(item => {
+    const baseSlug = generateSlug(item.name);
+    const uniqueSlug = ensureUniqueSlug(baseSlug, existingSlugs);
+    item.slug = uniqueSlug;
+    existingSlugs.push(uniqueSlug);
+  });
+
+  // Generate slugs for packages
+  mockPackages.forEach(pkg => {
+    const baseSlug = generateSlug(pkg.name);
+    const uniqueSlug = ensureUniqueSlug(baseSlug, existingSlugs);
+    pkg.slug = uniqueSlug;
+    existingSlugs.push(uniqueSlug);
+  });
+}
+
+// Initialize slugs
+generateSlugsForMockData();
