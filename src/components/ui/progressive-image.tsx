@@ -4,10 +4,14 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  imageUtils,
-  imageOptimizer,
-  imagePerformance,
+  getOptimizedImageProps,
+  generateBlurDataURL,
+  ImagePerformanceMonitor,
+  IMAGE_SIZES,
+  IMAGE_QUALITY,
+  getImageOptimizationRecommendations,
 } from '@/lib/image-optimization';
+import { PerformanceMonitor } from '@/lib/performance';
 
 interface ProgressiveImageProps {
   src: string;
@@ -17,7 +21,7 @@ interface ProgressiveImageProps {
   fill?: boolean;
   className?: string;
   priority?: boolean;
-  quality?: number;
+  quality?: keyof typeof IMAGE_QUALITY;
   sizes?: string;
   fallbackSrc?: string;
   showLoadingSpinner?: boolean;
@@ -25,6 +29,9 @@ interface ProgressiveImageProps {
   onError?: () => void;
   placeholder?: 'blur' | 'empty';
   blurDataURL?: string;
+  imageType?: 'menu' | 'package' | 'hero' | 'gallery' | 'avatar';
+  context?: 'card' | 'detail' | 'thumbnail' | 'banner';
+  enablePerformanceMonitoring?: boolean;
 }
 
 export function ProgressiveImage({
@@ -35,65 +42,126 @@ export function ProgressiveImage({
   fill = false,
   className = '',
   priority = false,
-  quality = 85,
+  quality = 'medium',
   sizes,
   fallbackSrc = '/placeholder-food.svg',
   showLoadingSpinner = true,
   onLoad,
   onError,
-  placeholder = 'empty',
+  placeholder = 'blur',
   blurDataURL,
+  imageType = 'menu',
+  context = 'card',
+  enablePerformanceMonitoring = true,
 }: ProgressiveImageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [currentSrc, setCurrentSrc] = useState(src);
   const imageRef = useRef<HTMLImageElement>(null);
+  const loadStartTime = useRef<number>(0);
+
+  // Get optimization recommendations based on image type and context
+  const recommendations = getImageOptimizationRecommendations(
+    imageType,
+    context
+  );
 
   // Reset states when src changes
   useEffect(() => {
     setIsLoading(true);
     setHasError(false);
     setCurrentSrc(src);
-  }, [src]);
+
+    if (enablePerformanceMonitoring) {
+      loadStartTime.current = performance.now();
+      ImagePerformanceMonitor.startLoad(src);
+    }
+  }, [src, enablePerformanceMonitoring]);
 
   const handleLoad = useCallback(() => {
-    const loadTime =
-      performance.now() - (imageRef.current as any)?.loadStartTime || 0;
+    const loadTime = enablePerformanceMonitoring
+      ? performance.now() - loadStartTime.current
+      : 0;
+
     setIsLoading(false);
-    imagePerformance.trackImageLoad(currentSrc, loadTime);
+
+    if (enablePerformanceMonitoring) {
+      const monitoredLoadTime = ImagePerformanceMonitor.endLoad(currentSrc);
+      PerformanceMonitor.recordMetric(
+        'Image_Load_Success',
+        monitoredLoadTime || loadTime
+      );
+
+      // Log slow loading images
+      if (loadTime > 2000) {
+        console.warn(
+          `Slow image load: ${currentSrc} took ${loadTime.toFixed(2)}ms`
+        );
+      }
+    }
+
     onLoad?.();
-  }, [currentSrc, onLoad]);
+  }, [currentSrc, onLoad, enablePerformanceMonitoring]);
 
   const handleError = useCallback(() => {
     setIsLoading(false);
     setHasError(true);
-    setCurrentSrc(fallbackSrc);
-    onError?.();
-  }, [fallbackSrc, onError]);
 
-  // Generate blur placeholder for better loading experience
-  const generateBlurDataURL = (width: number = 10, height: number = 10) => {
-    if (blurDataURL) return blurDataURL;
-    return imageOptimizer.generateBlurPlaceholder(width, height);
-  };
+    if (enablePerformanceMonitoring) {
+      ImagePerformanceMonitor.endLoad(currentSrc);
+      PerformanceMonitor.recordMetric('Image_Load_Error', 1);
+    }
 
-  const imageProps = {
-    src: currentSrc,
-    alt: hasError ? `${alt} (fallback image)` : alt,
-    className: `transition-opacity duration-300 ${
-      isLoading ? 'opacity-0' : 'opacity-100'
-    } ${className}`,
-    priority,
-    quality,
-    sizes,
-    onLoad: handleLoad,
-    onError: handleError,
-    placeholder: placeholder as any,
-    ...(placeholder === 'blur' && {
-      blurDataURL: generateBlurDataURL(),
-    }),
-    ...(fill ? { fill: true } : { width: width || 400, height: height || 300 }),
-  };
+    // Try fallback image
+    if (currentSrc !== fallbackSrc) {
+      setCurrentSrc(fallbackSrc);
+      setIsLoading(true);
+      setHasError(false);
+    } else {
+      onError?.();
+    }
+  }, [currentSrc, fallbackSrc, onError, enablePerformanceMonitoring]);
+
+  // Generate optimized image props
+  const optimizedProps =
+    width && height
+      ? {
+          src: currentSrc,
+          alt: hasError ? `${alt} (fallback image)` : alt,
+          width,
+          height,
+          quality: IMAGE_QUALITY[quality],
+          priority: priority || recommendations.priority,
+          placeholder: placeholder as any,
+          blurDataURL:
+            placeholder === 'blur'
+              ? blurDataURL || generateBlurDataURL()
+              : undefined,
+          sizes,
+          className: `transition-opacity duration-300 ${
+            isLoading ? 'opacity-0' : 'opacity-100'
+          } ${className}`,
+          onLoad: handleLoad,
+          onError: handleError,
+        }
+      : {
+          src: currentSrc,
+          alt: hasError ? `${alt} (fallback image)` : alt,
+          fill,
+          quality: IMAGE_QUALITY[quality],
+          priority: priority || recommendations.priority,
+          placeholder: placeholder as any,
+          blurDataURL:
+            placeholder === 'blur'
+              ? blurDataURL || generateBlurDataURL()
+              : undefined,
+          sizes,
+          className: `transition-opacity duration-300 ${
+            isLoading ? 'opacity-0' : 'opacity-100'
+          } ${className}`,
+          onLoad: handleLoad,
+          onError: handleError,
+        };
 
   return (
     <div className="relative">
@@ -110,10 +178,10 @@ export function ProgressiveImage({
       )}
 
       {/* Image */}
-      <Image ref={imageRef} {...imageProps} />
+      <Image ref={imageRef} {...optimizedProps} />
 
       {/* Error state indicator */}
-      {hasError && (
+      {hasError && currentSrc === fallbackSrc && (
         <div className="absolute right-2 bottom-2 rounded bg-yellow-100 px-2 py-1 text-xs text-yellow-800">
           Fallback image
         </div>
@@ -129,20 +197,71 @@ export function ProductImage({
   className = '',
   priority = false,
   fallbackSrc = '/placeholder-food.svg',
+  variant = 'card',
   ...props
-}: Omit<ProgressiveImageProps, 'sizes'> & {
+}: Omit<ProgressiveImageProps, 'sizes' | 'imageType' | 'context'> & {
   variant?: 'hero' | 'thumbnail' | 'card';
 }) {
+  const sizeMap = {
+    hero: IMAGE_SIZES.menuHero,
+    card: IMAGE_SIZES.menuCard,
+    thumbnail: IMAGE_SIZES.menuCardSmall,
+  };
+
+  const contextMap = {
+    hero: 'banner' as const,
+    card: 'card' as const,
+    thumbnail: 'thumbnail' as const,
+  };
+
+  const size = sizeMap[variant];
+
   return (
     <ProgressiveImage
       src={src}
       alt={alt}
+      width={size.width}
+      height={size.height}
       className={className}
       priority={priority}
       fallbackSrc={fallbackSrc}
-      sizes={imageUtils.getResponsiveSizes.gallery}
-      quality={85}
-      placeholder="blur"
+      quality={variant === 'hero' ? 'high' : 'medium'}
+      imageType="menu"
+      context={contextMap[variant]}
+      {...props}
+    />
+  );
+}
+
+// Specialized component for package images
+export function PackageImage({
+  src,
+  alt,
+  className = '',
+  priority = false,
+  variant = 'card',
+  ...props
+}: Omit<ProgressiveImageProps, 'sizes' | 'imageType' | 'context'> & {
+  variant?: 'hero' | 'card';
+}) {
+  const sizeMap = {
+    hero: IMAGE_SIZES.packageHero,
+    card: IMAGE_SIZES.packageCard,
+  };
+
+  const size = sizeMap[variant];
+
+  return (
+    <ProgressiveImage
+      src={src}
+      alt={alt}
+      width={size.width}
+      height={size.height}
+      className={className}
+      priority={priority}
+      quality={variant === 'hero' ? 'high' : 'medium'}
+      imageType="package"
+      context={variant === 'hero' ? 'banner' : 'card'}
       {...props}
     />
   );
@@ -154,9 +273,11 @@ export function ThumbnailImage({
   alt,
   className = '',
   size = 80,
+  imageType = 'menu',
   ...props
-}: Omit<ProgressiveImageProps, 'width' | 'height' | 'sizes'> & {
+}: Omit<ProgressiveImageProps, 'width' | 'height' | 'sizes' | 'context'> & {
   size?: number;
+  imageType?: 'menu' | 'package' | 'avatar';
 }) {
   return (
     <ProgressiveImage
@@ -165,15 +286,16 @@ export function ThumbnailImage({
       width={size}
       height={size}
       className={className}
-      sizes={imageUtils.getResponsiveSizes.thumbnail}
-      quality={60}
+      quality="low"
       showLoadingSpinner={false}
+      imageType={imageType}
+      context="thumbnail"
       {...props}
     />
   );
 }
 
-// Hook for preloading images
+// Hook for preloading images with performance monitoring
 export function useImagePreloader() {
   const preloadedImages = useRef<Set<string>>(new Set());
 
@@ -184,21 +306,41 @@ export function useImagePreloader() {
         return;
       }
 
+      const startTime = performance.now();
       const img = new window.Image();
+
       img.onload = () => {
+        const loadTime = performance.now() - startTime;
         preloadedImages.current.add(src);
+        PerformanceMonitor.recordMetric('Image_Preload', loadTime);
         resolve();
       };
-      img.onerror = reject;
+
+      img.onerror = () => {
+        const loadTime = performance.now() - startTime;
+        PerformanceMonitor.recordMetric('Image_Preload_Error', loadTime);
+        reject(new Error(`Failed to preload image: ${src}`));
+      };
+
       img.src = src;
     });
   }, []);
 
   const preloadImages = useCallback(
     (sources: string[]): Promise<void> => {
-      return Promise.allSettled(sources.map(preloadImage)).then(
-        () => undefined
-      );
+      const startTime = performance.now();
+      return Promise.allSettled(sources.map(preloadImage)).then(results => {
+        const loadTime = performance.now() - startTime;
+        const successCount = results.filter(
+          r => r.status === 'fulfilled'
+        ).length;
+
+        PerformanceMonitor.recordMetric('Batch_Image_Preload', loadTime);
+        PerformanceMonitor.recordMetric(
+          'Batch_Image_Success_Rate',
+          (successCount / sources.length) * 100
+        );
+      });
     },
     [preloadImage]
   );

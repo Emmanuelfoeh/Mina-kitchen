@@ -45,10 +45,14 @@ export async function getAuthUser(
   }
 }
 
-export function requireAuth(
-  handler: (request: NextRequest, user: AuthUser) => Promise<Response>
+export function requireAuth<T = any>(
+  handler: (
+    request: NextRequest,
+    user: AuthUser,
+    context?: T
+  ) => Promise<Response>
 ) {
-  return async (request: NextRequest) => {
+  return async (request: NextRequest, context?: T) => {
     const user = await getAuthUser(request);
 
     if (!user) {
@@ -61,14 +65,18 @@ export function requireAuth(
       );
     }
 
-    return handler(request, user);
+    return handler(request, user, context);
   };
 }
 
-export function requireAdmin(
-  handler: (request: NextRequest, user: AuthUser) => Promise<Response>
+export function requireAdmin<T = any>(
+  handler: (
+    request: NextRequest,
+    user: AuthUser,
+    context?: T
+  ) => Promise<Response>
 ) {
-  return async (request: NextRequest) => {
+  return async (request: NextRequest, context?: T) => {
     const user = await getAuthUser(request);
 
     if (!user) {
@@ -88,6 +96,6 @@ export function requireAdmin(
       });
     }
 
-    return handler(request, user);
+    return handler(request, user, context);
   };
 }

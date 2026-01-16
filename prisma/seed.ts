@@ -1,7 +1,42 @@
 import 'dotenv/config';
+import bcrypt from 'bcryptjs';
 import { db } from '../src/lib/db';
 
 async function main() {
+  // Hash passwords
+  const adminPasswordHash = await bcrypt.hash('admin123', 12);
+  const customerPasswordHash = await bcrypt.hash('customer123', 12);
+
+  // Create admin user
+  const adminUser = await db.user.upsert({
+    where: { email: 'admin@minakitchen.ca' },
+    update: {},
+    create: {
+      email: 'admin@minakitchen.ca',
+      name: 'Admin User',
+      passwordHash: adminPasswordHash,
+      role: 'ADMIN',
+      isVerified: true,
+    },
+  });
+
+  console.log('Admin user created:', adminUser.email);
+
+  // Create customer user
+  const customerUser = await db.user.upsert({
+    where: { email: 'customer@minakitchen.ca' },
+    update: {},
+    create: {
+      email: 'customer@minakitchen.ca',
+      name: 'Customer User',
+      passwordHash: customerPasswordHash,
+      role: 'CUSTOMER',
+      isVerified: true,
+    },
+  });
+
+  console.log('Customer user created:', customerUser.email);
+
   // Create menu categories
   const mainDishes = await db.menuCategory.create({
     data: {

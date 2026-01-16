@@ -1,6 +1,30 @@
 import { Suspense } from 'react';
+import { Metadata } from 'next';
 import { MenuBrowser } from '@/components/menu/menu-browser';
 import { MenuSkeleton } from '@/components/menu/menu-skeleton';
+import { generateMetadata } from '@/lib/metadata';
+
+export const metadata: Metadata = generateMetadata({
+  title: 'Menu - Authentic African Dishes',
+  description:
+    'Browse our full menu of authentic West African dishes. From smokey Jollof rice to rich Egusi soup, tender Suya, and traditional sides. Order online for delivery in Toronto and GTA.',
+  keywords: [
+    'African menu Toronto',
+    'Jollof rice menu',
+    'Egusi soup order',
+    'Suya delivery',
+    'West African dishes',
+    'Nigerian food menu',
+    'Ghanaian cuisine',
+    'African restaurant menu',
+    'authentic African food',
+    'plantain dishes',
+    'African soups',
+    'rice dishes',
+  ],
+  url: '/menu',
+  type: 'website',
+});
 
 export default function MenuPage() {
   return (

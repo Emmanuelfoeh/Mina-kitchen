@@ -8,10 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PriceBreakdown } from './price-breakdown';
+import { useEffect, useRef } from 'react';
+import { trapFocus, announceToScreenReader } from '@/lib/accessibility';
 import type { CartItem, SelectedCustomization } from '@/types';
 
 export function CartSidebar() {
   const router = useRouter();
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const {
     items,
     isOpen,
@@ -26,7 +29,49 @@ export function CartSidebar() {
   const handleCheckout = () => {
     closeCart();
     router.push('/checkout');
+    announceToScreenReader('Navigating to checkout page');
   };
+
+  const handleRemoveItem = (itemId: string, itemName: string) => {
+    removeItem(itemId);
+    announceToScreenReader(`${itemName} removed from cart`);
+  };
+
+  const handleQuantityChange = (
+    itemId: string,
+    newQuantity: number,
+    itemName: string
+  ) => {
+    updateQuantity(itemId, newQuantity);
+    announceToScreenReader(`${itemName} quantity updated to ${newQuantity}`);
+  };
+
+  const handleClose = () => {
+    toggleCart();
+    announceToScreenReader('Cart closed');
+  };
+
+  // Focus management and keyboard navigation
+  useEffect(() => {
+    if (isOpen && sidebarRef.current) {
+      const cleanup = trapFocus(sidebarRef.current);
+      return cleanup;
+    }
+  }, [isOpen]);
+
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -35,23 +80,49 @@ export function CartSidebar() {
       {/* Overlay */}
       <div
         className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-        onClick={toggleCart}
+        onClick={handleClose}
+        aria-hidden="true"
       />
 
       {/* Sidebar */}
-      <div className="fixed top-0 right-0 z-50 flex h-screen w-full max-w-md transform flex-col bg-white shadow-xl transition-transform duration-300 ease-in-out">
+      <div
+        ref={sidebarRef}
+        className="fixed top-0 right-0 z-50 flex h-screen w-full max-w-md transform flex-col bg-white shadow-xl transition-transform duration-300 ease-in-out"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-title"
+        aria-describedby="cart-description"
+      >
         {/* Header */}
         <div className="flex flex-shrink-0 items-center justify-between border-b p-4">
           <div className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">Your Cart</h2>
+            <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+            <h2 id="cart-title" className="text-lg font-semibold">
+              Your Cart
+            </h2>
             {getTotalItems() > 0 && (
-              <Badge variant="secondary">{getTotalItems()}</Badge>
+              <Badge
+                variant="secondary"
+                aria-label={`${getTotalItems()} items in cart`}
+              >
+                {getTotalItems()}
+              </Badge>
             )}
           </div>
-          <Button variant="ghost" size="sm" onClick={toggleCart}>
-            <X className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClose}
+            className="focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+            aria-label="Close cart"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
+        </div>
+
+        <div id="cart-description" className="sr-only">
+          Shopping cart containing {getTotalItems()}{' '}
+          {getTotalItems() === 1 ? 'item' : 'items'}
         </div>
 
         {/* Cart Content */}

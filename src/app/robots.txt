@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Disallow admin pages
+Disallow: /admin/
+Disallow: /api/
+
+# Allow important pages
+Allow: /menu
+Allow: /packages
+Allow: /about
+Allow: /contact
+
+# Sitemap location
+Sitemap: https://minakitchen.ca/sitemap.xml

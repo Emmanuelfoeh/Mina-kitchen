@@ -1,11 +1,6 @@
+import { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
@@ -16,9 +11,30 @@ import {
   Plus,
   ArrowRight,
   ShoppingCart,
-  MapPin,
-  Phone,
 } from 'lucide-react';
+import { generateMetadata } from '@/lib/metadata';
+
+export const metadata: Metadata = generateMetadata({
+  title: 'Mina Kitchen - Authentic African Cuisine in Toronto',
+  description:
+    'Order authentic West African dishes online. Experience traditional Jollof rice, Egusi soup, Suya, and more. Fresh ingredients, bold flavors, delivered to your door in Toronto and GTA.',
+  keywords: [
+    'African food Toronto',
+    'West African cuisine',
+    'Jollof rice delivery',
+    'Nigerian food Toronto',
+    'Ghanaian food',
+    'African restaurant',
+    'Egusi soup',
+    'Suya Toronto',
+    'authentic African food',
+    'food delivery Toronto',
+    'meal packages',
+    'African catering',
+  ],
+  url: '/',
+  type: 'website',
+});
 
 export default function Home() {
   return (
@@ -530,148 +546,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-[#f4e9e7] bg-[#fcf9f8] pt-12 pb-8">
-        <div className="mx-auto max-w-[1280px] px-4 md:px-10 lg:px-40">
-          <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-4 lg:gap-12">
-            <div className="col-span-2 md:col-span-1">
-              <div className="mb-4 flex items-center gap-2 text-[#1c100d]">
-                <div className="flex size-6 items-center justify-center rounded-md bg-[#f2330d]/10 text-[#f2330d]">
-                  <span className="text-[18px]">🍳</span>
-                </div>
-                <span className="text-lg font-bold">Chef's Kitchen</span>
-              </div>
-              <p className="mb-4 text-sm text-[#5c4a45]">
-                Bringing the warmth of African hospitality and the bold flavors
-                of our heritage to your dining table in Canada.
-              </p>
-              <div className="flex gap-4">
-                <Link
-                  href="#"
-                  className="text-[#5c4a45] transition-colors hover:text-[#f2330d]"
-                >
-                  IG
-                </Link>
-                <Link
-                  href="#"
-                  className="text-[#5c4a45] transition-colors hover:text-[#f2330d]"
-                >
-                  FB
-                </Link>
-                <Link
-                  href="#"
-                  className="text-[#5c4a45] transition-colors hover:text-[#f2330d]"
-                >
-                  TW
-                </Link>
-              </div>
-            </div>
-            <div>
-              <h3 className="mb-4 font-bold text-[#1c100d]">Quick Links</h3>
-              <ul className="flex flex-col gap-2 text-sm text-[#5c4a45]">
-                <li>
-                  <Link
-                    href="#"
-                    className="transition-colors hover:text-[#f2330d]"
-                  >
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="transition-colors hover:text-[#f2330d]"
-                  >
-                    Menu
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="transition-colors hover:text-[#f2330d]"
-                  >
-                    Packages
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="transition-colors hover:text-[#f2330d]"
-                  >
-                    Gift Cards
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-4 font-bold text-[#1c100d]">Support</h3>
-              <ul className="flex flex-col gap-2 text-sm text-[#5c4a45]">
-                <li>
-                  <Link
-                    href="#"
-                    className="transition-colors hover:text-[#f2330d]"
-                  >
-                    Contact Us
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="transition-colors hover:text-[#f2330d]"
-                  >
-                    FAQs
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="transition-colors hover:text-[#f2330d]"
-                  >
-                    Delivery Areas
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#"
-                    className="transition-colors hover:text-[#f2330d]"
-                  >
-                    Terms of Service
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-4 font-bold text-[#1c100d]">Contact</h3>
-              <ul className="flex flex-col gap-3 text-sm text-[#5c4a45]">
-                <li className="flex items-center gap-2">
-                  <MapPin className="text-[16px]" />
-                  123 Culinary Ave, Toronto, ON
-                </li>
-                <li className="flex items-center gap-2">
-                  <Phone className="text-[16px]" />
-                  (416) 555-0123
-                </li>
-                <li className="flex items-center gap-2">
-                  <Mail className="text-[16px]" />
-                  hello@chefs-kitchen.ca
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex flex-col items-center justify-between gap-4 border-t border-[#f4e9e7] pt-8 md:flex-row">
-            <p className="text-xs text-[#5c4a45]">
-              © 2024 Chef's Kitchen. All rights reserved.
-            </p>
-            <div className="flex gap-4">
-              {/* Payment Icons placeholders */}
-              <div className="h-6 w-10 rounded bg-gray-200"></div>
-              <div className="h-6 w-10 rounded bg-gray-200"></div>
-              <div className="h-6 w-10 rounded bg-gray-200"></div>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

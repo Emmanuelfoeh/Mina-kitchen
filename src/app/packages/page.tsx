@@ -1,6 +1,30 @@
 import { Suspense } from 'react';
+import { Metadata } from 'next';
 import { PackageBrowser } from '@/components/packages/package-browser';
 import { PackageSkeleton } from '@/components/packages/package-skeleton';
+import { generateMetadata } from '@/lib/metadata';
+
+export const metadata: Metadata = generateMetadata({
+  title: 'Meal Packages - Weekly African Food Delivery',
+  description:
+    'Save time and money with our curated African meal packages. Choose from Daily, Weekly, or Monthly plans featuring authentic Jollof rice, soups, and traditional dishes delivered fresh to your door.',
+  keywords: [
+    'African meal packages Toronto',
+    'weekly meal delivery',
+    'African food subscription',
+    'meal prep Toronto',
+    'African catering packages',
+    'Jollof rice packages',
+    'family meal plans',
+    'African food boxes',
+    'meal delivery service',
+    'authentic African meals',
+    'weekly food delivery',
+    'African cuisine packages',
+  ],
+  url: '/packages',
+  type: 'website',
+});
 
 export default function PackagesPage() {
   return (

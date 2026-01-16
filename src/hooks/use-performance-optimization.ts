@@ -1,79 +1,249 @@
-import { useEffect, useCallback, useRef } from 'react';
-import { optimizationUtils, performanceMonitor } from '@/lib/performance';
-import { preloadComponents } from '@/lib/code-splitting';
-import { imageUtils } from '@/lib/image-optimization';
+import { useEffect, useCallback, useRef, useMemo } from 'react';
+import {
+  PerformanceMonitor,
+  CodeSplittingOptimizer,
+  MemoryMonitor,
+  optimizationUtils,
+} from '@/lib/performance';
 
-// Hook for performance optimization
-export function usePerformanceOptimization() {
-  const componentMountTime = useRef<number>(performance.now());
+/**
+ * Hook for component-level performance optimization
+ */
+export function usePerformanceOptimization(componentName: string) {
+  const renderStartTime = useRef<number>(0);
+  const mountTime = useRef<number>(0);
 
   useEffect(() => {
-    const mountTime = performance.now() - componentMountTime.current;
-    console.log(`Component mounted in ${mountTime}ms`);
-  }, []);
+    mountTime.current = performance.now();
 
-  const measureOperation = useCallback(
-    <T>(operation: () => T, operationName: string): T => {
-      return performanceMonitor.measureRender(operationName, operation);
-    },
-    []
-  );
+    return () => {
+      const unmountTime = performance.now();
+      const componentLifetime = unmountTime - mountTime.current;
+      PerformanceMonitor.recordMetric(
+        `${componentName}_Lifetime`,
+        componentLifetime
+      );
+    };
+  }, [componentName]);
 
-  const preloadCriticalResources = useCallback((resources: string[]) => {
-    resources.forEach(resource => {
-      optimizationUtils.preloadResource(resource);
-    });
-  }, []);
+  const measureRender = useCallback(
+    <T>(renderFn: () => T): T => {
+      renderStartTime.current = performance.now();
+      const result = renderFn();
+      const renderTime = performance.now() - renderStartTime.current;
 
-  const prefetchNextPage = useCallback((href: string) => {
-    optimizationUtils.prefetchPage(href);
-  }, []);
+      PerformanceMonitor.recordMetric(`${componentName}_Render`, renderTime);
 
-  return {
-    measureOperation,
-    preloadCriticalResources,
-    prefetchNextPage,
-    isSlowConnection: optimizationUtils.isSlowConnection(),
-    shouldLoadHighQuality: optimizationUtils.shouldLoadHighQuality(),
-  };
-}
-
-// Hook for lazy loading optimization
-export function useLazyLoading() {
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  const observeElement = useCallback(
-    (
-      element: HTMLElement,
-      callback: () => void,
-      options: IntersectionObserverInit = {}
-    ) => {
-      if (!observerRef.current) {
-        observerRef.current = new IntersectionObserver(
-          entries => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                callback();
-                observerRef.current?.unobserve(entry.target);
-              }
-            });
-          },
-          {
-            threshold: 0.1,
-            rootMargin: '50px',
-            ...options,
-          }
+      if (renderTime > 16) {
+        // More than one frame at 60fps
+        console.warn(
+          `Slow render detected in ${componentName}: ${renderTime.toFixed(2)}ms`
         );
       }
 
-      observerRef.current.observe(element);
+      return result;
+    },
+    [componentName]
+  );
+
+  const measureAsync = useCallback(
+    async <T>(asyncFn: () => Promise<T>, operationName: string): Promise<T> => {
+      const startTime = performance.now();
+      try {
+        const result = await asyncFn();
+        const duration = performance.now() - startTime;
+        PerformanceMonitor.recordMetric(
+          `${componentName}_${operationName}`,
+          duration
+        );
+        return result;
+      } catch (error) {
+        const duration = performance.now() - startTime;
+        PerformanceMonitor.recordMetric(
+          `${componentName}_${operationName}_Error`,
+          duration
+        );
+        throw error;
+      }
+    },
+    [componentName]
+  );
+
+  return {
+    measureRender,
+    measureAsync,
+  };
+}
+
+/**
+ * Hook for lazy loading components with performance monitoring
+ */
+export function useLazyComponent<T extends React.ComponentType<any>>(
+  importFn: () => Promise<{ default: T }>,
+  componentName: string
+) {
+  return useMemo(() => {
+    return CodeSplittingOptimizer.createLazyComponent(importFn);
+  }, [importFn]);
+}
+
+/**
+ * Hook for preloading routes based on user interaction
+ */
+export function useRoutePreloading() {
+  const preloadedRoutes = useRef<Set<string>>(new Set());
+
+  const preloadRoute = useCallback((route: string) => {
+    if (!preloadedRoutes.current.has(route)) {
+      CodeSplittingOptimizer.preloadRoute(route);
+      preloadedRoutes.current.add(route);
+    }
+  }, []);
+
+  const preloadOnHover = useCallback(
+    (route: string) => {
+      return {
+        onMouseEnter: () => preloadRoute(route),
+        onFocus: () => preloadRoute(route),
+      };
+    },
+    [preloadRoute]
+  );
+
+  return {
+    preloadRoute,
+    preloadOnHover,
+  };
+}
+
+/**
+ * Hook for monitoring memory usage in components
+ */
+export function useMemoryMonitoring(
+  componentName: string,
+  intervalMs: number = 30000
+) {
+  useEffect(() => {
+    const cleanup = MemoryMonitor.startMemoryMonitoring(intervalMs);
+
+    // Log initial memory usage
+    const initialMemory = MemoryMonitor.getMemoryUsage();
+    if (initialMemory.percentage) {
+      PerformanceMonitor.recordMetric(
+        `${componentName}_Initial_Memory`,
+        initialMemory.percentage
+      );
+    }
+
+    return cleanup;
+  }, [componentName, intervalMs]);
+
+  const getMemoryUsage = useCallback(() => {
+    return MemoryMonitor.getMemoryUsage();
+  }, []);
+
+  return { getMemoryUsage };
+}
+
+/**
+ * Hook for debounced and throttled functions
+ */
+export function useOptimizedCallbacks() {
+  const debounce = useCallback(
+    <T extends (...args: any[]) => any>(func: T, wait: number) => {
+      return optimizationUtils.debounce(func, wait);
     },
     []
   );
 
+  const throttle = useCallback(
+    <T extends (...args: any[]) => any>(func: T, limit: number) => {
+      return optimizationUtils.throttle(func, limit);
+    },
+    []
+  );
+
+  return { debounce, throttle };
+}
+
+/**
+ * Hook for adaptive loading based on device capabilities
+ */
+export function useAdaptiveLoading() {
+  const deviceCapabilities = useMemo(
+    () => ({
+      isSlowConnection: optimizationUtils.isSlowConnection(),
+      deviceMemory: optimizationUtils.getDeviceMemory(),
+      shouldLoadHighQuality: optimizationUtils.shouldLoadHighQuality(),
+    }),
+    []
+  );
+
+  const getOptimalImageQuality = useCallback(() => {
+    if (deviceCapabilities.isSlowConnection) return 60;
+    if (deviceCapabilities.deviceMemory < 4) return 70;
+    return 85;
+  }, [deviceCapabilities]);
+
+  const shouldPreloadImages = useCallback(() => {
+    return (
+      !deviceCapabilities.isSlowConnection &&
+      deviceCapabilities.deviceMemory >= 4
+    );
+  }, [deviceCapabilities]);
+
+  const getOptimalChunkSize = useCallback(() => {
+    if (deviceCapabilities.isSlowConnection) return 5;
+    if (deviceCapabilities.deviceMemory < 4) return 10;
+    return 20;
+  }, [deviceCapabilities]);
+
+  return {
+    deviceCapabilities,
+    getOptimalImageQuality,
+    shouldPreloadImages,
+    getOptimalChunkSize,
+  };
+}
+
+/**
+ * Hook for intersection observer with performance optimization
+ */
+export function useIntersectionObserver(
+  callback: (entries: IntersectionObserverEntry[]) => void,
+  options: IntersectionObserverInit = {}
+) {
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const elementsRef = useRef<Set<Element>>(new Set());
+
+  const observe = useCallback(
+    (element: Element) => {
+      if (!observerRef.current) {
+        observerRef.current = new IntersectionObserver(callback, {
+          threshold: 0.1,
+          rootMargin: '50px',
+          ...options,
+        });
+      }
+
+      observerRef.current.observe(element);
+      elementsRef.current.add(element);
+    },
+    [callback, options]
+  );
+
+  const unobserve = useCallback((element: Element) => {
+    if (observerRef.current) {
+      observerRef.current.unobserve(element);
+      elementsRef.current.delete(element);
+    }
+  }, []);
+
   const disconnect = useCallback(() => {
-    observerRef.current?.disconnect();
-    observerRef.current = null;
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      elementsRef.current.clear();
+    }
   }, []);
 
   useEffect(() => {
@@ -82,221 +252,102 @@ export function useLazyLoading() {
     };
   }, [disconnect]);
 
-  return { observeElement, disconnect };
+  return { observe, unobserve, disconnect };
 }
 
-// Hook for preloading components based on user interaction
-export function useComponentPreloading() {
-  const preloadCustomization = useCallback(() => {
-    preloadComponents.preloadCustomization();
+/**
+ * Hook for performance monitoring dashboard
+ */
+export function usePerformanceDashboard() {
+  const getMetrics = useCallback(() => {
+    return PerformanceMonitor.getPerformanceSummary();
   }, []);
 
-  const preloadCart = useCallback(() => {
-    preloadComponents.preloadCart();
+  const getDetailedMetrics = useCallback(() => {
+    return PerformanceMonitor.getMetrics();
   }, []);
 
-  const preloadCheckout = useCallback(() => {
-    preloadComponents.preloadCheckout();
+  const clearMetrics = useCallback(() => {
+    PerformanceMonitor.cleanup();
   }, []);
-
-  const preloadRelatedItems = useCallback(() => {
-    preloadComponents.preloadRelatedItems();
-  }, []);
-
-  // Preload on hover with debounce
-  const handleHoverPreload = useCallback(
-    optimizationUtils.debounce((component: string) => {
-      switch (component) {
-        case 'customization':
-          preloadCustomization();
-          break;
-        case 'cart':
-          preloadCart();
-          break;
-        case 'checkout':
-          preloadCheckout();
-          break;
-        case 'related':
-          preloadRelatedItems();
-          break;
-      }
-    }, 100),
-    [preloadCustomization, preloadCart, preloadCheckout, preloadRelatedItems]
-  );
 
   return {
-    preloadCustomization,
-    preloadCart,
-    preloadCheckout,
-    preloadRelatedItems,
-    handleHoverPreload,
+    getMetrics,
+    getDetailedMetrics,
+    clearMetrics,
   };
 }
 
-// Hook for image optimization
-export function useImageOptimization() {
-  const preloadImages = useCallback(async (images: string[]) => {
-    try {
-      await imageUtils.preloadCriticalImages(images);
-    } catch (error) {
-      console.warn('Failed to preload some images:', error);
+/**
+ * Hook for critical resource preloading
+ */
+export function useCriticalResourcePreloading() {
+  const preloadedResources = useRef<Set<string>>(new Set());
+
+  const preloadCriticalResources = useCallback((resources: string[]) => {
+    resources.forEach(resource => {
+      if (!preloadedResources.current.has(resource)) {
+        optimizationUtils.preloadResource(resource);
+        preloadedResources.current.add(resource);
+      }
+    });
+  }, []);
+
+  const preloadFont = useCallback((fontUrl: string) => {
+    if (!preloadedResources.current.has(fontUrl)) {
+      optimizationUtils.preloadResource(fontUrl, 'font');
+      preloadedResources.current.add(fontUrl);
     }
   }, []);
 
-  const getOptimalImageProps = useCallback(
-    (
-      src: string,
-      alt: string,
-      options: Parameters<typeof imageUtils.getImageProps>[2] = {}
-    ) => {
-      return imageUtils.getImageProps(src, alt, {
-        quality: optimizationUtils.shouldLoadHighQuality() ? 85 : 60,
-        ...options,
-      });
-    },
-    []
-  );
-
-  return {
-    preloadImages,
-    getOptimalImageProps,
-    supportsWebP: imageUtils.supportsFormat('webp'),
-    supportsAVIF: imageUtils.supportsFormat('avif'),
-    optimalFormat: imageUtils.getOptimalFormat(),
-  };
-}
-
-// Hook for adaptive loading based on device capabilities
-export function useAdaptiveLoading() {
-  const deviceCapabilities = {
-    memory: optimizationUtils.getDeviceMemory(),
-    connection: optimizationUtils.isSlowConnection() ? 'slow' : 'fast',
-    shouldLoadHighQuality: optimizationUtils.shouldLoadHighQuality(),
-  };
-
-  const getAdaptiveConfig = useCallback(() => {
-    const { memory, connection, shouldLoadHighQuality } = deviceCapabilities;
-
-    return {
-      // Image quality based on device capabilities
-      imageQuality: shouldLoadHighQuality ? 85 : 60,
-
-      // Number of items to load initially
-      initialLoadCount: memory >= 8 ? 12 : memory >= 4 ? 8 : 6,
-
-      // Preload strategy
-      preloadStrategy: connection === 'fast' ? 'aggressive' : 'conservative',
-
-      // Animation preferences
-      enableAnimations: memory >= 4 && connection === 'fast',
-
-      // Lazy loading threshold
-      lazyLoadThreshold: connection === 'fast' ? 0.1 : 0.3,
-    };
-  }, [deviceCapabilities]);
-
-  return {
-    deviceCapabilities,
-    adaptiveConfig: getAdaptiveConfig(),
-  };
-}
-
-// Hook for performance monitoring
-export function usePerformanceMonitoring(componentName: string) {
-  const renderCount = useRef(0);
-  const mountTime = useRef(performance.now());
-
-  useEffect(() => {
-    renderCount.current += 1;
-
-    if (renderCount.current === 1) {
-      // First render
-      const initialRenderTime = performance.now() - mountTime.current;
-      console.log(`${componentName} initial render: ${initialRenderTime}ms`);
+  const preloadStylesheet = useCallback((cssUrl: string) => {
+    if (!preloadedResources.current.has(cssUrl)) {
+      optimizationUtils.preloadResource(cssUrl, 'style');
+      preloadedResources.current.add(cssUrl);
     }
-  });
+  }, []);
 
-  const trackUserInteraction = useCallback(
-    (action: string, details?: Record<string, any>) => {
-      const timestamp = performance.now();
+  return {
+    preloadCriticalResources,
+    preloadFont,
+    preloadStylesheet,
+  };
+}
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`User interaction in ${componentName}: ${action}`, details);
-      }
+/**
+ * Hook for component error boundary with performance tracking
+ */
+export function useErrorBoundaryPerformance(componentName: string) {
+  const errorCount = useRef<number>(0);
 
-      // Send to analytics in production
-      if (
-        process.env.NODE_ENV === 'production' &&
-        typeof window !== 'undefined'
-      ) {
-        // Example: Send to Google Analytics
-        // gtag('event', 'user_interaction', {
-        //   component: componentName,
-        //   action,
-        //   timestamp,
-        //   ...details,
-        // });
-      }
+  const trackError = useCallback(
+    (error: Error, errorInfo?: any) => {
+      errorCount.current += 1;
+
+      PerformanceMonitor.recordMetric(
+        `${componentName}_Error_Count`,
+        errorCount.current
+      );
+      PerformanceMonitor.recordMetric(
+        `${componentName}_Error_Timestamp`,
+        Date.now()
+      );
+
+      console.error(`Error in ${componentName}:`, error, errorInfo);
     },
     [componentName]
   );
 
-  const reportPerformance = useCallback(() => {
-    return performanceMonitor.reportPerformance();
-  }, []);
-
-  return {
-    renderCount: renderCount.current,
-    trackUserInteraction,
-    reportPerformance,
-  };
-}
-
-// Hook for bundle size optimization
-export function useBundleOptimization() {
-  const checkBundleSize = useCallback(() => {
-    if (
-      process.env.NODE_ENV === 'development' &&
-      typeof window !== 'undefined'
-    ) {
-      // Estimate current bundle size
-      const scripts = Array.from(document.querySelectorAll('script[src]'));
-      const nextScripts = scripts.filter(script =>
-        (script as HTMLScriptElement).src.includes('_next/static')
-      );
-
-      console.log(`Loaded ${nextScripts.length} Next.js script chunks`);
-
-      // Check for large chunks
-      nextScripts.forEach(script => {
-        const src = (script as HTMLScriptElement).src;
-        if (src.includes('chunks/pages') || src.includes('chunks/main')) {
-          console.log(`Critical chunk: ${src}`);
-        }
-      });
-    }
-  }, []);
-
-  const analyzeComponentSize = useCallback(
-    (componentName: string, estimatedSize: number) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          `Component ${componentName} estimated size: ${estimatedSize} bytes`
-        );
-
-        if (estimatedSize > 50000) {
-          // 50KB
-          console.warn(
-            `Large component detected: ${componentName} (${estimatedSize} bytes)`
-          );
-        }
-      }
-    },
-    []
+  const getErrorStats = useCallback(
+    () => ({
+      errorCount: errorCount.current,
+      componentName,
+    }),
+    [componentName]
   );
 
   return {
-    checkBundleSize,
-    analyzeComponentSize,
+    trackError,
+    getErrorStats,
   };
 }

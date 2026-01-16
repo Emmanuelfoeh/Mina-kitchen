@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
-import { userSchema } from '@/lib/validations';
+import { userSchema, passwordSchema } from '@/lib/validations';
+import {
+  SecurityMiddleware,
+  SecurityHeaders,
+  DataEncryption,
+} from '@/lib/security';
 import { z } from 'zod';
 
 const registerSchema = userSchema
   .extend({
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine(data => data.password === data.confirmPassword, {
@@ -16,31 +21,53 @@ const registerSchema = userSchema
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate request with rate limiting and security checks
+    const validation = await SecurityMiddleware.validateRequest(request, {
+      rateLimit: { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 5 registrations per 15 minutes
+    });
+
+    if (!validation.valid) {
+      const response = NextResponse.json(
+        { error: validation.error },
+        { status: validation.error === 'Rate limit exceeded' ? 429 : 400 }
+      );
+
+      if (validation.headers) {
+        Object.entries(validation.headers).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+      }
+
+      return SecurityHeaders.applyHeaders(response);
+    }
+
     const body = await request.json();
 
-    // Validate input
+    // Validate and sanitize input
     const validatedData = registerSchema.parse(body);
     const { email, password, name, phone } = validatedData;
 
     // Check if user already exists
     const existingUser = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email },
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 400 }
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          { error: 'User with this email already exists' },
+          { status: 400 }
+        )
       );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Hash password with high cost factor
+    const hashedPassword = await bcrypt.hash(password, 14);
 
     // Create user
     const user = await db.user.create({
       data: {
-        email: email.toLowerCase(),
+        email,
         name,
         phone,
         passwordHash: hashedPassword,
@@ -51,30 +78,45 @@ export async function POST(request: NextRequest) {
     });
 
     // Remove sensitive data from response
-    const { ...userResponse } = user;
+    const { passwordHash, ...userResponse } = user;
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        user: userResponse,
-        message: 'Registration successful. Please verify your email.',
-      },
+    // Log registration for security monitoring
+    console.log('User registration:', {
+      userId: user.id,
+      email: user.email,
+      timestamp: new Date().toISOString(),
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
     });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: error.issues,
+
+    return SecurityHeaders.applyHeaders(
+      NextResponse.json({
+        success: true,
+        data: {
+          user: userResponse,
+          message: 'Registration successful. Please verify your email.',
         },
-        { status: 400 }
+      })
+    );
+  } catch (error) {
+    console.error('Registration error:', error);
+
+    if (error instanceof z.ZodError) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          {
+            error: 'Validation failed',
+            details: error.issues.map(issue => ({
+              field: issue.path.join('.'),
+              message: issue.message,
+            })),
+          },
+          { status: 400 }
+        )
       );
     }
 
-    console.error('Registration error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+    return SecurityHeaders.applyHeaders(
+      NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     );
   }
 }

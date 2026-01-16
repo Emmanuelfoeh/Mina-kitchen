@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/stores/cart-store';
 import { useUserStore } from '@/stores/user-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +30,7 @@ export function OrderSummary({
   onBack,
   onSpecialInstructionsChange,
 }: OrderSummaryProps) {
+  const router = useRouter();
   const { items, getSubtotal, getTax, getDeliveryFee, getTotal } =
     useCartStore();
   const { user } = useUserStore();
@@ -78,7 +80,7 @@ export function OrderSummary({
         useCartStore.getState().clearCart();
 
         // Redirect to confirmation page
-        window.location.href = `/order-confirmation?orderId=${result.data.id}`;
+        router.push(`/order-confirmation?orderId=${result.data.id}`);
       } else {
         throw new Error(result.error || 'Failed to place order');
       }

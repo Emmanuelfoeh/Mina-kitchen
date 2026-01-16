@@ -1,16 +1,8 @@
-'use client';
-// import { Metadata } from 'next';
+import { Metadata } from 'next';
 import Image from 'next/image';
 import { Plus_Jakarta_Sans } from 'next/font/google';
-import {
-  BadgeCheck,
-  Leaf,
-  Users,
-  Utensils,
-  Medal,
-  Camera,
-  ChefHat,
-} from 'lucide-react';
+import { BadgeCheck, Leaf, Users, Utensils, Medal, Camera } from 'lucide-react';
+import { generateMetadata } from '@/lib/metadata';
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -18,16 +10,29 @@ const plusJakarta = Plus_Jakarta_Sans({
   variable: '--font-plus-jakarta',
 });
 
-// export const metadata: Metadata = {
-//   title: "Our Story - Chef's Kitchen",
-//   description:
-//     "Learn about our chef's journey from West Africa to Canada and our commitment to authentic African cuisine.",
-// };
+export const metadata: Metadata = generateMetadata({
+  title: 'About Chef Adebayo - Our Story',
+  description:
+    "Learn about Chef Adebayo's journey from West Africa to Canada and our commitment to authentic African cuisine. Discover our mission, values, and passion for bringing traditional flavors to Toronto.",
+  keywords: [
+    'Chef Adebayo',
+    'African chef Toronto',
+    'West African cuisine story',
+    'authentic African cooking',
+    'Nigerian chef Canada',
+    'African restaurant story',
+    'traditional African recipes',
+    'culinary heritage',
+    'African food culture',
+  ],
+  url: '/about',
+  type: 'article',
+});
 
 export default function AboutPage() {
   return (
     <div
-      className={`${plusJakarta.variable} min-h-screen bg-background-light font-display text-text-dark transition-colors duration-200 dark:bg-background-dark dark:text-white`}
+      className={`${plusJakarta.variable} bg-background-light font-display text-text-dark dark:bg-background-dark min-h-screen transition-colors duration-200 dark:text-white`}
     >
       {/* Main Content */}
       <main className="mx-auto w-full max-w-[1440px] flex-1 pb-16">
@@ -43,14 +48,14 @@ export default function AboutPage() {
             />
             <div className="from-background-dark via-background-dark/70 absolute inset-0 z-10 bg-gradient-to-t to-transparent" />
             <div className="relative z-20 max-w-3xl">
-              <span className="mb-6 inline-block rounded-full border border-primary/30 bg-primary/20 px-4 py-1 text-sm font-bold text-primary">
+              <span className="border-primary/30 bg-primary/20 text-primary mb-6 inline-block rounded-full border px-4 py-1 text-sm font-bold">
                 Welcome to My Kitchen
               </span>
-              <h1 className="mb-6 text-4xl font-black leading-tight text-white md:text-6xl lg:text-7xl">
+              <h1 className="mb-6 text-4xl leading-tight font-black text-white md:text-6xl lg:text-7xl">
                 Bringing African <span className="text-accent-gold">Soul</span>{' '}
                 to Canadian Soil
               </h1>
-              <p className="text-lg font-medium leading-relaxed text-gray-300 md:text-xl">
+              <p className="text-lg leading-relaxed font-medium text-gray-300 md:text-xl">
                 A culinary journey that spans across oceans, blending heritage
                 flavors with fresh local ingredients.
               </p>
@@ -63,11 +68,11 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             <div className="order-2 lg:order-1">
               <div className="relative">
-                <div className="absolute -top-4 -left-4 h-24 w-24 rounded-full bg-accent-gold/10 blur-3xl" />
-                <h2 className="mb-4 text-sm font-bold tracking-[0.2em] text-primary uppercase">
+                <div className="bg-accent-gold/10 absolute -top-4 -left-4 h-24 w-24 rounded-full blur-3xl" />
+                <h2 className="text-primary mb-4 text-sm font-bold tracking-[0.2em] uppercase">
                   Our Journey
                 </h2>
-                <h3 className="mb-6 text-3xl font-extrabold leading-tight text-text-dark dark:text-white md:text-4xl">
+                <h3 className="text-text-dark mb-6 text-3xl leading-tight font-extrabold md:text-4xl dark:text-white">
                   From the Vibrant Streets of Lagos to the Heart of Toronto
                 </h3>
                 <div className="text-text-muted space-y-4 text-lg leading-relaxed dark:text-gray-400">
@@ -118,7 +123,7 @@ export default function AboutPage() {
 
         {/* Mission Section */}
         <div className="mb-24 px-4 md:px-10">
-          <div className="bg-neutral-light/50 dark:bg-surface-dark/50 rounded-[2.5rem] border border-neutral-light p-8 dark:border-neutral-dark md:p-16">
+          <div className="bg-neutral-light/50 dark:bg-surface-dark/50 border-neutral-light dark:border-neutral-dark rounded-[2.5rem] border p-8 md:p-16">
             <div className="mx-auto mb-16 max-w-3xl text-center">
               <h2 className="mb-6 text-3xl font-extrabold md:text-4xl">
                 Our Mission
@@ -130,8 +135,8 @@ export default function AboutPage() {
               </p>
             </div>
             <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-              <div className="dark:bg-surface-dark rounded-3xl border border-neutral-light bg-white p-8 text-center shadow-sm transition-shadow hover:shadow-xl dark:border-neutral-dark">
-                <div className="mx-auto mb-6 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <div className="dark:bg-surface-dark border-neutral-light dark:border-neutral-dark rounded-3xl border bg-white p-8 text-center shadow-sm transition-shadow hover:shadow-xl">
+                <div className="bg-primary/10 text-primary mx-auto mb-6 flex size-14 items-center justify-center rounded-2xl">
                   <BadgeCheck size={32} />
                 </div>
                 <h4 className="mb-3 text-xl font-bold">Authenticity</h4>
@@ -140,8 +145,8 @@ export default function AboutPage() {
                   define our heritage flavors.
                 </p>
               </div>
-              <div className="dark:bg-surface-dark rounded-3xl border border-neutral-light bg-white p-8 text-center shadow-sm transition-shadow hover:shadow-xl dark:border-neutral-dark">
-                <div className="mx-auto mb-6 flex size-14 items-center justify-center rounded-2xl bg-accent-gold/10 text-accent-gold">
+              <div className="dark:bg-surface-dark border-neutral-light dark:border-neutral-dark rounded-3xl border bg-white p-8 text-center shadow-sm transition-shadow hover:shadow-xl">
+                <div className="bg-accent-gold/10 text-accent-gold mx-auto mb-6 flex size-14 items-center justify-center rounded-2xl">
                   <Leaf size={32} />
                 </div>
                 <h4 className="mb-3 text-xl font-bold">Quality</h4>
@@ -150,8 +155,8 @@ export default function AboutPage() {
                   dish meets our high standards.
                 </p>
               </div>
-              <div className="dark:bg-surface-dark rounded-3xl border border-neutral-light bg-white p-8 text-center shadow-sm transition-shadow hover:shadow-xl dark:border-neutral-dark">
-                <div className="mx-auto mb-6 flex size-14 items-center justify-center rounded-2xl bg-earth-tone/10 text-earth-tone">
+              <div className="dark:bg-surface-dark border-neutral-light dark:border-neutral-dark rounded-3xl border bg-white p-8 text-center shadow-sm transition-shadow hover:shadow-xl">
+                <div className="bg-earth-tone/10 text-earth-tone mx-auto mb-6 flex size-14 items-center justify-center rounded-2xl">
                   <Users size={32} />
                 </div>
                 <h4 className="mb-3 text-xl font-bold">Community</h4>
@@ -167,7 +172,7 @@ export default function AboutPage() {
         {/* Chef Profile Section */}
         <div className="px-4 md:px-10">
           <div className="bg-earth-tone relative overflow-hidden rounded-[2.5rem] text-white">
-            <div className="absolute top-0 right-0 h-full w-1/2 translate-x-1/4 skew-x-12 bg-primary/10" />
+            <div className="bg-primary/10 absolute top-0 right-0 h-full w-1/2 translate-x-1/4 skew-x-12" />
             <div className="grid grid-cols-1 gap-0 lg:grid-cols-12">
               <div className="relative z-10 flex items-center justify-center p-8 md:p-12 lg:col-span-5">
                 <div className="aspect-[4/5] w-full max-w-sm overflow-hidden rounded-3xl border-8 border-white shadow-xl">
@@ -181,7 +186,7 @@ export default function AboutPage() {
                 </div>
               </div>
               <div className="relative z-10 flex flex-col justify-center p-8 md:p-16 lg:col-span-7">
-                <span className="mb-4 text-sm font-bold tracking-widest text-accent-gold uppercase">
+                <span className="text-accent-gold mb-4 text-sm font-bold tracking-widest uppercase">
                   The Visionary
                 </span>
                 <h2 className="mb-6 text-4xl font-black md:text-5xl">
@@ -211,20 +216,20 @@ export default function AboutPage() {
                 <div className="flex items-center gap-6">
                   <div className="text-center">
                     <p className="text-2xl font-black text-white">5k+</p>
-                    <p className="text-[10px] font-bold text-accent-gold uppercase">
+                    <p className="text-accent-gold text-[10px] font-bold uppercase">
                       Happy Clients
                     </p>
                   </div>
                   <div className="h-10 w-px bg-white/20" />
                   <div className="text-center">
                     <p className="text-2xl font-black text-white">40+</p>
-                    <p className="text-[10px] font-bold text-accent-gold uppercase">
+                    <p className="text-accent-gold text-[10px] font-bold uppercase">
                       Original Recipes
                     </p>
                   </div>
                   <div className="h-10 w-px bg-white/20" />
                   <div className="flex gap-3">
-                    <div className="hover:bg-primary flex size-10 items-center justify-center rounded-full border border-white/20 transition-colors cursor-pointer">
+                    <div className="hover:bg-primary flex size-10 cursor-pointer items-center justify-center rounded-full border border-white/20 transition-colors">
                       <Camera size={20} />
                     </div>
                   </div>
@@ -234,32 +239,6 @@ export default function AboutPage() {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-neutral-light py-12 px-4 dark:bg-surface-dark dark:border-neutral-dark md:px-10">
-        <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-6 md:flex-row">
-          <div className="flex items-center gap-3 text-text-dark dark:text-white">
-            <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <ChefHat size={20} />
-            </div>
-            <span className="text-lg font-bold">Chef's Kitchen</span>
-          </div>
-          <div className="text-text-muted flex gap-8 text-sm">
-            <a className="hover:text-primary transition-colors" href="#">
-              Privacy Policy
-            </a>
-            <a className="hover:text-primary transition-colors" href="#">
-              Terms of Service
-            </a>
-            <a className="hover:text-primary transition-colors" href="#">
-              Catering
-            </a>
-          </div>
-          <p className="text-text-muted text-sm">
-            © 2024 Chef's Kitchen Canada. Authentic African Flavors.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

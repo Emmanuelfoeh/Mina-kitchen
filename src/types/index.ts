@@ -6,7 +6,7 @@ export interface User {
   email: string;
   name: string;
   phone?: string;
-  role: 'customer' | 'admin';
+  role: 'CUSTOMER' | 'ADMIN';
   addresses: Address[];
   createdAt: Date;
   updatedAt: Date;

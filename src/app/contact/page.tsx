@@ -1,21 +1,30 @@
-'use client';
-
-import {
-  Phone,
-  Mail,
-  MapPin,
-  Users,
-  Camera,
-  Map,
-  Send,
-  ChefHat,
-} from 'lucide-react';
+import { Phone, Mail, MapPin, Users, Camera, Map, Send } from 'lucide-react';
 import Image from 'next/image';
+import { Metadata } from 'next';
+import { generateMetadata } from '@/lib/metadata';
+
+export const metadata: Metadata = generateMetadata({
+  title: 'Contact Us - Get in Touch',
+  description:
+    'Contact Mina Kitchen for inquiries, catering requests, or feedback. Located in Toronto, we serve authentic West African cuisine across the GTA. Call us or visit our restaurant.',
+  keywords: [
+    'contact African restaurant Toronto',
+    'Mina Kitchen location',
+    'African catering Toronto',
+    'restaurant contact information',
+    'West African food inquiries',
+    'Toronto African cuisine',
+    'restaurant reservations',
+    'catering services Toronto',
+  ],
+  url: '/contact',
+  type: 'website',
+});
 
 export default function ContactPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background-light transition-colors duration-200 dark:bg-background-dark text-text-dark dark:text-white">
-      <main className="mx-auto flex-1 w-full max-w-[1440px] pb-16">
+    <div className="bg-background-light dark:bg-background-dark text-text-dark flex min-h-screen flex-col transition-colors duration-200 dark:text-white">
+      <main className="mx-auto w-full max-w-[1440px] flex-1 pb-16">
         <div className="mb-12 px-4 pt-6 md:px-10 md:pt-10">
           <div className="bg-surface-dark relative flex min-h-[240px] flex-col items-center justify-center overflow-hidden rounded-3xl p-6 text-center shadow-xl md:min-h-[300px] md:p-12">
             <div
@@ -40,14 +49,14 @@ export default function ContactPage() {
 
         <div className="grid grid-cols-1 gap-10 px-4 md:px-10 lg:grid-cols-12">
           <div className="flex flex-col gap-8 lg:col-span-5">
-            <div className="bg-white dark:bg-surface-dark contact-card-shadow rounded-3xl border border-neutral-light p-8 dark:border-neutral-dark">
+            <div className="dark:bg-surface-dark contact-card-shadow border-neutral-light dark:border-neutral-dark rounded-3xl border bg-white p-8">
               <h3 className="mb-6 flex items-center gap-2 text-2xl font-bold">
-                <span className="block h-6 w-1.5 rounded-full bg-primary"></span>
+                <span className="bg-primary block h-6 w-1.5 rounded-full"></span>
                 Contact Information
               </h3>
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <div className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
                     <Phone size={20} />
                   </div>
                   <div>
@@ -60,7 +69,7 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-gold/10 text-accent-gold">
+                  <div className="bg-accent-gold/10 text-accent-gold flex size-10 shrink-0 items-center justify-center rounded-xl">
                     <Mail size={20} />
                   </div>
                   <div>
@@ -73,7 +82,7 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-earth-tone/10 text-earth-tone">
+                  <div className="bg-earth-tone/10 text-earth-tone flex size-10 shrink-0 items-center justify-center rounded-xl">
                     <MapPin size={20} />
                   </div>
                   <div>
@@ -86,19 +95,19 @@ export default function ContactPage() {
                   </div>
                 </div>
               </div>
-              <div className="mt-8 border-t border-neutral-light pt-8 dark:border-neutral-dark">
+              <div className="border-neutral-light dark:border-neutral-dark mt-8 border-t pt-8">
                 <p className="text-text-muted mb-4 text-sm">
                   Follow us on social media for daily specials:
                 </p>
                 <div className="flex gap-3">
                   <a
-                    className="bg-neutral-light dark:bg-neutral-dark flex size-10 items-center justify-center rounded-full transition-all hover:bg-primary hover:text-white"
+                    className="bg-neutral-light dark:bg-neutral-dark hover:bg-primary flex size-10 items-center justify-center rounded-full transition-all hover:text-white"
                     href="#"
                   >
                     <Users size={20} />
                   </a>
                   <a
-                    className="bg-neutral-light dark:bg-neutral-dark flex size-10 items-center justify-center rounded-full transition-all hover:bg-primary hover:text-white"
+                    className="bg-neutral-light dark:bg-neutral-dark hover:bg-primary flex size-10 items-center justify-center rounded-full transition-all hover:text-white"
                     href="#"
                   >
                     <Camera size={20} />
@@ -106,7 +115,7 @@ export default function ContactPage() {
                 </div>
               </div>
             </div>
-            <div className="group relative aspect-[4/3] overflow-hidden rounded-3xl border border-neutral-light dark:border-neutral-dark">
+            <div className="group border-neutral-light dark:border-neutral-dark relative aspect-[4/3] overflow-hidden rounded-3xl border">
               <div
                 className="map-container absolute inset-0 bg-cover bg-center opacity-30"
                 style={{
@@ -115,20 +124,20 @@ export default function ContactPage() {
                 }}
               />
               <div className="bg-neutral-light/50 dark:bg-neutral-dark/50 absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                <Map className="mb-3 text-5xl text-primary" size={48} />
+                <Map className="text-primary mb-3 text-5xl" size={48} />
                 <h4 className="mb-2 text-lg font-bold">Our Delivery Range</h4>
                 <p className="text-text-muted text-sm">
                   Serving within 50km of downtown Toronto. Contact us for
                   special event catering outside this range.
                 </p>
-                <button className="bg-white dark:bg-surface-dark border-neutral-light dark:border-neutral-dark mt-4 rounded-lg border px-4 py-2 text-xs font-bold transition-colors hover:bg-primary hover:text-white cursor-pointer">
+                <button className="dark:bg-surface-dark border-neutral-light dark:border-neutral-dark hover:bg-primary mt-4 cursor-pointer rounded-lg border bg-white px-4 py-2 text-xs font-bold transition-colors hover:text-white">
                   View Interactive Map
                 </button>
               </div>
             </div>
           </div>
           <div className="lg:col-span-7">
-            <div className="bg-white dark:bg-surface-dark contact-card-shadow h-full rounded-3xl border border-neutral-light p-8 dark:border-neutral-dark md:p-12">
+            <div className="dark:bg-surface-dark contact-card-shadow border-neutral-light dark:border-neutral-dark h-full rounded-3xl border bg-white p-8 md:p-12">
               <h3 className="mb-2 text-2xl font-bold">Send us a Message</h3>
               <p className="text-text-muted mb-8">
                 We'll get back to you within 24 hours.
@@ -140,7 +149,7 @@ export default function ContactPage() {
                       Full Name
                     </label>
                     <input
-                      className="bg-neutral-light/30 dark:bg-neutral-dark/30 border-neutral-light dark:border-neutral-dark h-12 w-full rounded-xl border px-4 transition-all focus:border-primary focus:ring-primary"
+                      className="bg-neutral-light/30 dark:bg-neutral-dark/30 border-neutral-light dark:border-neutral-dark focus:border-primary focus:ring-primary h-12 w-full rounded-xl border px-4 transition-all"
                       placeholder="John Doe"
                       type="text"
                     />
@@ -150,7 +159,7 @@ export default function ContactPage() {
                       Email Address
                     </label>
                     <input
-                      className="bg-neutral-light/30 dark:bg-neutral-dark/30 border-neutral-light dark:border-neutral-dark h-12 w-full rounded-xl border px-4 transition-all focus:border-primary focus:ring-primary"
+                      className="bg-neutral-light/30 dark:bg-neutral-dark/30 border-neutral-light dark:border-neutral-dark focus:border-primary focus:ring-primary h-12 w-full rounded-xl border px-4 transition-all"
                       placeholder="john@example.com"
                       type="email"
                     />
@@ -160,7 +169,7 @@ export default function ContactPage() {
                   <label className="text-text-dark ml-1 text-sm font-bold dark:text-gray-200">
                     Subject
                   </label>
-                  <select className="bg-neutral-light/30 dark:bg-neutral-dark/30 border-neutral-light dark:border-neutral-dark h-12 w-full rounded-xl border px-4 transition-all focus:border-primary focus:ring-primary">
+                  <select className="bg-neutral-light/30 dark:bg-neutral-dark/30 border-neutral-light dark:border-neutral-dark focus:border-primary focus:ring-primary h-12 w-full rounded-xl border px-4 transition-all">
                     <option>General Inquiry</option>
                     <option>Catering Request</option>
                     <option>Feedback</option>
@@ -172,13 +181,13 @@ export default function ContactPage() {
                     Your Message
                   </label>
                   <textarea
-                    className="bg-neutral-light/30 dark:bg-neutral-dark/30 border-neutral-light dark:border-neutral-dark w-full resize-none rounded-xl border p-4 transition-all focus:border-primary focus:ring-primary"
+                    className="bg-neutral-light/30 dark:bg-neutral-dark/30 border-neutral-light dark:border-neutral-dark focus:border-primary focus:ring-primary w-full resize-none rounded-xl border p-4 transition-all"
                     placeholder="How can we help you today?"
                     rows={6}
                   ></textarea>
                 </div>
                 <button
-                  className="shadow-primary/25 hover:bg-primary/90 flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-10 font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 md:w-auto"
+                  className="shadow-primary/25 hover:bg-primary/90 bg-primary flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-10 font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 md:w-auto"
                   type="submit"
                 >
                   Send Message
@@ -211,13 +220,13 @@ export default function ContactPage() {
             </div>
             <div className="flex gap-4">
               <div className="px-4 text-center">
-                <p className="text-2xl font-bold text-primary">100%</p>
+                <p className="text-primary text-2xl font-bold">100%</p>
                 <p className="text-text-muted text-xs font-bold uppercase">
                   Authentic
                 </p>
               </div>
               <div className="border-neutral-dark/10 border-l px-4 text-center">
-                <p className="text-2xl font-bold text-primary">Daily</p>
+                <p className="text-primary text-2xl font-bold">Daily</p>
                 <p className="text-text-muted text-xs font-bold uppercase">
                   Freshness
                 </p>
@@ -226,31 +235,6 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
-
-      <footer className="bg-white dark:bg-surface-dark border-t border-neutral-light dark:border-neutral-dark py-12 px-4 md:px-10">
-        <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-6 md:flex-row">
-          <div className="flex items-center gap-3 text-text-dark dark:text-white">
-            <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <ChefHat size={20} />
-            </div>
-            <span className="text-lg font-bold">Chef's Kitchen</span>
-          </div>
-          <div className="text-text-muted flex gap-8 text-sm">
-            <a className="hover:text-primary transition-colors" href="#">
-              Privacy Policy
-            </a>
-            <a className="hover:text-primary transition-colors" href="#">
-              Terms of Service
-            </a>
-            <a className="hover:text-primary transition-colors" href="#">
-              Catering
-            </a>
-          </div>
-          <p className="text-text-muted text-sm">
-            © 2024 Chef's Kitchen Canada. Authentic African Flavors.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

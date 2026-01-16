@@ -1,14 +1,23 @@
+'use client';
+
 import Link from 'next/link';
 import { Home, Search, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { getSuggestedUrls } from '@/lib/redirects';
+import { useEffect, useState } from 'react';
 
 export default function NotFound() {
-  // Get suggested URLs based on the current path
-  const suggestedUrls = getSuggestedUrls(
-    typeof window !== 'undefined' ? window.location.pathname : '/'
-  );
+  const [suggestedUrls, setSuggestedUrls] = useState<
+    Array<{ href: string; label: string }>
+  >([]);
+
+  useEffect(() => {
+    // Get suggested URLs based on the current path
+    const urls = getSuggestedUrls(window.location.pathname);
+    setSuggestedUrls(urls);
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mx-auto max-w-2xl text-center">

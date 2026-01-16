@@ -1,26 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { NotificationService } from '@/lib/notifications';
+import { orderSchema, orderItemSchema } from '@/lib/validations';
+import {
+  SecurityMiddleware,
+  SecurityHeaders,
+  InputSanitizer,
+} from '@/lib/security';
+import { requireAuth } from '@/lib/auth';
+import { z } from 'zod';
 import type { Order, OrderItem, OrderStatus, PaymentStatus } from '@/types';
 
-interface CreateOrderRequest {
-  customerId: string;
-  items: {
-    menuItemId: string;
-    quantity: number;
-    unitPrice: number;
-    customizations: any[];
-    specialInstructions?: string;
-    totalPrice: number;
-  }[];
-  deliveryType: 'delivery' | 'pickup';
-  deliveryAddressId?: string;
-  scheduledFor?: string;
-  specialInstructions?: string;
-  subtotal: number;
-  tax: number;
-  deliveryFee: number;
-  total: number;
-}
+const createOrderSchema = z.object({
+  customerId: z.string().cuid('Invalid customer ID'),
+  items: z
+    .array(
+      orderItemSchema.extend({
+        menuItemId: z.string().cuid('Invalid menu item ID'),
+        unitPrice: z.number().positive('Unit price must be positive').max(1000),
+        totalPrice: z
+          .number()
+          .positive('Total price must be positive')
+          .max(50000),
+      })
+    )
+    .min(1, 'At least one item is required')
+    .max(50, 'Too many items in order'),
+  deliveryType: z.enum(['DELIVERY', 'PICKUP']),
+  deliveryAddressId: z.string().cuid().optional(),
+  scheduledFor: z.string().datetime().optional(),
+  specialInstructions: z
+    .string()
+    .max(500, 'Special instructions too long')
+    .transform(InputSanitizer.sanitizeString)
+    .optional(),
+  subtotal: z.number().positive('Subtotal must be positive').max(50000),
+  tax: z.number().min(0, 'Tax cannot be negative').max(10000),
+  deliveryFee: z.number().min(0, 'Delivery fee cannot be negative').max(100),
+  total: z.number().positive('Total must be positive').max(50000),
+});
 
 // Generate order number
 function generateOrderNumber(): string {
@@ -33,85 +51,176 @@ function generateOrderNumber(): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateOrderRequest = await request.json();
+    // Validate request with rate limiting and security checks
+    const validation = await SecurityMiddleware.validateRequest(request, {
+      rateLimit: { maxRequests: 20, windowMs: 15 * 60 * 1000 }, // 20 orders per 15 minutes
+      requireAuth: true,
+    });
 
-    // Validate required fields
-    if (!body.customerId || !body.items || body.items.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Missing required fields: customerId and items are required',
-        },
-        { status: 400 }
+    if (!validation.valid) {
+      const response = NextResponse.json(
+        { error: validation.error },
+        { status: validation.error === 'Rate limit exceeded' ? 429 : 401 }
       );
+
+      if (validation.headers) {
+        Object.entries(validation.headers).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+      }
+
+      return SecurityHeaders.applyHeaders(response);
     }
 
-    // Validate delivery address for delivery orders
-    if (body.deliveryType === 'delivery' && !body.deliveryAddressId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Delivery address is required for delivery orders',
-        },
-        { status: 400 }
-      );
-    }
+    const body = await request.json();
 
-    // Verify customer exists
+    // Validate and sanitize input
+    const validatedData = createOrderSchema.parse(body);
+
+    // Verify customer exists and matches authenticated user
     const customer = await db.user.findUnique({
-      where: { id: body.customerId },
+      where: { id: validatedData.customerId },
       include: { addresses: true },
     });
 
     if (!customer) {
-      return NextResponse.json(
-        { success: false, error: 'Customer not found' },
-        { status: 404 }
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          { success: false, error: 'Customer not found' },
+          { status: 404 }
+        )
       );
     }
 
     // Verify delivery address if provided
     let deliveryAddress = null;
-    if (body.deliveryAddressId) {
+    if (validatedData.deliveryAddressId) {
       deliveryAddress = customer.addresses.find(
-        (addr: any) => addr.id === body.deliveryAddressId
+        (addr: any) => addr.id === validatedData.deliveryAddressId
       );
 
       if (!deliveryAddress) {
-        return NextResponse.json(
-          { success: false, error: 'Delivery address not found' },
-          { status: 404 }
+        return SecurityHeaders.applyHeaders(
+          NextResponse.json(
+            { success: false, error: 'Delivery address not found' },
+            { status: 404 }
+          )
         );
       }
     }
 
+    // Validate delivery address requirement
+    if (
+      validatedData.deliveryType === 'DELIVERY' &&
+      !validatedData.deliveryAddressId
+    ) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          {
+            success: false,
+            error: 'Delivery address is required for delivery orders',
+          },
+          { status: 400 }
+        )
+      );
+    }
+
+    // Verify menu items exist and calculate prices
+    const menuItemIds = validatedData.items.map(item => item.menuItemId);
+    const menuItems = await db.menuItem.findMany({
+      where: {
+        id: { in: menuItemIds },
+        status: 'ACTIVE',
+      },
+    });
+
+    if (menuItems.length !== menuItemIds.length) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          { success: false, error: 'Some menu items are not available' },
+          { status: 400 }
+        )
+      );
+    }
+
+    // Validate pricing (prevent price manipulation)
+    let calculatedSubtotal = 0;
+    for (const item of validatedData.items) {
+      const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
+      if (!menuItem) continue;
+
+      const expectedTotal = item.quantity * item.unitPrice;
+      if (Math.abs(item.totalPrice - expectedTotal) > 0.01) {
+        return SecurityHeaders.applyHeaders(
+          NextResponse.json(
+            { success: false, error: 'Invalid item pricing detected' },
+            { status: 400 }
+          )
+        );
+      }
+      calculatedSubtotal += item.totalPrice;
+    }
+
+    // Validate order totals
+    if (Math.abs(validatedData.subtotal - calculatedSubtotal) > 0.01) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          { success: false, error: 'Invalid order subtotal' },
+          { status: 400 }
+        )
+      );
+    }
+
+    const expectedTotal =
+      validatedData.subtotal + validatedData.tax + validatedData.deliveryFee;
+    if (Math.abs(validatedData.total - expectedTotal) > 0.01) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          { success: false, error: 'Invalid order total' },
+          { status: 400 }
+        )
+      );
+    }
+
     // Create order with items
     const orderNumber = generateOrderNumber();
-    const scheduledFor = body.scheduledFor ? new Date(body.scheduledFor) : null;
+    const scheduledFor = validatedData.scheduledFor
+      ? new Date(validatedData.scheduledFor)
+      : null;
+
+    // Validate scheduled time is in the future
+    if (scheduledFor && scheduledFor <= new Date()) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          { success: false, error: 'Scheduled time must be in the future' },
+          { status: 400 }
+        )
+      );
+    }
 
     const order = await db.order.create({
       data: {
         orderNumber,
-        customerId: body.customerId,
-        subtotal: body.subtotal,
-        tax: body.tax,
-        deliveryFee: body.deliveryFee,
+        customerId: validatedData.customerId,
+        subtotal: validatedData.subtotal,
+        tax: validatedData.tax,
+        deliveryFee: validatedData.deliveryFee,
         tip: 0, // TODO: Add tip functionality
-        total: body.total,
+        total: validatedData.total,
         status: 'PENDING',
-        deliveryType: body.deliveryType.toUpperCase() as any,
-        deliveryAddressId: body.deliveryAddressId || null,
+        deliveryType: validatedData.deliveryType as any,
+        deliveryAddressId: validatedData.deliveryAddressId || null,
         scheduledFor,
         estimatedDelivery: scheduledFor
           ? new Date(scheduledFor.getTime() + 45 * 60000)
           : null, // 45 min after scheduled time
         paymentStatus: 'PENDING',
-        specialInstructions: body.specialInstructions,
+        specialInstructions: validatedData.specialInstructions,
         items: {
-          create: body.items.map(item => ({
+          create: validatedData.items.map(item => ({
             quantity: item.quantity,
             unitPrice: item.unitPrice,
-            customizations: JSON.stringify(item.customizations),
+            customizations: JSON.stringify(item.customizations || []),
             specialInstructions: item.specialInstructions,
             totalPrice: item.totalPrice,
             menuItem: {
@@ -134,40 +243,115 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: Send order confirmation email
-    // TODO: Notify restaurant of new order
-    // TODO: Set up order status tracking
-
-    return NextResponse.json({
-      success: true,
-      data: order,
-      message: 'Order created successfully',
+    // Log order creation for security monitoring
+    console.log('Order created:', {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      customerId: order.customerId,
+      total: order.total,
+      timestamp: new Date().toISOString(),
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
     });
+
+    // Send order confirmation notification
+    try {
+      await NotificationService.sendOrderConfirmationNotification(order.id);
+    } catch (notificationError) {
+      console.error('Failed to send order confirmation:', notificationError);
+      // Don't fail the order creation if notification fails
+    }
+
+    return SecurityHeaders.applyHeaders(
+      NextResponse.json({
+        success: true,
+        data: order,
+        message: 'Order created successfully',
+      })
+    );
   } catch (error) {
     console.error('Order creation error:', error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to create order. Please try again.',
-      },
-      { status: 500 }
+    if (error instanceof z.ZodError) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          {
+            success: false,
+            error: 'Invalid input data',
+            details: error.issues.map(issue => ({
+              field: issue.path.join('.'),
+              message: issue.message,
+            })),
+          },
+          { status: 400 }
+        )
+      );
+    }
+
+    return SecurityHeaders.applyHeaders(
+      NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to create order. Please try again.',
+        },
+        { status: 500 }
+      )
     );
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
+    // Validate request with rate limiting
+    const validation = await SecurityMiddleware.validateRequest(request, {
+      rateLimit: { maxRequests: 100, windowMs: 15 * 60 * 1000 },
+    });
+
+    if (!validation.valid) {
+      const response = NextResponse.json(
+        { error: validation.error },
+        { status: validation.error === 'Rate limit exceeded' ? 429 : 400 }
+      );
+
+      if (validation.headers) {
+        Object.entries(validation.headers).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+      }
+
+      return SecurityHeaders.applyHeaders(response);
+    }
+
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get('customerId');
     const orderId = searchParams.get('orderId');
 
+    // Validate input parameters
     if (orderId) {
+      // Validate orderId format
+      if (!/^[a-zA-Z0-9_-]+$/.test(orderId)) {
+        return SecurityHeaders.applyHeaders(
+          NextResponse.json(
+            { success: false, error: 'Invalid order ID format' },
+            { status: 400 }
+          )
+        );
+      }
+
       // Get specific order
       const order = await db.order.findUnique({
         where: { id: orderId },
         include: {
-          items: true,
+          items: {
+            include: {
+              menuItem: {
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
+              },
+            },
+          },
           customer: {
             select: {
               id: true,
@@ -181,48 +365,100 @@ export async function GET(request: NextRequest) {
       });
 
       if (!order) {
-        return NextResponse.json(
-          { success: false, error: 'Order not found' },
-          { status: 404 }
+        return SecurityHeaders.applyHeaders(
+          NextResponse.json(
+            { success: false, error: 'Order not found' },
+            { status: 404 }
+          )
         );
       }
 
-      return NextResponse.json({
-        success: true,
-        data: order,
-      });
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json({
+          success: true,
+          data: order,
+        })
+      );
     }
 
     if (customerId) {
-      // Get customer orders
-      const orders = await db.order.findMany({
-        where: { customerId },
-        include: {
-          items: true,
-          deliveryAddress: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      });
+      // Validate customerId format
+      if (!/^[a-zA-Z0-9_-]+$/.test(customerId)) {
+        return SecurityHeaders.applyHeaders(
+          NextResponse.json(
+            { success: false, error: 'Invalid customer ID format' },
+            { status: 400 }
+          )
+        );
+      }
 
-      return NextResponse.json({
-        success: true,
-        data: orders,
-      });
+      // Get customer orders with pagination
+      const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+      const limit = Math.min(
+        50,
+        Math.max(1, parseInt(searchParams.get('limit') || '10'))
+      );
+      const skip = (page - 1) * limit;
+
+      const [orders, totalCount] = await Promise.all([
+        db.order.findMany({
+          where: { customerId },
+          include: {
+            items: {
+              include: {
+                menuItem: {
+                  select: {
+                    id: true,
+                    name: true,
+                    image: true,
+                  },
+                },
+              },
+            },
+            deliveryAddress: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        db.order.count({
+          where: { customerId },
+        }),
+      ]);
+
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json({
+          success: true,
+          data: {
+            orders,
+            pagination: {
+              page,
+              limit,
+              total: totalCount,
+              pages: Math.ceil(totalCount / limit),
+            },
+          },
+        })
+      );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Missing required parameters' },
-      { status: 400 }
+    return SecurityHeaders.applyHeaders(
+      NextResponse.json(
+        { success: false, error: 'Missing required parameters' },
+        { status: 400 }
+      )
     );
   } catch (error) {
     console.error('Order fetch error:', error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch orders',
-      },
-      { status: 500 }
+    return SecurityHeaders.applyHeaders(
+      NextResponse.json(
+        {
+          success: false,
+          error: 'Failed to fetch orders',
+        },
+        { status: 500 }
+      )
     );
   }
 }

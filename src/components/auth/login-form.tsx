@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useUserStore } from '@/stores/user-store';
@@ -24,11 +24,12 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export function LoginForm() {
+function LoginFormContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [generalError, setGeneralError] = useState('');
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setUser, setLoading } = useUserStore();
 
   const form = useForm<LoginFormData>({
@@ -59,8 +60,17 @@ export function LoginForm() {
         // Set user in store
         setUser(result.data.user);
 
-        // Redirect to homepage or dashboard
-        router.push('/');
+        // Handle role-based redirects
+        const redirectTo = searchParams.get('redirect');
+        const user = result.data.user;
+
+        if (user.role === 'ADMIN') {
+          // Admin users go to admin dashboard
+          router.push(redirectTo || '/admin');
+        } else {
+          // Regular users go to homepage or specified redirect
+          router.push(redirectTo || '/');
+        }
       } else {
         setGeneralError(result.error || 'Login failed');
       }
@@ -76,6 +86,9 @@ export function LoginForm() {
     <div className="mx-auto w-full max-w-md">
       <div className="mb-6 text-center">
         <h2 className="text-2xl font-bold">Sign In</h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Welcome back! Please sign in to your account.
+        </p>
       </div>
 
       <Form {...form}>
@@ -144,6 +157,27 @@ export function LoginForm() {
           </div>
         </form>
       </Form>
+
+      {/* Demo credentials info */}
+      <div className="mt-8 rounded-lg bg-gray-50 p-4 text-center text-sm text-gray-600">
+        <p className="mb-2 font-medium">Demo Credentials:</p>
+        <div className="space-y-1">
+          <p>
+            <strong>Customer:</strong> customer@minakitchen.ca / customer123
+          </p>
+          <p>
+            <strong>Admin:</strong> admin@minakitchen.ca / admin123
+          </p>
+        </div>
+      </div>
     </div>
+  );
+}
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={<div className="text-center">Loading...</div>}>
+      <LoginFormContent />
+    </Suspense>
   );
 }

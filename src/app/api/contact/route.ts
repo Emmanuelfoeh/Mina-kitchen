@@ -1,31 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-interface ContactFormData {
-  name: string;
-  email: string;
-  phone?: string;
-  subject: string;
-  message: string;
-}
+import { contactFormSchema } from '@/lib/validations';
+import { SecurityMiddleware, SecurityHeaders } from '@/lib/security';
+import { z } from 'zod';
 
 export async function POST(request: NextRequest) {
   try {
-    const body: ContactFormData = await request.json();
+    // Validate request with rate limiting and security checks
+    const validation = await SecurityMiddleware.validateRequest(request, {
+      rateLimit: { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 5 requests per 15 minutes
+    });
 
-    // Validate required fields
-    if (!body.name || !body.email || !body.message) {
-      return NextResponse.json(
-        { error: 'Name, email, and message are required' },
-        { status: 400 }
+    if (!validation.valid) {
+      const response = NextResponse.json(
+        { error: validation.error },
+        { status: validation.error === 'Rate limit exceeded' ? 429 : 400 }
+      );
+
+      if (validation.headers) {
+        Object.entries(validation.headers).forEach(([key, value]) => {
+          response.headers.set(key, value);
+        });
+      }
+
+      return SecurityHeaders.applyHeaders(response);
+    }
+
+    const body = await request.json();
+
+    // Validate and sanitize input
+    const validatedData = contactFormSchema.parse(body);
+
+    // Additional security checks
+    if (!validatedData.name || !validatedData.email || !validatedData.message) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          { error: 'Name, email, and message are required' },
+          { status: 400 }
+        )
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(body.email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
+    // Check for suspicious patterns
+    const suspiciousPatterns = [
+      /script/i,
+      /javascript/i,
+      /onclick/i,
+      /onerror/i,
+      /<[^>]*>/,
+      /eval\(/i,
+    ];
+
+    const textToCheck = `${validatedData.name} ${validatedData.message} ${validatedData.subject}`;
+    if (suspiciousPatterns.some(pattern => pattern.test(textToCheck))) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          { error: 'Invalid content detected' },
+          { status: 400 }
+        )
       );
     }
 
@@ -37,26 +68,47 @@ export async function POST(request: NextRequest) {
 
     // For now, we'll just log the inquiry and return success
     console.log('Contact form submission:', {
-      ...body,
+      ...validatedData,
       timestamp: new Date().toISOString(),
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
     });
 
     // Simulate processing time
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    return NextResponse.json(
-      {
-        message:
-          'Your inquiry has been submitted successfully. We will get back to you within 24 hours.',
-        success: true,
-      },
-      { status: 200 }
+    return SecurityHeaders.applyHeaders(
+      NextResponse.json(
+        {
+          message:
+            'Your inquiry has been submitted successfully. We will get back to you within 24 hours.',
+          success: true,
+        },
+        { status: 200 }
+      )
     );
   } catch (error) {
     console.error('Error processing contact form:', error);
-    return NextResponse.json(
-      { error: 'Internal server error. Please try again later.' },
-      { status: 500 }
+
+    if (error instanceof z.ZodError) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          {
+            error: 'Invalid input data',
+            details: error.issues.map(issue => ({
+              field: issue.path.join('.'),
+              message: issue.message,
+            })),
+          },
+          { status: 400 }
+        )
+      );
+    }
+
+    return SecurityHeaders.applyHeaders(
+      NextResponse.json(
+        { error: 'Internal server error. Please try again later.' },
+        { status: 500 }
+      )
     );
   }
 }

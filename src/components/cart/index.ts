@@ -1,4 +1,5 @@
 export { CartSidebar } from './cart-sidebar';
+export { ConditionalCartSidebar } from './conditional-cart-sidebar';
 export { CartButton } from './cart-button';
 export { PriceBreakdown, PriceLine, SavingsLine } from './price-breakdown';
 export { CartProvider, useCartSafe } from './cart-provider';
