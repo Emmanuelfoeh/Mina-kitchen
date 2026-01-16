@@ -15,16 +15,12 @@ import type { CartItem, SelectedCustomization } from '@/types';
 export function CartSidebar() {
   const router = useRouter();
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const {
-    items,
-    isOpen,
-    toggleCart,
-    closeCart,
-    removeItem,
-    updateQuantity,
-    getTotalItems,
-    hasItems,
-  } = useCartSafe();
+  const { items, isOpen, toggleCart, closeCart, removeItem, updateQuantity } =
+    useCartSafe();
+
+  // Compute values directly from items to ensure reactivity
+  const totalItems = items.reduce((total, item) => total + item.quantity, 0);
+  const hasCartItems = items.length > 0;
 
   const handleCheckout = () => {
     closeCart();
@@ -100,12 +96,12 @@ export function CartSidebar() {
             <h2 id="cart-title" className="text-lg font-semibold">
               Your Cart
             </h2>
-            {getTotalItems() > 0 && (
+            {totalItems > 0 && (
               <Badge
                 variant="secondary"
-                aria-label={`${getTotalItems()} items in cart`}
+                aria-label={`${totalItems} items in cart`}
               >
-                {getTotalItems()}
+                {totalItems}
               </Badge>
             )}
           </div>
@@ -121,13 +117,13 @@ export function CartSidebar() {
         </div>
 
         <div id="cart-description" className="sr-only">
-          Shopping cart containing {getTotalItems()}{' '}
-          {getTotalItems() === 1 ? 'item' : 'items'}
+          Shopping cart containing {totalItems}{' '}
+          {totalItems === 1 ? 'item' : 'items'}
         </div>
 
         {/* Cart Content */}
         <div className="flex min-h-0 flex-1 flex-col">
-          {!hasItems() ? (
+          {!hasCartItems ? (
             <div className="flex flex-1 items-center justify-center p-8">
               <div className="text-center">
                 <ShoppingCart className="mx-auto mb-4 h-12 w-12 text-gray-400" />

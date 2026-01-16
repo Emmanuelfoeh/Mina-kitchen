@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useCartSafe } from './cart-provider';
 import { formatCurrency } from '@/utils';
+import { calculateTax, calculateDeliveryFee } from '@/utils';
 
 interface PriceBreakdownProps {
   showTitle?: boolean;
@@ -15,26 +15,14 @@ export function PriceBreakdown({
   showEstimatedTime = true,
   className = '',
 }: PriceBreakdownProps) {
-  const {
-    getTotalItems,
-    getSubtotal,
-    getTax,
-    getDeliveryFee,
-    getTotal,
-    items,
-  } = useCartSafe();
+  const { items } = useCartSafe();
 
-  // Force re-render when items change
-  const [, forceUpdate] = useState({});
-  useEffect(() => {
-    forceUpdate({});
-  }, [items]);
-
-  const subtotal = getSubtotal();
-  const tax = getTax();
-  const deliveryFee = getDeliveryFee();
-  const total = getTotal();
-  const totalItems = getTotalItems();
+  // Calculate values directly from items to ensure reactivity
+  const totalItems = items.reduce((total, item) => total + item.quantity, 0);
+  const subtotal = items.reduce((total, item) => total + item.totalPrice, 0);
+  const tax = calculateTax(subtotal);
+  const deliveryFee = calculateDeliveryFee();
+  const total = subtotal + tax + deliveryFee;
 
   if (totalItems === 0) {
     return null;

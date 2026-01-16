@@ -50,7 +50,34 @@ export function CartProvider({
 // Hook to safely use cart store with SSR
 export function useCartSafe() {
   const [isHydrated, setIsHydrated] = useState(false);
-  const cartStore = useCartStore();
+
+  // Subscribe to all cart store state to ensure re-renders
+  const items = useCartStore(state => state.items);
+  const isOpen = useCartStore(state => state.isOpen);
+  const lastSyncTimestamp = useCartStore(state => state.lastSyncTimestamp);
+  const storeIsHydrated = useCartStore(state => state.isHydrated);
+
+  // Get all the methods
+  const addItem = useCartStore(state => state.addItem);
+  const removeItem = useCartStore(state => state.removeItem);
+  const updateQuantity = useCartStore(state => state.updateQuantity);
+  const updateCustomizations = useCartStore(
+    state => state.updateCustomizations
+  );
+  const clearCart = useCartStore(state => state.clearCart);
+  const toggleCart = useCartStore(state => state.toggleCart);
+  const openCart = useCartStore(state => state.openCart);
+  const closeCart = useCartStore(state => state.closeCart);
+  const getTotalItems = useCartStore(state => state.getTotalItems);
+  const getSubtotal = useCartStore(state => state.getSubtotal);
+  const getTax = useCartStore(state => state.getTax);
+  const getDeliveryFee = useCartStore(state => state.getDeliveryFee);
+  const getTotal = useCartStore(state => state.getTotal);
+  const hasItems = useCartStore(state => state.hasItems);
+  const getItemById = useCartStore(state => state.getItemById);
+  const syncCart = useCartStore(state => state.syncCart);
+  const setHydrated = useCartStore(state => state.setHydrated);
+  const validateCartItems = useCartStore(state => state.validateCartItems);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -84,5 +111,28 @@ export function useCartSafe() {
     };
   }
 
-  return cartStore;
+  return {
+    items,
+    isOpen,
+    lastSyncTimestamp,
+    isHydrated: storeIsHydrated,
+    addItem,
+    removeItem,
+    updateQuantity,
+    updateCustomizations,
+    clearCart,
+    toggleCart,
+    openCart,
+    closeCart,
+    getTotalItems,
+    getSubtotal,
+    getTax,
+    getDeliveryFee,
+    getTotal,
+    hasItems,
+    getItemById,
+    syncCart,
+    setHydrated,
+    validateCartItems,
+  };
 }
