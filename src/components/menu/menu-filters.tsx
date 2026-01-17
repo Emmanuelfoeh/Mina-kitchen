@@ -30,20 +30,6 @@ export function MenuFilters({
 
   return (
     <div className="space-y-4">
-      {/* Search Bar - Only show when there's a search query or when not on 'all' */}
-      {(searchQuery || selectedCategory !== 'all') && (
-        <div className="relative max-w-md">
-          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-[#5c4a45]" />
-          <Input
-            type="text"
-            placeholder="Search dishes..."
-            value={searchQuery}
-            onChange={e => onSearchChange(e.target.value)}
-            className="h-10 border-[#e6dbd9] pl-10 focus:border-[#f2330d] focus:ring-[#f2330d]/20"
-          />
-        </div>
-      )}
-
       {/* Category Pills - Horizontal scrollable */}
       <div className="scrollbar-hide overflow-x-auto">
         <div className="flex gap-3 pb-2">
@@ -129,6 +115,20 @@ export function MenuFilters({
           >
             Clear all
           </Button>
+        </div>
+      )}
+
+      {/* Search Bar - Only show when there's a search query or when not on 'all' */}
+      {(searchQuery || selectedCategory !== 'all') && (
+        <div className="relative max-w-md">
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-[#5c4a45]" />
+          <Input
+            type="text"
+            placeholder="Search dishes..."
+            value={searchQuery}
+            onChange={e => onSearchChange(e.target.value)}
+            className="h-10 border-[#e6dbd9] pl-10 focus:border-[#f2330d] focus:ring-[#f2330d]/20"
+          />
         </div>
       )}
     </div>

@@ -1,11 +1,20 @@
 import { NextResponse } from 'next/server';
-import { mockCategories } from '@/lib/mock-data';
+import { db } from '@/lib/db';
 
 export async function GET() {
   try {
+    const categories = await db.menuCategory.findMany({
+      where: {
+        isActive: true,
+      },
+      orderBy: {
+        displayOrder: 'asc',
+      },
+    });
+
     return NextResponse.json({
       success: true,
-      data: mockCategories.filter(category => category.isActive),
+      data: categories,
     });
   } catch (error) {
     console.error('Error fetching categories:', error);

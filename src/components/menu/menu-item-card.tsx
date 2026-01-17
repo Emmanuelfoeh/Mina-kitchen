@@ -10,11 +10,13 @@ import type { MenuItem } from '@/types';
 interface MenuItemCardProps {
   menuItem: MenuItem;
   onCustomizeClick: () => void;
+  onQuickAdd?: () => void;
 }
 
 export function MenuItemCard({
   menuItem,
   onCustomizeClick,
+  onQuickAdd,
 }: MenuItemCardProps) {
   const getStatusBadge = () => {
     switch (menuItem.status) {
@@ -121,19 +123,41 @@ export function MenuItemCard({
           </div>
         )}
 
-        <Button
-          onClick={onCustomizeClick}
-          disabled={!isAvailable}
-          className={`mt-auto flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition-colors ${
-            isAvailable
-              ? 'border border-[#f2330d] bg-white text-[#f2330d] hover:bg-[#f2330d] hover:text-white'
-              : 'cursor-not-allowed bg-gray-100 text-gray-400'
-          }`}
-          variant={isAvailable ? 'outline' : 'secondary'}
-        >
-          <Plus className="text-[18px]" />
-          {isAvailable ? 'Customize & Add' : 'Unavailable'}
-        </Button>
+        {/* Action Buttons */}
+        <div className="mt-auto space-y-2">
+          {/* Main Action Button */}
+          <Button
+            onClick={onCustomizeClick}
+            disabled={!isAvailable}
+            className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition-colors ${
+              isAvailable
+                ? 'border border-[#f2330d] bg-white text-[#f2330d] hover:bg-[#f2330d] hover:text-white'
+                : 'cursor-not-allowed bg-gray-100 text-gray-400'
+            }`}
+            variant={isAvailable ? 'outline' : 'secondary'}
+          >
+            <Plus className="text-[18px]" />
+            {isAvailable
+              ? menuItem.customizations.length > 0
+                ? 'Customize & Add'
+                : 'Add to Cart'
+              : 'Unavailable'}
+          </Button>
+
+          {/* Quick Add Button - Only show if item has no required customizations and onQuickAdd is provided */}
+          {isAvailable &&
+            onQuickAdd &&
+            menuItem.customizations.length > 0 &&
+            !menuItem.customizations.some(c => c.required) && (
+              <Button
+                onClick={onQuickAdd}
+                className="w-full bg-[#f2330d] py-1.5 text-xs text-white hover:bg-[#d12b0a]"
+                size="sm"
+              >
+                Quick Add - {formatCurrency(menuItem.basePrice)}
+              </Button>
+            )}
+        </div>
       </div>
     </Card>
   );

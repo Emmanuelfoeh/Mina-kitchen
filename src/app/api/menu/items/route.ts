@@ -1,33 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockMenuItems } from '@/lib/mock-data';
+import { db } from '@/lib/db';
+import { generateSlug } from '@/lib/utils';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const search = searchParams.get('search');
-    const status = searchParams.get('status') || 'active';
+    const status = searchParams.get('status') || 'ACTIVE';
 
-    let filteredItems = mockMenuItems.filter(item => item.status === status);
+    // Build where clause
+    const where: any = {
+      status: status,
+    };
 
+    // Filter by category if specified
     if (category && category !== 'all') {
-      filteredItems = filteredItems.filter(
-        item => item.category.name.toLowerCase() === category.toLowerCase()
-      );
+      where.category = {
+        name: {
+          equals: category,
+          mode: 'insensitive',
+        },
+      };
     }
 
+    // Add search filter if specified
     if (search) {
-      const searchLower = search.toLowerCase();
-      filteredItems = filteredItems.filter(
-        item =>
-          item.name.toLowerCase().includes(searchLower) ||
-          item.description.toLowerCase().includes(searchLower)
-      );
+      where.OR = [
+        {
+          name: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          description: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ];
     }
+
+    const menuItems = await db.menuItem.findMany({
+      where,
+      include: {
+        category: true,
+        customizations: {
+          include: {
+            options: true,
+          },
+        },
+      },
+      orderBy: [{ category: { displayOrder: 'asc' } }, { name: 'asc' }],
+    });
+
+    // Transform the data to match the expected format
+    const transformedItems = menuItems.map(item => ({
+      ...item,
+      basePrice: item.basePrice,
+      image: item.image || '/placeholder-food.svg',
+      images: item.image ? [item.image] : ['/placeholder-food.svg'],
+      tags: item.tags ? JSON.parse(item.tags) : [],
+      status: item.status.toLowerCase(),
+      slug: generateSlug(item.name),
+      customizations: item.customizations.map(customization => ({
+        ...customization,
+        type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
+        options: customization.options.map(option => ({
+          ...option,
+          isAvailable: true, // Default to available
+        })),
+      })),
+    }));
 
     return NextResponse.json({
       success: true,
-      data: filteredItems,
+      data: transformedItems,
     });
   } catch (error) {
     console.error('Error fetching menu items:', error);

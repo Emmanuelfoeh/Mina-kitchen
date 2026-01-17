@@ -8,12 +8,14 @@ interface MenuGridProps {
   menuItems: MenuItem[];
   isLoading: boolean;
   onCustomizeClick: (menuItem: MenuItem) => void;
+  onQuickAdd?: (menuItem: MenuItem) => void;
 }
 
 export function MenuGrid({
   menuItems,
   isLoading,
   onCustomizeClick,
+  onQuickAdd,
 }: MenuGridProps) {
   if (isLoading) {
     return <MenuSkeleton />;
@@ -48,15 +50,15 @@ export function MenuGrid({
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       {Object.entries(itemsByCategory).map(([categoryName, items]) => (
-        <div key={categoryName} className="space-y-4">
+        <div key={categoryName} className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-[#1c100d]">
               {categoryName}
             </h2>
-            <span className="rounded-full bg-[#f2330d]/10 px-3 py-1 text-sm text-[#5c4a45]">
-              {items.length} {items.length === 1 ? 'dish' : 'dishes'}
+            <span className="text-sm text-[#5c4a45]">
+              {items.length} {items.length === 1 ? 'item' : 'items'}
             </span>
           </div>
 
@@ -66,6 +68,7 @@ export function MenuGrid({
                 key={item.id}
                 menuItem={item}
                 onCustomizeClick={() => onCustomizeClick(item)}
+                onQuickAdd={onQuickAdd ? () => onQuickAdd(item) : undefined}
               />
             ))}
           </div>
