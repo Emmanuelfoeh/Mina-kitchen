@@ -41,7 +41,6 @@ export interface MenuItem {
   allergens?: string[]; // Allergen information
   status: 'active' | 'inactive' | 'sold_out' | 'low_stock';
   customizations: Customization[];
-  nutritionalInfo?: NutritionalInfo;
   tags: string[];
   relatedItemIds?: string[]; // Related product IDs
   createdAt: Date;
@@ -70,15 +69,6 @@ export interface CustomizationOption {
   name: string;
   priceModifier: number;
   isAvailable: boolean;
-}
-
-export interface NutritionalInfo {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fiber?: number;
-  sodium?: number;
 }
 
 // Package Models

@@ -334,22 +334,8 @@ export function MenuItemsTable({
                               Edit
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDuplicate(item)}
-                          >
-                            <Copy className="mr-2 h-4 w-4" />
-                            Duplicate
-                          </DropdownMenuItem>
+                          
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem asChild>
-                            <Link
-                              href={`/menu/items/${item.id}`}
-                              target="_blank"
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              View on Customer Site
-                            </Link>
-                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() =>

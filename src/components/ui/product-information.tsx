@@ -1,5 +1,4 @@
 import React from 'react';
-import type { NutritionalInfo } from '@/types';
 
 interface ProductInformationProps {
   name: string;
@@ -8,7 +7,6 @@ interface ProductInformationProps {
   savings?: number;
   description: string;
   tags?: string[];
-  nutritionalInfo?: NutritionalInfo;
   chefNotes?: string;
   className?: string;
 }
@@ -20,7 +18,6 @@ export function ProductInformation({
   savings,
   description,
   tags = [],
-  nutritionalInfo,
   chefNotes,
   className = '',
 }: ProductInformationProps) {
@@ -119,86 +116,6 @@ export function ProductInformation({
                 {tag}
               </span>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Nutritional Information */}
-      {nutritionalInfo && (
-        <div>
-          <h3 className="mb-3 text-lg font-semibold" id="nutrition-heading">
-            Nutritional Information
-          </h3>
-          <div
-            className="grid grid-cols-2 gap-4 text-sm"
-            role="table"
-            aria-labelledby="nutrition-heading"
-            aria-label="Nutritional information per serving"
-          >
-            <div className="flex justify-between" role="row">
-              <span role="rowheader">Calories:</span>
-              <span
-                className="font-medium"
-                role="cell"
-                aria-label={`${nutritionalInfo.calories} calories`}
-              >
-                {nutritionalInfo.calories}
-              </span>
-            </div>
-            <div className="flex justify-between" role="row">
-              <span role="rowheader">Protein:</span>
-              <span
-                className="font-medium"
-                role="cell"
-                aria-label={`${nutritionalInfo.protein} grams of protein`}
-              >
-                {nutritionalInfo.protein}g
-              </span>
-            </div>
-            <div className="flex justify-between" role="row">
-              <span role="rowheader">Carbs:</span>
-              <span
-                className="font-medium"
-                role="cell"
-                aria-label={`${nutritionalInfo.carbs} grams of carbohydrates`}
-              >
-                {nutritionalInfo.carbs}g
-              </span>
-            </div>
-            <div className="flex justify-between" role="row">
-              <span role="rowheader">Fat:</span>
-              <span
-                className="font-medium"
-                role="cell"
-                aria-label={`${nutritionalInfo.fat} grams of fat`}
-              >
-                {nutritionalInfo.fat}g
-              </span>
-            </div>
-            {nutritionalInfo.fiber && (
-              <div className="flex justify-between" role="row">
-                <span role="rowheader">Fiber:</span>
-                <span
-                  className="font-medium"
-                  role="cell"
-                  aria-label={`${nutritionalInfo.fiber} grams of fiber`}
-                >
-                  {nutritionalInfo.fiber}g
-                </span>
-              </div>
-            )}
-            {nutritionalInfo.sodium && (
-              <div className="flex justify-between" role="row">
-                <span role="rowheader">Sodium:</span>
-                <span
-                  className="font-medium"
-                  role="cell"
-                  aria-label={`${nutritionalInfo.sodium} milligrams of sodium`}
-                >
-                  {nutritionalInfo.sodium}mg
-                </span>
-              </div>
-            )}
           </div>
         </div>
       )}

@@ -98,14 +98,6 @@ export const mockMenuItems: MenuItem[] = [
     ],
     status: 'active',
     customizations: mockCustomizations,
-    nutritionalInfo: {
-      calories: 650,
-      protein: 35,
-      carbs: 75,
-      fat: 18,
-      fiber: 4,
-      sodium: 890,
-    },
     tags: ['spicy', 'popular', 'chicken'],
     relatedItemIds: ['12', '3', '13', '17'], // Fried Plantain, Beef Suya, Coconut Rice, Chicken Wings
     createdAt: new Date(),
@@ -146,14 +138,6 @@ export const mockMenuItems: MenuItem[] = [
       mockCustomizations[0], // pepper level
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 580,
-      protein: 45,
-      carbs: 52,
-      fat: 22,
-      fiber: 3,
-      sodium: 720,
-    },
     tags: ['fish', 'healthy', 'grilled'],
     relatedItemIds: ['13', '16', '12', '15'], // Coconut Rice, Steamed Vegetables, Fried Plantain, Moi Moi
     createdAt: new Date(),
@@ -170,14 +154,6 @@ export const mockMenuItems: MenuItem[] = [
       'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
     status: 'active',
     customizations: mockCustomizations,
-    nutritionalInfo: {
-      calories: 695,
-      protein: 38,
-      carbs: 68,
-      fat: 28,
-      fiber: 5,
-      sodium: 950,
-    },
     tags: ['spicy', 'chicken', 'traditional'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -212,14 +188,6 @@ export const mockMenuItems: MenuItem[] = [
       },
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 780,
-      protein: 48,
-      carbs: 62,
-      fat: 32,
-      fiber: 6,
-      sodium: 1100,
-    },
     tags: ['traditional', 'goat', 'stew'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -249,14 +217,6 @@ export const mockMenuItems: MenuItem[] = [
       },
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 720,
-      protein: 42,
-      carbs: 58,
-      fat: 30,
-      fiber: 8,
-      sodium: 980,
-    },
     tags: ['beef', 'traditional', 'okra'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -309,14 +269,6 @@ export const mockMenuItems: MenuItem[] = [
         ],
       },
     ],
-    nutritionalInfo: {
-      calories: 720,
-      protein: 42,
-      carbs: 65,
-      fat: 25,
-      fiber: 8,
-      sodium: 1200,
-    },
     tags: ['traditional', 'soup', 'meat'],
     relatedItemIds: ['14', '15', '6', '7'], // Yam Porridge, Moi Moi, Goat Meat Stew, Beef & Okra Stew
     createdAt: new Date(),
@@ -363,14 +315,6 @@ export const mockMenuItems: MenuItem[] = [
       mockCustomizations[0], // pepper level
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 680,
-      protein: 45,
-      carbs: 48,
-      fat: 28,
-      fiber: 12,
-      sodium: 1150,
-    },
     tags: ['traditional', 'soup', 'bitter-leaf'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -431,14 +375,6 @@ export const mockMenuItems: MenuItem[] = [
       },
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 420,
-      protein: 35,
-      carbs: 8,
-      fat: 28,
-      fiber: 2,
-      sodium: 980,
-    },
     tags: ['spicy', 'soup', 'traditional'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -478,14 +414,6 @@ export const mockMenuItems: MenuItem[] = [
       mockCustomizations[0], // pepper level
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 750,
-      protein: 40,
-      carbs: 55,
-      fat: 32,
-      fiber: 10,
-      sodium: 1080,
-    },
     tags: ['traditional', 'soup', 'oha'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -520,14 +448,6 @@ export const mockMenuItems: MenuItem[] = [
       mockCustomizations[0], // pepper level
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 650,
-      protein: 38,
-      carbs: 45,
-      fat: 30,
-      fiber: 8,
-      sodium: 950,
-    },
     tags: ['traditional', 'soup', 'ogbono'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -572,14 +492,6 @@ export const mockMenuItems: MenuItem[] = [
       },
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 280,
-      protein: 2,
-      carbs: 58,
-      fat: 8,
-      fiber: 4,
-      sodium: 120,
-    },
     tags: ['sweet', 'plantain', 'side'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -611,14 +523,6 @@ export const mockMenuItems: MenuItem[] = [
       },
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 320,
-      protein: 6,
-      carbs: 65,
-      fat: 5,
-      fiber: 2,
-      sodium: 480,
-    },
     tags: ['coconut', 'rice', 'side'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -662,14 +566,6 @@ export const mockMenuItems: MenuItem[] = [
       mockCustomizations[0], // pepper level
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 380,
-      protein: 8,
-      carbs: 72,
-      fat: 8,
-      fiber: 6,
-      sodium: 650,
-    },
     tags: ['yam', 'vegetables', 'side'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -708,14 +604,6 @@ export const mockMenuItems: MenuItem[] = [
       mockCustomizations[0], // pepper level
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 250,
-      protein: 15,
-      carbs: 35,
-      fat: 6,
-      fiber: 8,
-      sodium: 580,
-    },
     tags: ['beans', 'protein', 'side'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -764,14 +652,6 @@ export const mockMenuItems: MenuItem[] = [
       },
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 120,
-      protein: 4,
-      carbs: 25,
-      fat: 2,
-      fiber: 8,
-      sodium: 320,
-    },
     tags: ['healthy', 'vegetables', 'side'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -838,14 +718,6 @@ export const mockMenuItems: MenuItem[] = [
         ],
       },
     ],
-    nutritionalInfo: {
-      calories: 480,
-      protein: 38,
-      carbs: 12,
-      fat: 32,
-      fiber: 2,
-      sodium: 650,
-    },
     tags: ['spicy', 'grilled', 'beef', 'popular'],
     relatedItemIds: ['1', '17', '20', '21'], // Smokey Jollof Rice, Chicken Wings, Puff Puff, Chin Chin
     createdAt: new Date(),
@@ -890,14 +762,6 @@ export const mockMenuItems: MenuItem[] = [
       mockCustomizations[0], // pepper level
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 420,
-      protein: 32,
-      carbs: 8,
-      fat: 28,
-      fiber: 1,
-      sodium: 780,
-    },
     tags: ['chicken', 'spicy', 'grilled'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -962,14 +826,6 @@ export const mockMenuItems: MenuItem[] = [
       },
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 320,
-      protein: 18,
-      carbs: 28,
-      fat: 16,
-      fiber: 2,
-      sodium: 520,
-    },
     tags: ['fish', 'crispy', 'pastry'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -1018,14 +874,6 @@ export const mockMenuItems: MenuItem[] = [
       },
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 380,
-      protein: 16,
-      carbs: 32,
-      fat: 22,
-      fiber: 3,
-      sodium: 680,
-    },
     tags: ['pastry', 'meat', 'traditional'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -1088,14 +936,6 @@ export const mockMenuItems: MenuItem[] = [
       },
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 240,
-      protein: 4,
-      carbs: 38,
-      fat: 8,
-      fiber: 1,
-      sodium: 180,
-    },
     tags: ['sweet', 'fried', 'snack'],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -1139,14 +979,6 @@ export const mockMenuItems: MenuItem[] = [
       },
       mockCustomizations[2], // special instructions
     ],
-    nutritionalInfo: {
-      calories: 180,
-      protein: 3,
-      carbs: 28,
-      fat: 6,
-      fiber: 1,
-      sodium: 120,
-    },
     tags: ['sweet', 'crunchy', 'snack'],
     createdAt: new Date(),
     updatedAt: new Date(),

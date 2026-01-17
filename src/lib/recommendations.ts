@@ -528,14 +528,6 @@ export function getPopularItems(
       score += 10;
     }
 
-    // Items with good nutritional balance
-    if (item.nutritionalInfo) {
-      const { protein, calories } = item.nutritionalInfo;
-      if (protein >= 25 && calories <= 700) {
-        score += 8;
-      }
-    }
-
     return { item, score };
   });
 

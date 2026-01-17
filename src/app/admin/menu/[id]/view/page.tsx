@@ -43,7 +43,6 @@ export default async function ViewMenuItemPage({
           options: true,
         },
       },
-      nutritionalInfo: true,
     },
   });
 
@@ -148,6 +147,30 @@ export default async function ViewMenuItemPage({
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Additional Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Additional Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Created</span>
+                <span className="font-medium">
+                  {new Date(menuItem.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Last Updated</span>
+                <span className="font-medium">
+                  {new Date(menuItem.updatedAt).toLocaleDateString()}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Customizations */}
           {menuItem.customizations && menuItem.customizations.length > 0 && (
@@ -198,101 +221,6 @@ export default async function ViewMenuItemPage({
               </CardContent>
             </Card>
           )}
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Nutritional Information */}
-          {menuItem.nutritionalInfo && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Nutritional Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Calories</span>
-                  <span className="font-medium">
-                    {menuItem.nutritionalInfo.calories}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Protein</span>
-                  <span className="font-medium">
-                    {menuItem.nutritionalInfo.protein}g
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Carbs</span>
-                  <span className="font-medium">
-                    {menuItem.nutritionalInfo.carbs}g
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Fat</span>
-                  <span className="font-medium">
-                    {menuItem.nutritionalInfo.fat}g
-                  </span>
-                </div>
-                {menuItem.nutritionalInfo.fiber && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Fiber</span>
-                    <span className="font-medium">
-                      {menuItem.nutritionalInfo.fiber}g
-                    </span>
-                  </div>
-                )}
-                {menuItem.nutritionalInfo.sodium && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Sodium</span>
-                    <span className="font-medium">
-                      {menuItem.nutritionalInfo.sodium}mg
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Additional Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Created</span>
-                <span className="font-medium">
-                  {new Date(menuItem.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Last Updated</span>
-                <span className="font-medium">
-                  {new Date(menuItem.updatedAt).toLocaleDateString()}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Link href={`/menu/items/${menuItem.id}`} target="_blank">
-                <Button variant="outline" className="w-full justify-start">
-                  View on Customer Site
-                </Button>
-              </Link>
-              <Button variant="outline" className="w-full justify-start">
-                Duplicate Item
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                View Order History
-              </Button>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

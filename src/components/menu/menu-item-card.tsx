@@ -101,15 +101,6 @@ export function MenuItemCard({
           {menuItem.description}
         </p>
 
-        {/* Nutritional Info Preview */}
-        {menuItem.nutritionalInfo && (
-          <div className="flex gap-4 border-t border-gray-100 pt-3 text-xs text-[#5c4a45]">
-            <span>{menuItem.nutritionalInfo.calories} cal</span>
-            <span>{menuItem.nutritionalInfo.protein}g protein</span>
-            <span>{menuItem.nutritionalInfo.carbs}g carbs</span>
-          </div>
-        )}
-
         {/* Customization Options Preview */}
         {menuItem.customizations.length > 0 && (
           <div className="text-xs text-[#5c4a45]">

@@ -64,22 +64,26 @@ model MenuCategory {
 }
 
 model MenuItem {
-  id          String     @id @default(cuid())
-  name        String
-  description String
-  basePrice   Float
-  image       String
-  status      ItemStatus @default(ACTIVE)
-  tags        String // JSON array stored as string
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id              String     @id @default(cuid())
+  name            String
+  description     String
+  basePrice       Float
+  image           String
+  status          ItemStatus @default(ACTIVE)
+  tags            String // JSON array stored as string
+  chefNotes       String?
+  preparationTime Int?
+  allergens       String[] // Array of allergen strings
+  seoTitle        String?
+  seoDescription  String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   // Relations
   categoryId String
   category   MenuCategory @relation(fields: [categoryId], references: [id])
 
   customizations Customization[]
-  nutritionalInfo NutritionalInfo?
   orderItems     OrderItem[]
   packageItems   PackageItem[]
 
@@ -116,21 +120,7 @@ model CustomizationOption {
   @@map("customization_options")
 }
 
-model NutritionalInfo {
-  id       String @id @default(cuid())
-  calories Int
-  protein  Float
-  carbs    Float
-  fat      Float
-  fiber    Float?
-  sodium   Float?
-
-  // Relations
-  menuItemId String   @unique
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
-
-  @@map("nutritional_info")
-}
+// Remove the NutritionalInfo model entirely
 
 // Package Models
 model Package {

@@ -22,27 +22,21 @@ const menuItemSchema = z.object({
     .optional(),
   tags: z.array(z.string()).default([]),
   chefNotes: z.string().optional(),
-  preparationTime: z.number().min(1).optional(),
+  preparationTime: z.number().min(0).optional(),
   allergens: z.array(z.string()).default([]),
-  nutritionalInfo: z
-    .object({
-      calories: z.number().min(0),
-      protein: z.number().min(0),
-      carbs: z.number().min(0),
-      fat: z.number().min(0),
-      fiber: z.number().min(0).optional(),
-      sodium: z.number().min(0).optional(),
-    })
-    .optional(),
+  seoTitle: z.string().optional(),
+  seoDescription: z.string().optional(),
   customizations: z
     .array(
       z.object({
+        id: z.string().optional(), // For existing customizations
         name: z.string(),
-        type: z.enum(['RADIO', 'CHECKBOX', 'TEXT']),
+        type: z.enum(['radio', 'checkbox', 'text']),
         required: z.boolean(),
         maxSelections: z.number().optional(),
         options: z.array(
           z.object({
+            id: z.string().optional(), // For existing options
             name: z.string(),
             priceModifier: z.number(),
             isAvailable: z.boolean(),
@@ -95,7 +89,6 @@ export const GET = requireAdmin(async (request: NextRequest) => {
               options: true,
             },
           },
-          nutritionalInfo: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -145,18 +138,17 @@ export const POST = requireAdmin(async (request: NextRequest) => {
         status: validatedData.status,
         image: validatedData.image || '/placeholder-food.svg',
         tags: JSON.stringify(validatedData.tags),
-        // Create nutritional info if provided
-        ...(validatedData.nutritionalInfo && {
-          nutritionalInfo: {
-            create: validatedData.nutritionalInfo,
-          },
-        }),
+        chefNotes: validatedData.chefNotes,
+        preparationTime: validatedData.preparationTime,
+        allergens: validatedData.allergens,
+        seoTitle: validatedData.seoTitle,
+        seoDescription: validatedData.seoDescription,
         // Create customizations if provided
         ...(validatedData.customizations.length > 0 && {
           customizations: {
             create: validatedData.customizations.map(custom => ({
               name: custom.name,
-              type: custom.type,
+              type: custom.type.toUpperCase() as 'RADIO' | 'CHECKBOX' | 'TEXT',
               required: custom.required,
               maxSelections: custom.maxSelections,
               options: {
@@ -173,7 +165,6 @@ export const POST = requireAdmin(async (request: NextRequest) => {
             options: true,
           },
         },
-        nutritionalInfo: true,
       },
     });
 

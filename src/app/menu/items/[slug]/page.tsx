@@ -255,7 +255,6 @@ export default async function MenuItemPage({ params }: MenuItemPageProps) {
                 price={item.basePrice}
                 description={item.description}
                 tags={item.tags}
-                nutritionalInfo={item.nutritionalInfo}
                 chefNotes={item.chefNotes}
               />
 

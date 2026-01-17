@@ -117,16 +117,6 @@ async function main() {
           },
         ],
       },
-      nutritionalInfo: {
-        create: {
-          calories: 650,
-          protein: 35,
-          carbs: 75,
-          fat: 18,
-          fiber: 4,
-          sodium: 890,
-        },
-      },
     },
   });
 
@@ -170,16 +160,6 @@ async function main() {
           },
         ],
       },
-      nutritionalInfo: {
-        create: {
-          calories: 720,
-          protein: 42,
-          carbs: 65,
-          fat: 25,
-          fiber: 8,
-          sodium: 1200,
-        },
-      },
     },
   });
 
@@ -222,16 +202,6 @@ async function main() {
           },
         ],
       },
-      nutritionalInfo: {
-        create: {
-          calories: 480,
-          protein: 38,
-          carbs: 12,
-          fat: 32,
-          fiber: 2,
-          sodium: 650,
-        },
-      },
     },
   });
 
@@ -260,16 +230,6 @@ async function main() {
             },
           },
         ],
-      },
-      nutritionalInfo: {
-        create: {
-          calories: 220,
-          protein: 2,
-          carbs: 58,
-          fat: 0.5,
-          fiber: 4,
-          sodium: 5,
-        },
       },
     },
   });
@@ -311,16 +271,6 @@ async function main() {
             },
           },
         ],
-      },
-      nutritionalInfo: {
-        create: {
-          calories: 380,
-          protein: 45,
-          carbs: 8,
-          fat: 18,
-          fiber: 2,
-          sodium: 980,
-        },
       },
     },
   });

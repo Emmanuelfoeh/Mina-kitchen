@@ -18,16 +18,37 @@ export default async function EditMenuItemPage({
   const { id } = await params;
 
   // Fetch the menu item from database
-  const menuItem = await db.menuItem.findUnique({
+  const rawMenuItem = await db.menuItem.findUnique({
     where: { id },
     include: {
       category: true,
+      customizations: {
+        include: {
+          options: true,
+        },
+      },
     },
   });
 
-  if (!menuItem) {
+  if (!rawMenuItem) {
     notFound();
   }
+
+  // Transform the data to match the form interface
+  const menuItem = {
+    ...rawMenuItem,
+    tags: rawMenuItem.tags ? JSON.parse(rawMenuItem.tags) : [],
+    allergens: rawMenuItem.allergens || [],
+    preparationTime: rawMenuItem.preparationTime || undefined,
+    chefNotes: rawMenuItem.chefNotes || undefined,
+    seoTitle: rawMenuItem.seoTitle || undefined,
+    seoDescription: rawMenuItem.seoDescription || undefined,
+    customizations: rawMenuItem.customizations.map(customization => ({
+      ...customization,
+      type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
+      maxSelections: customization.maxSelections || undefined,
+    })),
+  };
 
   return (
     <div className="space-y-6">
