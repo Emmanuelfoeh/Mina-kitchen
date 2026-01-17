@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { jwtVerify } from 'jose';
 import { SecurityHeaders, RateLimiter } from '@/lib/security';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
+console.log('Middleware JWT_SECRET check:', {
+  hasEnvVar: !!process.env.JWT_SECRET,
+  secretLength: JWT_SECRET.length,
+  secretPreview: JWT_SECRET.substring(0, 10) + '...',
+});
+
 /**
  * Middleware to handle URL redirects, validation, security headers, and admin authentication
  */
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip middleware for static files and API routes (except admin API)
@@ -54,8 +60,8 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Handle admin route protection - TEMPORARILY DISABLED FOR TESTING
-  if (false && pathname.startsWith('/admin')) {
+  // Handle admin route protection
+  if (pathname.startsWith('/admin')) {
     // Allow access to admin login page
     if (pathname === '/admin/login') {
       return NextResponse.next();
@@ -67,7 +73,8 @@ export function middleware(request: NextRequest) {
     console.log('Admin route access attempt:', {
       pathname,
       hasToken: !!authToken,
-      token: authToken ? 'present' : 'missing',
+      tokenPreview: authToken ? authToken.substring(0, 20) + '...' : 'missing',
+      cookieCount: request.cookies.size,
     });
 
     if (!authToken) {
@@ -79,15 +86,21 @@ export function middleware(request: NextRequest) {
     }
 
     try {
-      const decoded = jwt.verify(authToken!, JWT_SECRET) as any;
+      const secret = new TextEncoder().encode(JWT_SECRET);
+      const { payload } = await jwtVerify(authToken!, secret);
+
       console.log('Token decoded successfully:', {
-        role: decoded.role,
-        userId: decoded.userId,
-        email: decoded.email,
+        fullDecoded: payload,
+        role: payload.role,
+        userId: payload.userId,
+        email: payload.email,
       });
 
-      if (decoded.role !== 'ADMIN') {
-        console.log('User is not admin, redirecting to login');
+      if (payload.role !== 'ADMIN') {
+        console.log(
+          'User is not admin, redirecting to login. Role found:',
+          payload.role
+        );
         const url = request.nextUrl.clone();
         url.pathname = '/auth/login';
         url.searchParams.set('redirect', pathname);
@@ -119,8 +132,9 @@ export function middleware(request: NextRequest) {
     }
 
     try {
-      const decoded = jwt.verify(authToken, JWT_SECRET) as { role: string };
-      if (decoded.role !== 'ADMIN') {
+      const secret = new TextEncoder().encode(JWT_SECRET);
+      const { payload } = await jwtVerify(authToken, secret);
+      if (payload.role !== 'ADMIN') {
         return Response.json(
           { error: 'Admin access required' },
           { status: 403 }

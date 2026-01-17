@@ -9,7 +9,17 @@ const menuItemSchema = z.object({
   basePrice: z.number().min(0, 'Price must be positive'),
   categoryId: z.string().min(1, 'Category is required'),
   status: z.enum(['ACTIVE', 'INACTIVE', 'SOLD_OUT', 'LOW_STOCK']),
-  image: z.string().url('Invalid image URL').optional().or(z.literal('')),
+  image: z
+    .string()
+    .refine(
+      val => {
+        if (!val || val === '') return true; // Allow empty string
+        // Allow full URLs or relative paths starting with /
+        return val.startsWith('http') || val.startsWith('/');
+      },
+      { message: 'Invalid image URL or path' }
+    )
+    .optional(),
   tags: z.array(z.string()).default([]),
   chefNotes: z.string().optional(),
   preparationTime: z.number().min(1).optional(),

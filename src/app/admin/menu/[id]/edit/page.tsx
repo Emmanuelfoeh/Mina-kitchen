@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MenuItemForm } from '@/components/admin/menu/menu-item-form';
-import { mockMenuItems } from '@/lib/mock-data';
+import { db } from '@/lib/db';
 import Link from 'next/link';
 
 interface EditMenuItemPageProps {
@@ -15,11 +15,15 @@ interface EditMenuItemPageProps {
 export default async function EditMenuItemPage({
   params,
 }: EditMenuItemPageProps) {
-  // Await params in Next.js 15+
   const { id } = await params;
 
-  // Find the menu item by ID
-  const menuItem = mockMenuItems.find(item => item.id === id);
+  // Fetch the menu item from database
+  const menuItem = await db.menuItem.findUnique({
+    where: { id },
+    include: {
+      category: true,
+    },
+  });
 
   if (!menuItem) {
     notFound();

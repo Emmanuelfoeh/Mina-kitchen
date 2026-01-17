@@ -1,11 +1,21 @@
-import { Suspense } from 'react';
-import { ArrowLeft, Plus, GripVertical } from 'lucide-react';
+'use client';
+
+import { Suspense, useState, useCallback } from 'react';
+import { ArrowLeft, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CategoriesManager } from '@/components/admin/menu/categories-manager';
+import { AddCategoryModal } from '@/components/admin/menu/add-category-modal';
 import Link from 'next/link';
 
 export default function CategoriesPage() {
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleCategoryAdded = useCallback(() => {
+    // Force refresh of the categories list
+    setRefreshKey(prev => prev + 1);
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -26,10 +36,7 @@ export default function CategoriesPage() {
             </p>
           </div>
         </div>
-        <Button className="gap-2 bg-[#f97316] text-white hover:bg-[#ea580c]">
-          <Plus className="h-4 w-4" />
-          Add Category
-        </Button>
+        <AddCategoryModal onCategoryAdded={handleCategoryAdded} />
       </div>
 
       {/* Categories Manager */}
@@ -46,7 +53,7 @@ export default function CategoriesPage() {
         </CardHeader>
         <CardContent>
           <Suspense fallback={<div>Loading categories...</div>}>
-            <CategoriesManager />
+            <CategoriesManager key={refreshKey} />
           </Suspense>
         </CardContent>
       </Card>

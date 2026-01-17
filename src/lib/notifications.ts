@@ -143,7 +143,7 @@ export class NotificationService {
         <body>
           <div class="container">
             <div class="header">
-              <h1>AfriEats Kitchen</h1>
+              <h1>Mina’s Kitchen</h1>
               <p>Authentic African Cuisine</p>
             </div>
             
@@ -163,11 +163,11 @@ export class NotificationService {
               
               <p>If you have any questions about your order, please don't hesitate to contact us.</p>
               
-              <p>Thank you for choosing AfriEats Kitchen!</p>
+              <p>Thank you for choosing Mina’s Kitchen!</p>
             </div>
             
             <div class="footer">
-              <p>AfriEats Kitchen | Authentic African Cuisine</p>
+              <p> Mina’s Kitchen | Authentic African Cuisine</p>
               <p>Contact us: info@afrieats.com | (555) 123-4567</p>
             </div>
           </div>
@@ -178,7 +178,7 @@ export class NotificationService {
     return {
       subject: statusInfo.subject,
       html,
-      text: `${statusInfo.title}\n\nHello ${data.customerName},\n\n${statusInfo.message}\n\nOrder Number: ${data.orderNumber}\nStatus: ${data.status.replace('_', ' ')}\n\nWhat's Next: ${statusInfo.nextStep}\n\nThank you for choosing AfriEats Kitchen!`,
+      text: `${statusInfo.title}\n\nHello ${data.customerName},\n\n${statusInfo.message}\n\nOrder Number: ${data.orderNumber}\nStatus: ${data.status.replace('_', ' ')}\n\nWhat's Next: ${statusInfo.nextStep}\n\nThank you for choosing Mina Kitchen!`,
     };
   }
 
@@ -324,11 +324,11 @@ export class NotificationService {
                 ${order.deliveryType === 'DELIVERY' ? "<li>We'll deliver to your specified address</li>" : "<li>We'll notify you when it's ready for pickup</li>"}
               </ul>
               
-              <p>Thank you for choosing AfriEats Kitchen for your authentic African cuisine experience!</p>
+              <p>Thank you for choosing Mina’s Kitchen for your authentic African cuisine experience!</p>
             </div>
             
             <div class="footer">
-              <p>AfriEats Kitchen | Authentic African Cuisine</p>
+              <p>Mina’s Kitchen | Authentic African Cuisine</p>
               <p>Contact us: info@afrieats.com | (555) 123-4567</p>
             </div>
           </div>
@@ -339,7 +339,7 @@ export class NotificationService {
     return {
       subject: `Order Confirmation - ${order.orderNumber}`,
       html,
-      text: `Order Confirmation - ${order.orderNumber}\n\nHello ${order.customer.name}!\n\nWe've received your order: ${itemsList}\n\nOrder Number: ${order.orderNumber}\nTotal: $${order.total.toFixed(2)}\n\nThank you for choosing AfriEats Kitchen!`,
+      text: `Order Confirmation - ${order.orderNumber}\n\nHello ${order.customer.name}!\n\nWe've received your order: ${itemsList}\n\nOrder Number: ${order.orderNumber}\nTotal: $${order.total.toFixed(2)}\n\nThank you for choosing Mina’s Kitchen!`,
     };
   }
 }

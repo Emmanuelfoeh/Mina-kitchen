@@ -73,7 +73,7 @@ export function AdminSidebar({ className }: { className?: string }) {
             AE
           </div>
           <div>
-            <h1 className="text-lg leading-none font-bold">AfriEats</h1>
+            <h1 className="text-lg leading-none font-bold">Mina’s Kitchen</h1>
             <span className="text-muted-foreground text-xs">Admin Panel</span>
           </div>
         </div>
@@ -106,15 +106,6 @@ export function AdminSidebar({ className }: { className?: string }) {
       </div>
 
       <div className="mt-auto space-y-2 border-t border-gray-100 p-6">
-        <Link
-          href="/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex w-full items-center gap-3 rounded-lg border border-[#f2330d]/20 bg-[#f2330d]/5 px-4 py-3 text-sm font-medium text-[#f2330d] transition-colors hover:border-[#f2330d]/30 hover:bg-[#f2330d]/10"
-        >
-          <ExternalLink className="h-5 w-5" />
-          View Store
-        </Link>
         <button
           onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"

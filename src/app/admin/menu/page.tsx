@@ -1,23 +1,10 @@
-import { Suspense } from 'react';
-import {
-  Plus,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Eye,
-} from 'lucide-react';
+'use client';
+
+import { Suspense, useState, useEffect } from 'react';
+import { Plus, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -26,11 +13,41 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { MenuItemsTable } from '@/components/admin/menu/menu-items-table';
-import { MenuItemsGrid } from '@/components/admin/menu/menu-items-grid';
 import { MenuStats } from '@/components/admin/menu/menu-stats';
+import { useDebounce } from '@/hooks/use-debounce';
 import Link from 'next/link';
 
+interface MenuCategory {
+  id: string;
+  name: string;
+}
+
 export default function MenuManagementPage() {
+  const [searchInput, setSearchInput] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [categories, setCategories] = useState<MenuCategory[]>([]);
+
+  // Debounce search input to avoid too many API calls
+  const debouncedSearchTerm = useDebounce(searchInput, 300);
+
+  useEffect(() => {
+    // Fetch categories for the filter dropdown
+    async function fetchCategories() {
+      try {
+        const response = await fetch('/api/admin/menu/categories');
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    }
+
+    fetchCategories();
+  }, []);
+
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -71,37 +88,47 @@ export default function MenuManagementPage() {
           <div className="mb-6 flex flex-col gap-4 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-              <Input placeholder="Search menu items..." className="pl-10" />
+              <Input
+                placeholder="Search menu items..."
+                className="pl-10"
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+              />
             </div>
-            <Select defaultValue="all">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="main-dishes">Main Dishes</SelectItem>
-                <SelectItem value="soups">Soups</SelectItem>
-                <SelectItem value="sides">Sides</SelectItem>
-                <SelectItem value="starters">Starters</SelectItem>
+                {categories.map(category => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Select defaultValue="all">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="sold_out">Sold Out</SelectItem>
-                <SelectItem value="low_stock">Low Stock</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="INACTIVE">Inactive</SelectItem>
+                <SelectItem value="SOLD_OUT">Sold Out</SelectItem>
+                <SelectItem value="LOW_STOCK">Low Stock</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Menu Items Display */}
           <Suspense fallback={<div>Loading menu items...</div>}>
-            <MenuItemsTable />
+            <MenuItemsTable
+              searchTerm={debouncedSearchTerm}
+              categoryFilter={categoryFilter}
+              statusFilter={statusFilter}
+            />
           </Suspense>
         </CardContent>
       </Card>

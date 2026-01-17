@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import { jwtVerify } from 'jose';
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 
@@ -24,12 +24,13 @@ export async function getAuthUser(
       return null;
     }
 
-    // Verify token
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    // Verify token using jose (Edge Runtime compatible)
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    const { payload } = await jwtVerify(token, secret);
 
     // Get user from database
     const user = await db.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: payload.userId as string },
       select: {
         id: true,
         email: true,

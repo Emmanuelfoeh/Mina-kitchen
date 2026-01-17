@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { mockMenuItems } from '@/lib/mock-data';
+import { DeleteMenuItemButton } from '@/components/admin/menu/delete-menu-item-button';
 import Link from 'next/link';
 import Image from 'next/image';
+import { db } from '@/lib/db';
 
 interface ViewMenuItemPageProps {
   params: Promise<{
@@ -14,31 +15,44 @@ interface ViewMenuItemPageProps {
 }
 
 const statusColors = {
-  active: 'bg-green-100 text-green-800',
-  inactive: 'bg-gray-100 text-gray-800',
-  sold_out: 'bg-red-100 text-red-800',
-  low_stock: 'bg-yellow-100 text-yellow-800',
+  ACTIVE: 'bg-green-100 text-green-800 border-green-200',
+  INACTIVE: 'bg-gray-100 text-gray-800 border-gray-200',
+  SOLD_OUT: 'bg-red-100 text-red-800 border-red-200',
+  LOW_STOCK: 'bg-yellow-100 text-yellow-800 border-yellow-200',
 };
 
 const statusLabels = {
-  active: 'Active',
-  inactive: 'Inactive',
-  sold_out: 'Sold Out',
-  low_stock: 'Low Stock',
+  ACTIVE: 'Active',
+  INACTIVE: 'Inactive',
+  SOLD_OUT: 'Sold Out',
+  LOW_STOCK: 'Low Stock',
 };
 
 export default async function ViewMenuItemPage({
   params,
 }: ViewMenuItemPageProps) {
-  // Await params in Next.js 15+
   const { id } = await params;
 
-  // Find the menu item by ID
-  const menuItem = mockMenuItems.find(item => item.id === id);
+  // Fetch the menu item from database
+  const menuItem = await db.menuItem.findUnique({
+    where: { id },
+    include: {
+      category: true,
+      customizations: {
+        include: {
+          options: true,
+        },
+      },
+      nutritionalInfo: true,
+    },
+  });
 
   if (!menuItem) {
     notFound();
   }
+
+  // Parse tags from JSON string
+  const tags = JSON.parse(menuItem.tags || '[]');
 
   return (
     <div className="space-y-6">
@@ -65,13 +79,7 @@ export default async function ViewMenuItemPage({
               Edit Item
             </Button>
           </Link>
-          <Button
-            variant="outline"
-            className="gap-2 text-red-600 hover:text-red-700"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </Button>
+          <DeleteMenuItemButton itemId={menuItem.id} itemName={menuItem.name} />
         </div>
       </div>
 
@@ -115,8 +123,8 @@ export default async function ViewMenuItemPage({
                 <div>
                   <p className="text-sm font-medium text-gray-500">Status</p>
                   <Badge
-                    className={`mt-1 ${statusColors[menuItem.status]}`}
-                    variant="secondary"
+                    className={statusColors[menuItem.status]}
+                    variant="outline"
                   >
                     {statusLabels[menuItem.status]}
                   </Badge>
@@ -128,38 +136,16 @@ export default async function ViewMenuItemPage({
                 <p className="mt-1 text-gray-700">{menuItem.description}</p>
               </div>
 
-              {menuItem.chefNotes && (
-                <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Chef's Notes
-                  </p>
-                  <p className="mt-1 text-gray-700">{menuItem.chefNotes}</p>
-                </div>
-              )}
-
               <div>
                 <p className="text-sm font-medium text-gray-500">Tags</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {menuItem.tags.map(tag => (
+                  {tags.map((tag: string) => (
                     <Badge key={tag} variant="secondary">
                       {tag}
                     </Badge>
                   ))}
                 </div>
               </div>
-
-              {menuItem.allergens && menuItem.allergens.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Allergens</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {menuItem.allergens.map(allergen => (
-                      <Badge key={allergen} variant="destructive">
-                        {allergen}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -170,7 +156,7 @@ export default async function ViewMenuItemPage({
                 <CardTitle>Customizations</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {menuItem.customizations.map((customization, index) => (
+                {menuItem.customizations.map(customization => (
                   <div key={customization.id} className="rounded-lg border p-4">
                     <div className="mb-3 flex items-center justify-between">
                       <h4 className="font-medium">{customization.name}</h4>
@@ -273,14 +259,6 @@ export default async function ViewMenuItemPage({
               <CardTitle>Additional Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {menuItem.preparationTime && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Prep Time</span>
-                  <span className="font-medium">
-                    {menuItem.preparationTime} min
-                  </span>
-                </div>
-              )}
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Created</span>
                 <span className="font-medium">
@@ -302,10 +280,7 @@ export default async function ViewMenuItemPage({
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Link
-                href={`/menu/items/${menuItem.slug || menuItem.id}`}
-                target="_blank"
-              >
+              <Link href={`/menu/items/${menuItem.id}`} target="_blank">
                 <Button variant="outline" className="w-full justify-start">
                   View on Customer Site
                 </Button>

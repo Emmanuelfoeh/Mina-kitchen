@@ -1,322 +1,209 @@
 'use client';
 
-import { useState } from 'react';
-import { GripVertical, Edit, Trash2, Plus, Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { mockCategories } from '@/lib/mock-data';
-import type { MenuCategory } from '@/types';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { EditCategoryModal } from './edit-category-modal';
 
-export function CategoriesManager() {
-  const [categories, setCategories] = useState<MenuCategory[]>(
-    [...mockCategories].sort((a, b) => a.displayOrder - b.displayOrder)
-  );
-  const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(
-    null
-  );
-  const [isAddingNew, setIsAddingNew] = useState(false);
-  const [draggedItem, setDraggedItem] = useState<number | null>(null);
-
-  // Form state for new/edit category
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    isActive: true,
-  });
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      isActive: true,
-    });
-    setEditingCategory(null);
-    setIsAddingNew(false);
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+  displayOrder: number;
+  isActive: boolean;
+  _count: {
+    menuItems: number;
   };
+}
 
-  const handleEdit = (category: MenuCategory) => {
-    setEditingCategory(category);
-    setFormData({
-      name: category.name,
-      description: category.description,
-      isActive: category.isActive,
-    });
-    setIsAddingNew(false);
-  };
+interface CategoriesManagerProps {
+  key?: number;
+}
 
-  const handleAddNew = () => {
-    resetForm();
-    setIsAddingNew(true);
-  };
+export function CategoriesManager({ key }: CategoriesManagerProps) {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
-  const handleSave = () => {
-    if (!formData.name.trim()) return;
+  useEffect(() => {
+    fetchCategories();
+  }, [key]);
 
-    if (editingCategory) {
-      // Update existing category
-      setCategories(prev =>
-        prev.map(cat =>
-          cat.id === editingCategory.id ? { ...cat, ...formData } : cat
-        )
+  async function fetchCategories() {
+    try {
+      const response = await fetch(
+        '/api/admin/menu/categories?includeInactive=true'
       );
-    } else {
-      // Add new category
-      const newCategory: MenuCategory = {
-        id: `cat-${Date.now()}`,
-        name: formData.name,
-        description: formData.description,
-        displayOrder: categories.length + 1,
-        isActive: formData.isActive,
-      };
-      setCategories(prev => [...prev, newCategory]);
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    resetForm();
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setEditModalOpen(true);
   };
 
-  const handleDelete = (categoryId: string) => {
-    if (
-      confirm(
-        'Are you sure you want to delete this category? This action cannot be undone.'
-      )
-    ) {
-      setCategories(prev => prev.filter(cat => cat.id !== categoryId));
-    }
-  };
-
-  const handleToggleActive = (categoryId: string) => {
-    setCategories(prev =>
-      prev.map(cat =>
-        cat.id === categoryId ? { ...cat, isActive: !cat.isActive } : cat
-      )
-    );
-  };
-
-  // Drag and drop handlers
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedItem(index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-
-    if (draggedItem === null || draggedItem === dropIndex) {
-      setDraggedItem(null);
+  const handleDeleteCategory = async (category: Category) => {
+    if (category._count.menuItems > 0) {
+      alert(
+        `Cannot delete "${category.name}" because it has ${category._count.menuItems} menu item(s). Please move or delete the menu items first.`
+      );
       return;
     }
 
-    const newCategories = [...categories];
-    const draggedCategory = newCategories[draggedItem];
+    const confirmed = confirm(
+      `Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`
+    );
 
-    // Remove dragged item
-    newCategories.splice(draggedItem, 1);
+    if (!confirmed) return;
 
-    // Insert at new position
-    newCategories.splice(dropIndex, 0, draggedCategory);
+    try {
+      const response = await fetch(
+        `/api/admin/menu/categories/${category.id}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
-    // Update display orders
-    const updatedCategories = newCategories.map((cat, index) => ({
-      ...cat,
-      displayOrder: index + 1,
-    }));
+      const result = await response.json();
 
-    setCategories(updatedCategories);
-    setDraggedItem(null);
+      if (response.ok && result.success) {
+        // Refresh categories list
+        fetchCategories();
+      } else {
+        throw new Error(result.error || 'Failed to delete category');
+      }
+    } catch (error) {
+      console.error('Delete category error:', error);
+      alert(
+        error instanceof Error ? error.message : 'Failed to delete category'
+      );
+    }
   };
 
-  const handleDragEnd = () => {
-    setDraggedItem(null);
+  const handleCategoryUpdated = () => {
+    fetchCategories();
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex animate-pulse items-center gap-4 p-4">
+            <div className="h-4 w-4 rounded bg-gray-200"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-32 rounded bg-gray-200"></div>
+              <div className="h-3 w-48 rounded bg-gray-200"></div>
+            </div>
+            <div className="h-6 w-16 rounded-full bg-gray-200"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex animate-pulse items-center gap-4 p-4">
+            <div className="h-4 w-4 rounded bg-gray-200"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-32 rounded bg-gray-200"></div>
+              <div className="h-3 w-48 rounded bg-gray-200"></div>
+            </div>
+            <div className="h-6 w-16 rounded-full bg-gray-200"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      {/* Add New Category Button */}
-      <div className="flex justify-end">
-        <Dialog
-          open={isAddingNew || !!editingCategory}
-          onOpenChange={open => !open && resetForm()}
-        >
-          <DialogTrigger asChild>
-            <Button onClick={handleAddNew} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Category
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingCategory ? 'Edit Category' : 'Add New Category'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="categoryName">Category Name</Label>
-                <Input
-                  id="categoryName"
-                  value={formData.name}
-                  onChange={e =>
-                    setFormData(prev => ({ ...prev, name: e.target.value }))
-                  }
-                  placeholder="e.g., Main Dishes"
-                />
-              </div>
-              <div>
-                <Label htmlFor="categoryDescription">Description</Label>
-                <Textarea
-                  id="categoryDescription"
-                  value={formData.description}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  placeholder="Brief description of this category..."
-                  rows={3}
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="categoryActive"
-                  checked={formData.isActive}
-                  onChange={e =>
-                    setFormData(prev => ({
-                      ...prev,
-                      isActive: e.target.checked,
-                    }))
-                  }
-                />
-                <Label htmlFor="categoryActive">
-                  Active (visible to customers)
-                </Label>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button
-                  onClick={handleSave}
-                  className="bg-[#f97316] hover:bg-[#ea580c]"
-                >
-                  {editingCategory ? 'Update' : 'Create'} Category
-                </Button>
-                <Button variant="outline" onClick={resetForm}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Categories List */}
+    <>
       <div className="space-y-2">
-        {categories.map((category, index) => (
-          <Card
-            key={category.id}
-            className={`transition-all duration-200 ${
-              draggedItem === index ? 'scale-95 opacity-50' : 'hover:shadow-md'
-            }`}
-            draggable
-            onDragStart={e => handleDragStart(e, index)}
-            onDragOver={handleDragOver}
-            onDrop={e => handleDrop(e, index)}
-            onDragEnd={handleDragEnd}
-          >
-            <CardContent className="p-4">
+        {categories.length > 0 ? (
+          categories.map(category => (
+            <div
+              key={category.id}
+              className="flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50"
+            >
               <div className="flex items-center gap-4">
-                {/* Drag Handle */}
-                <div className="cursor-grab active:cursor-grabbing">
-                  <GripVertical className="h-5 w-5 text-gray-400" />
+                <div className="flex h-8 w-8 items-center justify-center rounded bg-gray-100 text-sm font-medium text-gray-600">
+                  {category.displayOrder}
                 </div>
-
-                {/* Category Info */}
-                <div className="flex-1">
-                  <div className="mb-1 flex items-center gap-2">
-                    <h3 className="font-semibold">{category.name}</h3>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium">{category.name}</h3>
                     <Badge
                       variant={category.isActive ? 'default' : 'secondary'}
                     >
                       {category.isActive ? 'Active' : 'Inactive'}
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      Order: {category.displayOrder}
-                    </Badge>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-500">
                     {category.description}
                   </p>
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleToggleActive(category.id)}
-                    className="gap-1"
-                  >
-                    {category.isActive ? (
-                      <>
-                        <EyeOff className="h-4 w-4" />
-                        Hide
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="h-4 w-4" />
-                        Show
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(category)}
-                    className="gap-1"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(category.id)}
-                    className="gap-1 text-red-600 hover:text-red-800"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </Button>
-                </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs">
+                  {category._count.menuItems} items
+                </Badge>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => handleEditCategory(category)}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Category
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => handleDeleteCategory(category)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Category
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="py-8 text-center text-gray-500">
+            No categories found. Create your first category to get started.
+          </div>
+        )}
       </div>
 
-      {categories.length === 0 && (
-        <div className="py-12 text-center">
-          <p className="mb-4 text-gray-500">No categories yet</p>
-          <Button onClick={handleAddNew} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Your First Category
-          </Button>
-        </div>
-      )}
-    </div>
+      {/* Edit Category Modal */}
+      <EditCategoryModal
+        category={editingCategory}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        onCategoryUpdated={handleCategoryUpdated}
+      />
+    </>
   );
 }

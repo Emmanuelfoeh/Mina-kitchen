@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { SignJWT } from 'jose';
 import { db } from '@/lib/db';
 import { SecurityMiddleware, SecurityHeaders } from '@/lib/security';
 import { z } from 'zod';
@@ -117,17 +117,17 @@ export async function POST(request: NextRequest) {
     // Clear failed attempts on successful login
     failedAttempts.delete(clientId);
 
-    // Generate JWT token with shorter expiry for security
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-        iat: Math.floor(Date.now() / 1000),
-      },
-      JWT_SECRET,
-      { expiresIn: '24h' } // Reduced from 7 days for better security
-    );
+    // Generate JWT token with shorter expiry for security using jose
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    const token = await new SignJWT({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('24h') // 24 hours
+      .sign(secret);
 
     // Remove sensitive data from response
     const { passwordHash, ...userResponse } = user;
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict', // Changed to strict for better CSRF protection
+      sameSite: 'lax', // Changed to lax for better compatibility with redirects
       maxAge: 24 * 60 * 60, // 24 hours
       path: '/',
     });

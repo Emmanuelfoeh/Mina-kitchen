@@ -1,19 +1,31 @@
 'use client';
 
-import { Search, Bell, ExternalLink } from 'lucide-react';
+import { Search, Bell, ExternalLink, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-
-// Mock user for now
-const user = {
-  name: 'Fatima K.',
-  role: 'Manager',
-  image:
-    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80',
-};
+import { useUserStore } from '@/stores/user-store';
+import { useEffect } from 'react';
 
 export function AdminHeader() {
+  const { user, isAuthenticated, initializeAuth } = useUserStore();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      initializeAuth();
+    }
+  }, [isAuthenticated, initializeAuth]);
+
+  // Get user initials for avatar fallback
+  const getUserInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <header className="sticky top-0 z-10 flex w-full items-center justify-between border-b border-gray-100 bg-white px-8 py-4">
       <div className="w-96">
@@ -28,7 +40,7 @@ export function AdminHeader() {
 
       <div className="flex items-center gap-6">
         {/* View Store Button */}
-        <Link href="/" target="_blank" rel="noopener noreferrer">
+        <Link href="/" >
           <Button
             variant="outline"
             size="sm"
@@ -45,21 +57,35 @@ export function AdminHeader() {
         </button>
 
         <div className="flex items-center gap-3 border-l border-gray-100 pl-6">
-          <div className="hidden text-right sm:block">
-            <p className="text-sm leading-none font-bold text-gray-900">
-              {user.name}
-            </p>
-            <p className="mt-1 text-xs font-medium text-gray-500">
-              {user.role}
-            </p>
-          </div>
-          <div className="h-10 w-10 overflow-hidden rounded-full border border-gray-200">
-            <img
-              src={user.image}
-              alt={user.name}
-              className="h-full w-full object-cover"
-            />
-          </div>
+          {user ? (
+            <>
+              <div className="hidden text-right sm:block">
+                <p className="text-sm leading-none font-bold text-gray-900">
+                  {user.name}
+                </p>
+                <p className="mt-1 text-xs font-medium text-gray-500">
+                  {user.role === 'ADMIN' ? 'Administrator' : 'Manager'}
+                </p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-orange-100">
+                <span className="text-sm font-semibold text-orange-600">
+                  {getUserInitials(user.name)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="hidden text-right sm:block">
+                <p className="text-sm leading-none font-bold text-gray-900">
+                  Loading...
+                </p>
+                <p className="mt-1 text-xs font-medium text-gray-500">Admin</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100">
+                <User className="h-5 w-5 text-gray-400" />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>

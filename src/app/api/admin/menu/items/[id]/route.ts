@@ -9,7 +9,17 @@ const menuItemSchema = z.object({
   basePrice: z.number().min(0, 'Price must be positive').optional(),
   categoryId: z.string().min(1, 'Category is required').optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'SOLD_OUT', 'LOW_STOCK']).optional(),
-  image: z.string().url('Invalid image URL').optional().or(z.literal('')),
+  image: z
+    .string()
+    .refine(
+      val => {
+        if (!val || val === '') return true; // Allow empty string
+        // Allow full URLs or relative paths starting with /
+        return val.startsWith('http') || val.startsWith('/');
+      },
+      { message: 'Invalid image URL or path' }
+    )
+    .optional(),
   tags: z.array(z.string()).optional(),
 });
 
@@ -18,9 +28,16 @@ export const GET = requireAdmin(
   async (
     request: NextRequest,
     authUser,
-    context: { params: Promise<{ id: string }> }
+    context?: { params: Promise<{ id: string }> }
   ) => {
     try {
+      if (!context?.params) {
+        return NextResponse.json(
+          { error: 'Menu item ID is required' },
+          { status: 400 }
+        );
+      }
+
       const { id } = await context.params;
 
       const menuItem = await db.menuItem.findUnique({
@@ -62,9 +79,16 @@ export const PATCH = requireAdmin(
   async (
     request: NextRequest,
     authUser,
-    context: { params: Promise<{ id: string }> }
+    context?: { params: Promise<{ id: string }> }
   ) => {
     try {
+      if (!context?.params) {
+        return NextResponse.json(
+          { error: 'Menu item ID is required' },
+          { status: 400 }
+        );
+      }
+
       const { id } = await context.params;
       const body = await request.json();
       const validatedData = menuItemSchema.parse(body);
@@ -144,9 +168,16 @@ export const DELETE = requireAdmin(
   async (
     request: NextRequest,
     authUser,
-    context: { params: Promise<{ id: string }> }
+    context?: { params: Promise<{ id: string }> }
   ) => {
     try {
+      if (!context?.params) {
+        return NextResponse.json(
+          { error: 'Menu item ID is required' },
+          { status: 400 }
+        );
+      }
+
       const { id } = await context.params;
 
       // Check if menu item exists

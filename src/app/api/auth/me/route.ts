@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { jwtVerify } from 'jose';
 import { db } from '@/lib/db';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -18,12 +18,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify token
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    // Verify token using jose (Edge Runtime compatible)
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    const { payload } = await jwtVerify(token, secret);
 
     // Get user from database
     const user = await db.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: payload.userId as string },
       include: {
         addresses: true,
       },
@@ -41,14 +42,7 @@ export async function GET(request: NextRequest) {
       data: userResponse,
     });
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
     console.error('Get user error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 }
