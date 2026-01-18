@@ -81,12 +81,31 @@ export function OrderTimeline({ orderId, currentStatus }: OrderTimelineProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // For now, we'll generate a mock timeline based on the current status
-    // In a real app, this would fetch actual timeline events from the API
-    generateMockTimeline();
-  }, [currentStatus]);
+    fetchOrderTimeline();
+  }, [orderId, currentStatus]);
 
-  function generateMockTimeline() {
+  async function fetchOrderTimeline() {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/admin/orders/${orderId}/timeline`);
+
+      if (response.ok) {
+        const result = await response.json();
+        setTimeline(result.data || []);
+      } else {
+        // If timeline API doesn't exist yet, generate basic timeline from current status
+        generateBasicTimeline();
+      }
+    } catch (error) {
+      console.error('Failed to fetch order timeline:', error);
+      // Fallback to basic timeline generation
+      generateBasicTimeline();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function generateBasicTimeline() {
     const now = new Date();
     const events: TimelineEvent[] = [];
 
@@ -94,85 +113,25 @@ export function OrderTimeline({ orderId, currentStatus }: OrderTimelineProps) {
     events.push({
       id: '1',
       status: 'PENDING',
-      timestamp: new Date(now.getTime() - 60 * 60 * 1000).toISOString(), // 1 hour ago
+      timestamp: new Date(now.getTime() - 60 * 60 * 1000).toISOString(),
       description: 'Order placed by customer',
       actor: 'Customer',
     });
 
-    // Add events based on current status
-    const statusOrder = [
-      'PENDING',
-      'CONFIRMED',
-      'PREPARING',
-      'READY',
-      'OUT_FOR_DELIVERY',
-      'DELIVERED',
-    ];
-    const currentIndex = statusOrder.indexOf(currentStatus);
-
-    if (currentIndex >= 1) {
+    // Add current status if different from PENDING
+    if (currentStatus !== 'PENDING') {
       events.push({
         id: '2',
-        status: 'CONFIRMED',
-        timestamp: new Date(now.getTime() - 45 * 60 * 1000).toISOString(), // 45 min ago
-        description: 'Order confirmed by restaurant',
-        actor: 'Admin',
-      });
-    }
-
-    if (currentIndex >= 2) {
-      events.push({
-        id: '3',
-        status: 'PREPARING',
-        timestamp: new Date(now.getTime() - 30 * 60 * 1000).toISOString(), // 30 min ago
-        description: 'Kitchen started preparing order',
-        actor: 'Kitchen Staff',
-      });
-    }
-
-    if (currentIndex >= 3) {
-      events.push({
-        id: '4',
-        status: 'READY',
-        timestamp: new Date(now.getTime() - 15 * 60 * 1000).toISOString(), // 15 min ago
-        description: 'Order is ready for pickup/delivery',
-        actor: 'Kitchen Staff',
-      });
-    }
-
-    if (currentIndex >= 4) {
-      events.push({
-        id: '5',
-        status: 'OUT_FOR_DELIVERY',
-        timestamp: new Date(now.getTime() - 10 * 60 * 1000).toISOString(), // 10 min ago
-        description: 'Order dispatched for delivery',
-        actor: 'Delivery Driver',
-      });
-    }
-
-    if (currentIndex >= 5) {
-      events.push({
-        id: '6',
-        status: 'DELIVERED',
-        timestamp: now.toISOString(),
-        description: 'Order delivered successfully',
-        actor: 'Delivery Driver',
-      });
-    }
-
-    // Handle cancelled status
-    if (currentStatus === 'CANCELLED') {
-      events.push({
-        id: 'cancelled',
-        status: 'CANCELLED',
-        timestamp: new Date(now.getTime() - 20 * 60 * 1000).toISOString(), // 20 min ago
-        description: 'Order was cancelled',
+        status: currentStatus,
+        timestamp: new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
+        description:
+          statusConfig[currentStatus as keyof typeof statusConfig]
+            ?.description || 'Status updated',
         actor: 'Admin',
       });
     }
 
     setTimeline(events);
-    setLoading(false);
   }
 
   const formatTime = (timestamp: string) => {

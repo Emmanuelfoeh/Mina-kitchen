@@ -15,9 +15,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserProfileDetails } from '@/components/admin/users/user-profile-details';
 
 interface UserDetailsPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 async function getUserDetails(userId: string) {
@@ -47,7 +47,8 @@ async function getUserDetails(userId: string) {
 export default async function UserDetailsPage({
   params,
 }: UserDetailsPageProps) {
-  const user = await getUserDetails(params.id);
+  const { id } = await params;
+  const user = await getUserDetails(id);
 
   if (!user) {
     notFound();

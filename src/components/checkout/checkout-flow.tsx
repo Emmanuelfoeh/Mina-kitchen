@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/stores/cart-store';
 import { useUserStore } from '@/stores/user-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { DeliverySelection } from './delivery-selection';
 import { AddressForm } from './address-form';
 import { OrderScheduling } from './order-scheduling';
@@ -23,8 +22,8 @@ interface CheckoutData {
 
 export function CheckoutFlow() {
   const router = useRouter();
-  const { items, hasItems, clearCart } = useCartStore();
-  const { user, isAuthenticated } = useUserStore();
+  const { items, hasItems } = useCartStore();
+  const { isAuthenticated } = useUserStore();
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('delivery');
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({

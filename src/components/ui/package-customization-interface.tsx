@@ -42,21 +42,206 @@ export function PackageCustomizationInterface({
   onAddToCart,
   disabled = false,
 }: PackageCustomizationInterfaceProps) {
+  // Debug logging
+  console.log('PackageCustomizationInterface loaded with:', {
+    packageName: pkg.name,
+    packageId: pkg.id,
+    includedItemsCount: pkg.includedItems.length,
+    menuItemsCount: menuItems.length,
+    includedItems: pkg.includedItems.map(item => ({
+      menuItemId: item.menuItemId,
+      quantity: item.quantity,
+      customizations: item.includedCustomizations,
+    })),
+  });
+
+  // Handle empty packages
+  if (pkg.includedItems.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-yellow-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">
+                Package Configuration Incomplete
+              </h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p>
+                  This package doesn't have any menu items configured yet.
+                  Please contact the restaurant to add items to this package, or
+                  choose a different package.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Price Summary for empty package */}
+        <div className="rounded-lg bg-gray-50 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm text-gray-600">Package Price</span>
+            <span className="font-medium text-gray-900">
+              {formatCurrency(pkg.price)}
+            </span>
+          </div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm text-gray-600">Items Total</span>
+            <span className="font-medium text-gray-900">
+              {formatCurrency(0)}
+            </span>
+          </div>
+        </div>
+
+        {/* Disabled Add to Cart Button */}
+        <Button
+          disabled={true}
+          className="w-full cursor-not-allowed bg-gray-300 text-gray-500"
+        >
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          Package Not Available
+        </Button>
+      </div>
+    );
+  }
+
   const [customizations, setCustomizations] = useState<
     PackageItemCustomization[]
   >(
-    pkg.includedItems.map(item => ({
-      menuItemId: item.menuItemId,
-      quantity: item.quantity,
-      customizations: item.includedCustomizations.map(customization => {
-        const [customizationId, optionId] = customization.split(':');
-        return {
-          customizationId,
-          optionIds: [optionId],
-          textValue: undefined,
-        };
-      }),
-    }))
+    pkg.includedItems.map(item => {
+      // Find the menu item to get customization details
+      const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
+
+      return {
+        menuItemId: item.menuItemId,
+        quantity: item.quantity,
+        customizations: item.includedCustomizations.map(customization => {
+          // Handle both old format (human-readable) and new format (CUID IDs)
+          if (customization.includes(':')) {
+            const [customizationId, optionId] = customization.split(':');
+
+            // Check if this is a CUID format (starts with 'c' and is long)
+            if (
+              customizationId.startsWith('c') &&
+              customizationId.length > 10
+            ) {
+              // New format: actual database IDs
+              const customizationObj = menuItem?.customizations.find(
+                c => c.id === customizationId
+              );
+              const option = customizationObj?.options.find(
+                o => o.id === optionId
+              );
+
+              return {
+                customizationId,
+                customizationName: customizationObj?.name,
+                optionIds: [optionId],
+                optionNames: option ? [option.name] : undefined,
+                textValue: undefined,
+              };
+            } else {
+              // Old format: human-readable strings like 'pepper-level:medium'
+              // Try to find matching customization and option by name patterns
+              console.log(
+                'Processing old format customization:',
+                customization
+              );
+
+              // Find the actual customization by name similarity
+              const customizationObj = menuItem?.customizations.find(c => {
+                const normalizedCustomizationName = c.name
+                  .toLowerCase()
+                  .replace(/\s+/g, '-');
+                const normalizedId = customizationId.toLowerCase();
+                return (
+                  normalizedCustomizationName.includes(normalizedId) ||
+                  normalizedId.includes(normalizedCustomizationName)
+                );
+              });
+
+              if (customizationObj) {
+                // Find the option by name similarity
+                const option = customizationObj.options.find(o => {
+                  const normalizedOptionName = o.name
+                    .toLowerCase()
+                    .replace(/\s+/g, '-');
+                  const normalizedId = optionId.toLowerCase();
+                  return (
+                    normalizedOptionName.includes(normalizedId) ||
+                    normalizedId.includes(normalizedOptionName)
+                  );
+                });
+
+                if (option) {
+                  console.log('Found matching customization and option:', {
+                    customization: customizationObj.name,
+                    option: option.name,
+                  });
+                  return {
+                    customizationId: customizationObj.id,
+                    customizationName: customizationObj.name,
+                    optionIds: [option.id],
+                    optionNames: [option.name],
+                    textValue: undefined,
+                  };
+                } else {
+                  console.log('Found customization but no matching option:', {
+                    customization: customizationObj.name,
+                    searchingFor: optionId,
+                    availableOptions: customizationObj.options.map(o => o.name),
+                  });
+                }
+              } else {
+                console.log(
+                  'No matching customization found for:',
+                  customizationId,
+                  'in menu item:',
+                  menuItem?.name
+                );
+              }
+
+              // Fallback: create a placeholder customization that won't break the UI
+              return {
+                customizationId: customizationId,
+                customizationName: customizationId
+                  .replace(/-/g, ' ')
+                  .replace(/\b\w/g, l => l.toUpperCase()),
+                optionIds: [optionId],
+                optionNames: [
+                  optionId
+                    .replace(/-/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase()),
+                ],
+                textValue: undefined,
+              };
+            }
+          }
+
+          // Fallback for malformed customization strings
+          console.log('Malformed customization string:', customization);
+          return {
+            customizationId: customization,
+            customizationName: 'Unknown Customization',
+            optionIds: [],
+            optionNames: [],
+            textValue: undefined,
+          };
+        }),
+      };
+    })
   );
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
@@ -148,25 +333,50 @@ export function PackageCustomizationInterface({
     textValue?: string
   ) => {
     setCustomizations(prev =>
-      prev.map(item =>
-        item.menuItemId === menuItemId
-          ? {
-              ...item,
-              customizations: item.customizations.some(
-                c => c.customizationId === customizationId
+      prev.map(item => {
+        if (item.menuItemId !== menuItemId) return item;
+
+        // Find the menu item to get customization details
+        const menuItem = menuItems.find(mi => mi.id === menuItemId);
+        const customization = menuItem?.customizations.find(
+          c => c.id === customizationId
+        );
+        const customizationName = customization?.name;
+
+        // Get option names
+        const optionNames = optionIds.map(optionId => {
+          const option = customization?.options.find(o => o.id === optionId);
+          return option?.name || optionId;
+        });
+
+        return {
+          ...item,
+          customizations: item.customizations.some(
+            c => c.customizationId === customizationId
+          )
+            ? item.customizations.map(c =>
+                c.customizationId === customizationId
+                  ? {
+                      ...c,
+                      customizationName,
+                      optionIds,
+                      optionNames,
+                      textValue,
+                    }
+                  : c
               )
-                ? item.customizations.map(c =>
-                    c.customizationId === customizationId
-                      ? { ...c, optionIds, textValue }
-                      : c
-                  )
-                : [
-                    ...item.customizations,
-                    { customizationId, optionIds, textValue },
-                  ],
-            }
-          : item
-      )
+            : [
+                ...item.customizations,
+                {
+                  customizationId,
+                  customizationName,
+                  optionIds,
+                  optionNames,
+                  textValue,
+                },
+              ],
+        };
+      })
     );
   };
 
@@ -206,11 +416,16 @@ export function PackageCustomizationInterface({
   };
 
   const calculateTotalPrice = () => {
+    console.log('Calculating total price for customizations:', customizations);
     return customizations.reduce((total, item) => {
       const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
-      if (!menuItem) return total;
+      if (!menuItem) {
+        console.log('Menu item not found for ID:', item.menuItemId);
+        return total;
+      }
 
       let itemPrice = menuItem.basePrice;
+      console.log(`Base price for ${menuItem.name}:`, itemPrice);
 
       // Add customization costs
       item.customizations.forEach(customization => {
@@ -223,13 +438,37 @@ export function PackageCustomizationInterface({
               o => o.id === optionId
             );
             if (option) {
+              console.log(
+                `Adding customization cost for ${option.name}:`,
+                option.priceModifier
+              );
               itemPrice += option.priceModifier;
             }
           });
         }
       });
 
-      return total + itemPrice * item.quantity;
+      const itemTotal = itemPrice * item.quantity;
+      console.log(
+        `Item total for ${menuItem.name} (${item.quantity}x):`,
+        itemTotal
+      );
+      return total + itemTotal;
+    }, 0);
+  };
+
+  // Calculate the original price based on menu item base prices
+  const calculateOriginalPrice = () => {
+    return pkg.includedItems.reduce((total, packageItem) => {
+      const menuItem = menuItems.find(mi => mi.id === packageItem.menuItemId);
+      if (!menuItem) {
+        console.log(
+          'Menu item not found for original price calculation:',
+          packageItem.menuItemId
+        );
+        return total;
+      }
+      return total + menuItem.basePrice * packageItem.quantity;
     }, 0);
   };
 
@@ -248,7 +487,10 @@ export function PackageCustomizationInterface({
       // Create cart items for each customized package item
       customizations.forEach(item => {
         const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
-        if (!menuItem) return;
+        if (!menuItem) {
+          console.error('Menu item not found:', item.menuItemId);
+          return;
+        }
 
         let unitPrice = menuItem.basePrice;
 
@@ -271,28 +513,40 @@ export function PackageCustomizationInterface({
 
         // Add to cart with package reference
         for (let i = 0; i < item.quantity; i++) {
-          cartItems.push({
+          const cartItem: CartItem = {
             id: generateId(),
             menuItemId: item.menuItemId,
+            name: menuItem.name,
+            image: menuItem.image,
             quantity: 1,
             selectedCustomizations: item.customizations,
             specialInstructions:
               specialInstructions || `From ${pkg.name} package`,
             unitPrice,
             totalPrice: unitPrice,
-          });
+          };
+
+          console.log('Adding cart item:', cartItem);
+          cartItems.push(cartItem);
         }
       });
+
+      console.log('Total cart items to add:', cartItems.length);
 
       if (onAddToCart) {
         onAddToCart(cartItems);
       } else {
-        cartItems.forEach(cartItem => addItem(cartItem));
+        cartItems.forEach(cartItem => {
+          console.log('Calling addItem with:', cartItem);
+          addItem(cartItem);
+        });
       }
 
       // Reset form after successful add
       setSpecialInstructions('');
       setValidationErrors([]);
+
+      console.log('Package added to cart successfully');
     } catch (error) {
       console.error('Error adding package to cart:', error);
     } finally {
@@ -312,20 +566,36 @@ export function PackageCustomizationInterface({
 
   const isAddToCartDisabled = () => {
     return (
-      disabled || validationErrors.length > 0 || isAddingToCart || !pkg.isActive
+      disabled ||
+      validationErrors.length > 0 ||
+      isAddingToCart ||
+      !pkg.isActive ||
+      customizations.length === 0 || // Prevent adding empty packages
+      totalPrice <= 0 // Prevent adding packages with no valid items
     );
   };
 
   const getAddToCartButtonText = () => {
     if (isAddingToCart) return 'Adding...';
     if (!pkg.isActive) return 'Package Currently Unavailable';
+    if (customizations.length === 0) return 'No items in package';
+    if (totalPrice <= 0) return 'Package has no valid items';
     if (validationErrors.length > 0) return 'Please complete required fields';
-    return `Add Package to Cart - ${formatCurrency(calculateTotalPrice())}`;
+    return `Add Package to Cart - ${formatCurrency(totalPrice)}`;
   };
 
   const totalPrice = calculateTotalPrice();
-  const originalPrice = pkg.originalPrice || pkg.price;
+  const originalPrice = calculateOriginalPrice();
   const priceDifference = totalPrice - originalPrice;
+
+  console.log('Price calculation:', {
+    totalPrice,
+    originalPrice,
+    priceDifference,
+    packagePrice: pkg.price,
+    customizationsCount: customizations.length,
+    menuItemsCount: menuItems.length,
+  });
 
   return (
     <div className="space-y-6">

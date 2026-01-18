@@ -84,6 +84,8 @@ export function MenuBrowser() {
     const cartItem: CartItem = {
       id: generateId(),
       menuItemId: menuItem.id,
+      name: menuItem.name,
+      image: menuItem.image,
       quantity: 1,
       selectedCustomizations: [],
       unitPrice: menuItem.basePrice,

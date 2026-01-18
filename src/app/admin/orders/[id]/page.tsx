@@ -8,12 +8,14 @@ import { OrderDetailsView } from '@/components/admin/orders/order-details-view';
 import Link from 'next/link';
 
 interface OrderDetailsProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function OrderDetailPage({ params }: OrderDetailsProps) {
+  const { id } = await params;
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -36,7 +38,7 @@ export default async function OrderDetailPage({ params }: OrderDetailsProps) {
             Print Receipt
           </Button>
           <Suspense fallback={<div>Loading...</div>}>
-            <OrderStatusUpdater orderId={params.id} currentStatus="PENDING" />
+            <OrderStatusUpdater orderId={id} currentStatus="PENDING" />
           </Suspense>
         </div>
       </div>
@@ -46,7 +48,7 @@ export default async function OrderDetailPage({ params }: OrderDetailsProps) {
         <div className="space-y-6 lg:col-span-2">
           {/* Order Details */}
           <Suspense fallback={<div>Loading order details...</div>}>
-            <OrderDetailsView orderId={params.id} />
+            <OrderDetailsView orderId={id} />
           </Suspense>
         </div>
 
@@ -59,7 +61,7 @@ export default async function OrderDetailPage({ params }: OrderDetailsProps) {
             </CardHeader>
             <CardContent>
               <Suspense fallback={<div>Loading timeline...</div>}>
-                <OrderTimeline orderId={params.id} currentStatus="PENDING" />
+                <OrderTimeline orderId={id} currentStatus="PENDING" />
               </Suspense>
             </CardContent>
           </Card>

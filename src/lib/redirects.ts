@@ -3,8 +3,6 @@
  */
 
 import { redirect } from 'next/navigation';
-import { mockMenuItems, mockPackages } from '@/lib/mock-data';
-import { generateSlug } from '@/lib/utils';
 
 /**
  * Redirect patterns for common URL mistakes
@@ -27,7 +25,7 @@ export const REDIRECT_PATTERNS = {
 /**
  * Check if a URL should be redirected and return the correct URL
  */
-export function getRedirectUrl(pathname: string): string | null {
+export async function getRedirectUrl(pathname: string): Promise<string | null> {
   // Check for exact pattern matches
   for (const [pattern, replacement] of Object.entries(REDIRECT_PATTERNS)) {
     if (pathname.startsWith(pattern)) {
@@ -36,13 +34,13 @@ export function getRedirectUrl(pathname: string): string | null {
   }
 
   // Check for menu item redirects
-  const menuItemRedirect = getMenuItemRedirect(pathname);
+  const menuItemRedirect = await getMenuItemRedirect(pathname);
   if (menuItemRedirect) {
     return menuItemRedirect;
   }
 
   // Check for package redirects
-  const packageRedirect = getPackageRedirect(pathname);
+  const packageRedirect = await getPackageRedirect(pathname);
   if (packageRedirect) {
     return packageRedirect;
   }
@@ -53,7 +51,7 @@ export function getRedirectUrl(pathname: string): string | null {
 /**
  * Handle menu item URL redirects
  */
-function getMenuItemRedirect(pathname: string): string | null {
+async function getMenuItemRedirect(pathname: string): Promise<string | null> {
   // Handle legacy menu item URLs
   const legacyPatterns = [
     /^\/item\/(.+)$/,
@@ -66,13 +64,22 @@ function getMenuItemRedirect(pathname: string): string | null {
     if (match) {
       const slug = match[1];
 
-      // Check if this slug exists in menu items
-      const item = mockMenuItems.find(
-        item => (item.slug || generateSlug(item.name)) === slug
-      );
-
-      if (item) {
-        return `/menu/items/${item.slug || generateSlug(item.name)}`;
+      try {
+        // Check if this slug exists in menu items via API
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/menu/items`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            const item = data.data.find((item: any) => item.slug === slug);
+            if (item) {
+              return `/menu/items/${item.slug}`;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking menu items for redirect:', error);
       }
     }
   }
@@ -83,7 +90,7 @@ function getMenuItemRedirect(pathname: string): string | null {
 /**
  * Handle package URL redirects
  */
-function getPackageRedirect(pathname: string): string | null {
+async function getPackageRedirect(pathname: string): Promise<string | null> {
   // Handle legacy package URLs
   const legacyPatterns = [
     /^\/package\/(.+)$/,
@@ -96,13 +103,22 @@ function getPackageRedirect(pathname: string): string | null {
     if (match) {
       const slug = match[1];
 
-      // Check if this slug exists in packages
-      const pkg = mockPackages.find(
-        pkg => (pkg.slug || generateSlug(pkg.name)) === slug
-      );
-
-      if (pkg) {
-        return `/packages/${pkg.slug || generateSlug(pkg.name)}`;
+      try {
+        // Check if this slug exists in packages via API
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/packages`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            const pkg = data.data.find((pkg: any) => pkg.slug === slug);
+            if (pkg) {
+              return `/packages/${pkg.slug}`;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking packages for redirect:', error);
       }
     }
   }
@@ -111,59 +127,10 @@ function getPackageRedirect(pathname: string): string | null {
 }
 
 /**
- * Find item by fuzzy slug matching (handles typos and variations)
- */
-function findItemByFuzzySlug<T extends { name: string; slug?: string }>(
-  providedSlug: string,
-  items: T[]
-): T | null {
-  const normalizedSlug = providedSlug.toLowerCase().replace(/[^a-z0-9-]/g, '');
-
-  // First try exact match
-  let item = items.find(
-    item => (item.slug || generateSlug(item.name)) === providedSlug
-  );
-
-  if (item) return item;
-
-  // Try normalized match
-  item = items.find(item => {
-    const itemSlug = (item.slug || generateSlug(item.name))
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '');
-    return itemSlug === normalizedSlug;
-  });
-
-  if (item) return item;
-
-  // Try partial match (for truncated URLs)
-  item = items.find(item => {
-    const itemSlug = item.slug || generateSlug(item.name);
-    return (
-      itemSlug.startsWith(providedSlug) || providedSlug.startsWith(itemSlug)
-    );
-  });
-
-  if (item) return item;
-
-  // Try name-based matching
-  item = items.find(item => {
-    const nameSlug = generateSlug(item.name);
-    return (
-      nameSlug === providedSlug ||
-      nameSlug.includes(providedSlug) ||
-      providedSlug.includes(nameSlug)
-    );
-  });
-
-  return item || null;
-}
-
-/**
  * Middleware helper to handle redirects
  */
-export function handleRedirect(pathname: string): void {
-  const redirectUrl = getRedirectUrl(pathname);
+export async function handleRedirect(pathname: string): Promise<void> {
+  const redirectUrl = await getRedirectUrl(pathname);
   if (redirectUrl) {
     redirect(redirectUrl);
   }
@@ -172,9 +139,9 @@ export function handleRedirect(pathname: string): void {
 /**
  * Get suggested URLs for 404 pages based on the requested path
  */
-export function getSuggestedUrls(
+export async function getSuggestedUrls(
   pathname: string
-): Array<{ label: string; href: string }> {
+): Promise<Array<{ label: string; href: string }>> {
   const suggestions: Array<{ label: string; href: string }> = [];
 
   // Always suggest main pages
@@ -184,26 +151,46 @@ export function getSuggestedUrls(
     { label: 'Packages', href: '/packages' }
   );
 
-  // If it looks like a menu item URL, suggest popular items
-  if (pathname.includes('/menu') || pathname.includes('/item')) {
-    const popularItems = mockMenuItems.slice(0, 3);
-    popularItems.forEach(item => {
-      suggestions.push({
-        label: item.name,
-        href: `/menu/items/${item.slug || generateSlug(item.name)}`,
-      });
-    });
-  }
+  try {
+    // If it looks like a menu item URL, suggest popular items
+    if (pathname.includes('/menu') || pathname.includes('/item')) {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/menu/items`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          const popularItems = data.data.slice(0, 3);
+          popularItems.forEach((item: any) => {
+            suggestions.push({
+              label: item.name,
+              href: `/menu/items/${item.slug}`,
+            });
+          });
+        }
+      }
+    }
 
-  // If it looks like a package URL, suggest popular packages
-  if (pathname.includes('/package') || pathname.includes('/bundle')) {
-    const popularPackages = mockPackages.slice(0, 3);
-    popularPackages.forEach(pkg => {
-      suggestions.push({
-        label: pkg.name,
-        href: `/packages/${pkg.slug || generateSlug(pkg.name)}`,
-      });
-    });
+    // If it looks like a package URL, suggest popular packages
+    if (pathname.includes('/package') || pathname.includes('/bundle')) {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/packages`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          const popularPackages = data.data.slice(0, 3);
+          popularPackages.forEach((pkg: any) => {
+            suggestions.push({
+              label: pkg.name,
+              href: `/packages/${pkg.slug}`,
+            });
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching suggestions:', error);
   }
 
   return suggestions;

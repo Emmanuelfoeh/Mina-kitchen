@@ -146,9 +146,24 @@ export function CustomizationInterface({
   ) => {
     setSelectedCustomizations(prev => {
       const existing = prev.find(c => c.customizationId === customizationId);
+
+      // Find the customization to get its name
+      const customization = item.customizations.find(
+        c => c.id === customizationId
+      );
+      const customizationName = customization?.name;
+
+      // Get option names
+      const optionNames = optionIds.map(optionId => {
+        const option = customization?.options.find(o => o.id === optionId);
+        return option?.name || optionId;
+      });
+
       const newCustomization: SelectedCustomization = {
         customizationId,
+        customizationName,
         optionIds,
+        optionNames,
         textValue,
       };
 

@@ -46,7 +46,7 @@ export function ProductInformation({
           >
             ${price.toFixed(2)}
           </p>
-          {originalPrice && savings && savings > 0 && (
+          {/* {originalPrice && savings && savings > 0 && (
             <div className="text-sm" role="group" aria-label="Pricing details">
               <p
                 className="text-gray-500 line-through"
@@ -61,7 +61,7 @@ export function ProductInformation({
                 Save ${savings.toFixed(2)}
               </p>
             </div>
-          )}
+          )} */}
         </div>
       </div>
 

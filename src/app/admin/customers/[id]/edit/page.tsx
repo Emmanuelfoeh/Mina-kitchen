@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { EditUserForm } from '@/components/admin/users/edit-user-form';
 
 interface EditUserPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 async function getUserDetails(userId: string) {
@@ -36,7 +36,8 @@ async function getUserDetails(userId: string) {
 }
 
 export default async function EditUserPage({ params }: EditUserPageProps) {
-  const user = await getUserDetails(params.id);
+  const { id } = await params;
+  const user = await getUserDetails(id);
 
   if (!user) {
     notFound();

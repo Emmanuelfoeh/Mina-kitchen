@@ -1,8 +1,6 @@
 import { MetadataRoute } from 'next';
-import { mockMenuItems, mockPackages } from '@/lib/mock-data';
-import { generateSlug } from '@/lib/utils';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://minakitchen.ca';
 
   // Static pages
@@ -39,21 +37,46 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  // Dynamic menu item pages
-  const menuItemPages = mockMenuItems.map(item => ({
-    url: `${baseUrl}/menu/items/${item.slug || generateSlug(item.name)}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
+  try {
+    // Fetch dynamic menu items and packages from API
+    const [menuItemsResponse, packagesResponse] = await Promise.all([
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || baseUrl}/api/menu/items`),
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || baseUrl}/api/packages`),
+    ]);
 
-  // Dynamic package pages
-  const packagePages = mockPackages.map(pkg => ({
-    url: `${baseUrl}/packages/${pkg.slug || generateSlug(pkg.name)}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
+    let menuItemPages: any[] = [];
+    let packagePages: any[] = [];
 
-  return [...staticPages, ...menuItemPages, ...packagePages];
+    // Add menu item pages if API is available
+    if (menuItemsResponse.ok) {
+      const menuItemsData = await menuItemsResponse.json();
+      if (menuItemsData.success && menuItemsData.data) {
+        menuItemPages = menuItemsData.data.map((item: any) => ({
+          url: `${baseUrl}/menu/items/${item.slug}`,
+          lastModified: new Date(item.updatedAt || Date.now()),
+          changeFrequency: 'weekly' as const,
+          priority: 0.7,
+        }));
+      }
+    }
+
+    // Add package pages if API is available
+    if (packagesResponse.ok) {
+      const packagesData = await packagesResponse.json();
+      if (packagesData.success && packagesData.data) {
+        packagePages = packagesData.data.map((pkg: any) => ({
+          url: `${baseUrl}/packages/${pkg.slug}`,
+          lastModified: new Date(pkg.updatedAt || Date.now()),
+          changeFrequency: 'weekly' as const,
+          priority: 0.7,
+        }));
+      }
+    }
+
+    return [...staticPages, ...menuItemPages, ...packagePages];
+  } catch (error) {
+    console.error('Error generating sitemap:', error);
+    // Return static pages only if API fails
+    return staticPages;
+  }
 }

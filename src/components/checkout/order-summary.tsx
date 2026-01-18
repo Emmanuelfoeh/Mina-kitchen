@@ -55,14 +55,18 @@ export function OrderSummary({
           specialInstructions: item.specialInstructions,
           totalPrice: item.totalPrice,
         })),
-        deliveryType: checkoutData.deliveryType,
+        deliveryType: checkoutData.deliveryType.toUpperCase(),
         deliveryAddressId: checkoutData.deliveryAddress?.id,
         scheduledFor: checkoutData.scheduledFor?.toISOString(),
         specialInstructions: checkoutData.specialInstructions,
         subtotal: getSubtotal(),
         tax: getTax(),
-        deliveryFee: getDeliveryFee(),
-        total: getTotal(),
+        deliveryFee:
+          checkoutData.deliveryType === 'pickup' ? 0 : getDeliveryFee(),
+        total:
+          getSubtotal() +
+          getTax() +
+          (checkoutData.deliveryType === 'pickup' ? 0 : getDeliveryFee()),
       };
 
       const response = await fetch('/api/orders', {
@@ -125,7 +129,7 @@ export function OrderSummary({
                   <div className="mb-1 flex items-center space-x-2">
                     <Badge variant="secondary">{item.quantity}x</Badge>
                     <h4 className="font-medium">
-                      Menu Item #{item.menuItemId}
+                      {item.name || `Menu Item #${item.menuItemId}`}
                     </h4>
                   </div>
 
@@ -134,15 +138,21 @@ export function OrderSummary({
                       {item.selectedCustomizations.map(
                         (customization, index) => (
                           <div key={index} className="text-sm text-gray-600">
-                            <span className="font-medium">Customization:</span>
+                            <span className="font-medium">
+                              {customization.customizationName ||
+                                'Customization'}
+                              :
+                            </span>
                             {customization.optionIds.length > 0 && (
                               <span className="ml-1">
-                                Options: {customization.optionIds.join(', ')}
+                                {customization.optionNames?.length
+                                  ? customization.optionNames.join(', ')
+                                  : customization.optionIds.join(', ')}
                               </span>
                             )}
                             {customization.textValue && (
-                              <span className="ml-1">
-                                Note: {customization.textValue}
+                              <span className="ml-1 italic">
+                                "{customization.textValue}"
                               </span>
                             )}
                           </div>
@@ -300,15 +310,24 @@ export function OrderSummary({
 
             <div className="flex justify-between text-lg font-bold">
               <span>Total</span>
-              <span>${getTotal().toFixed(2)}</span>
+              <span>
+                $
+                {(
+                  getSubtotal() +
+                  getTax() +
+                  (checkoutData.deliveryType === 'pickup'
+                    ? 0
+                    : getDeliveryFee())
+                ).toFixed(2)}
+              </span>
             </div>
           </div>
 
-          <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-            <p className="text-sm text-yellow-800">
-              <strong>Payment Method:</strong> Payment integration will be
-              available soon. For now, you can place your order and pay upon{' '}
-              {checkoutData.deliveryType}.
+          <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <p className="text-sm text-blue-800">
+              <strong>Payment:</strong> Our team will contact you after order
+              confirmation to arrange payment. You can pay by cash, e-transfer,
+              or card upon {checkoutData.deliveryType}.
             </p>
           </div>
         </CardContent>
@@ -327,7 +346,7 @@ export function OrderSummary({
         >
           {isProcessing
             ? 'Processing...'
-            : `Place Order - $${getTotal().toFixed(2)}`}
+            : `Place Order - $${(getSubtotal() + getTax() + (checkoutData.deliveryType === 'pickup' ? 0 : getDeliveryFee())).toFixed(2)}`}
         </Button>
       </div>
     </div>

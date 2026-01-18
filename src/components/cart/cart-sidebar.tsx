@@ -28,20 +28,6 @@ export function CartSidebar() {
     announceToScreenReader('Navigating to checkout page');
   };
 
-  const handleRemoveItem = (itemId: string, itemName: string) => {
-    removeItem(itemId);
-    announceToScreenReader(`${itemName} removed from cart`);
-  };
-
-  const handleQuantityChange = (
-    itemId: string,
-    newQuantity: number,
-    itemName: string
-  ) => {
-    updateQuantity(itemId, newQuantity);
-    announceToScreenReader(`${itemName} quantity updated to ${newQuantity}`);
-  };
-
   const handleClose = () => {
     toggleCart();
     announceToScreenReader('Cart closed');
@@ -173,41 +159,165 @@ interface CartItemCardProps {
 }
 
 function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
-  // Try to find the menu item from mock data to get better display info
-  const getMenuItemInfo = (menuItemId: string) => {
-    // For now, we'll create a simple display name from the ID
-    // In a real app, this would fetch from the menu items data
-    if (menuItemId.startsWith('package-')) {
-      return {
-        name: menuItemId
-          .replace('package-', '')
-          .replace(/-/g, ' ')
-          .replace(/\b\w/g, l => l.toUpperCase()),
-        image:
-          'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=300&q=80',
-        isPackage: true,
-      };
-    } else if (menuItemId.startsWith('side-')) {
-      return {
-        name: menuItemId
-          .replace('side-', '')
-          .replace(/-/g, ' ')
-          .replace(/\b\w/g, l => l.toUpperCase()),
-        image:
-          'https://images.unsplash.com/photo-1606491956689-2ea866880c84?auto=format&fit=crop&w=300&q=80',
-        isPackage: false,
-      };
-    } else {
-      return {
-        name: `Menu Item ${menuItemId}`,
-        image:
-          'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=300&q=80',
-        isPackage: false,
-      };
+  // Comprehensive mapping for customization names based on common patterns
+  const formatCustomizationName = (customizationId: string): string => {
+    // Create a mapping of common customization patterns to readable names
+    const customizationMap: Record<string, string> = {
+      // Spice/Heat related
+      'pepper-level': 'Pepper Level',
+      'spice-level': 'Spice Level',
+      'heat-level': 'Heat Level',
+
+      // Meat/Protein related
+      'meat-selection': 'Meat Selection',
+      'extra-meat': 'Extra Meat',
+      'protein-choice': 'Protein Choice',
+
+      // Preparation styles
+      'preparation-style': 'Preparation Style',
+      'cooking-style': 'Cooking Style',
+
+      // Add-ons and extras
+      'add-ons': 'Add-ons',
+      extras: 'Extras',
+      'additional-items': 'Additional Items',
+
+      // Special instructions
+      'special-instructions': 'Special Instructions',
+      notes: 'Notes',
+      comments: 'Comments',
+    };
+
+    // First check direct mapping
+    const lowerCaseId = customizationId.toLowerCase();
+    for (const [key, value] of Object.entries(customizationMap)) {
+      if (lowerCaseId.includes(key)) {
+        return value;
+      }
     }
+
+    // Pattern-based matching for CUID IDs
+    if (customizationId.match(/^c[a-z0-9]{20,}/)) {
+      // This is likely a CUID, try to infer from common patterns
+      if (lowerCaseId.includes('pepper') || lowerCaseId.includes('spice')) {
+        return 'Spice Level';
+      }
+      if (lowerCaseId.includes('heat')) {
+        return 'Heat Level';
+      }
+      if (lowerCaseId.includes('meat') || lowerCaseId.includes('protein')) {
+        return 'Meat Selection';
+      }
+      if (
+        lowerCaseId.includes('preparation') ||
+        lowerCaseId.includes('style')
+      ) {
+        return 'Preparation Style';
+      }
+      if (lowerCaseId.includes('add') || lowerCaseId.includes('extra')) {
+        return 'Add-ons';
+      }
+      if (lowerCaseId.includes('instruction') || lowerCaseId.includes('note')) {
+        return 'Special Instructions';
+      }
+
+      // Default for unrecognized CUIDs
+      return 'Customization';
+    }
+
+    // Fallback: clean up the ID to make it readable
+    return (
+      customizationId
+        .replace(/[_-]/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase())
+        .trim() || 'Customization'
+    );
   };
 
-  const menuItemInfo = getMenuItemInfo(item.menuItemId);
+  const formatOptionName = (optionId: string): string => {
+    // Create a comprehensive mapping for option names
+    const optionMap: Record<string, string> = {
+      // Spice levels
+      low: 'Mild',
+      mild: 'Mild',
+      medium: 'Medium',
+      hot: 'Hot',
+      extra: 'Hot',
+      'extra-hot': 'Extra Hot',
+      'african-hot': 'African Hot',
+
+      // Cooking methods
+      boiled: 'Boiled',
+      fried: 'Fried',
+      grilled: 'Grilled',
+      steamed: 'Steamed',
+      roasted: 'Roasted',
+
+      // Sizes and portions
+      regular: 'Regular',
+      large: 'Large',
+      small: 'Small',
+      'extra-large': 'Extra Large',
+
+      // Meat types
+      beef: 'Beef',
+      chicken: 'Chicken',
+      fish: 'Fish',
+      'goat-meat': 'Goat Meat',
+      stockfish: 'Stockfish',
+      'dried-fish': 'Dried Fish',
+      catfish: 'Catfish',
+
+      // Extras
+      'extra-chicken': 'Extra Chicken',
+      'extra-beef': 'Extra Beef',
+      'extra-goat-meat': 'Extra Goat Meat',
+      'add-fish': 'Add Fish',
+      'extra-onions': 'Extra Onions',
+      'extra-tomatoes': 'Extra Tomatoes',
+      'yaji-spice': 'Yaji Spice',
+      'boiled-egg': 'Boiled Egg',
+
+      // Preparation styles
+      'regular-cut': 'Regular Cut',
+      'thick-cut': 'Thick Cut',
+      diced: 'Diced',
+      chunky: 'Chunky',
+      chips: 'Chips',
+
+      // Common options
+      none: 'None',
+      mixed: 'Mixed',
+      yes: 'Yes',
+      no: 'No',
+    };
+
+    // First check direct mapping
+    const lowerCaseId = optionId.toLowerCase();
+    if (optionMap[lowerCaseId]) {
+      return optionMap[lowerCaseId];
+    }
+
+    // Handle numbered options (like "4-pieces", "6-pieces")
+    if (optionId.includes('pieces') || optionId.includes('piece')) {
+      return optionId
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    // Handle CUID options - these should ideally not happen, but provide fallback
+    if (optionId.match(/^c[a-z0-9]{20,}/)) {
+      return 'Selected Option';
+    }
+
+    // Fallback: clean up the ID to make it readable
+    return (
+      optionId
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase())
+        .trim() || optionId
+    );
+  };
 
   return (
     <Card className="p-4">
@@ -215,15 +325,17 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
         {/* Item Image */}
         <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-gray-200">
           <img
-            src={menuItemInfo.image}
-            alt={menuItemInfo.name}
+            src={item.image || '/placeholder-food.svg'}
+            alt={item.name || 'Menu Item'}
             className="h-full w-full object-cover"
           />
         </div>
 
         {/* Item Details */}
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-medium">{menuItemInfo.name}</h3>
+          <h3 className="truncate text-sm font-medium">
+            {item.name || 'Menu Item'}
+          </h3>
           <p className="mt-1 text-xs text-gray-500">
             {formatCurrency(item.unitPrice)} each
           </p>
@@ -239,11 +351,19 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
                   (customization: SelectedCustomization, index: number) => (
                     <div key={index} className="text-xs text-gray-500">
                       <span className="font-medium">
-                        {customization.customizationId}:
+                        {customization.customizationName ||
+                          formatCustomizationName(
+                            customization.customizationId
+                          )}
+                        :
                       </span>
                       {customization.optionIds.length > 0 && (
                         <span className="ml-1">
-                          {customization.optionIds.join(', ')}
+                          {customization.optionNames?.length
+                            ? customization.optionNames.join(', ')
+                            : customization.optionIds
+                                .map(formatOptionName)
+                                .join(', ')}
                         </span>
                       )}
                       {customization.textValue && (
@@ -267,15 +387,6 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
               <p className="mt-1 text-xs text-gray-500 italic">
                 {item.specialInstructions}
               </p>
-            </div>
-          )}
-
-          {/* Package indicator */}
-          {menuItemInfo.isPackage && (
-            <div className="mt-1">
-              <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
-                Package Deal
-              </span>
             </div>
           )}
         </div>

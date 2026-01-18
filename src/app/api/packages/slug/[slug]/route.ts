@@ -1,16 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { generateSlug } from '@/lib/utils';
 
 export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  request: NextRequest,
+  { params }: { params: { slug: string } }
 ) {
   try {
     const { slug } = await params;
 
-    // First try to find by slug field if it exists
-    let packageData = await db.package.findFirst({
+    // First, try to find package by slug
+    let pkg = await db.package.findFirst({
       where: {
         slug: slug,
         isActive: true,
@@ -21,6 +21,11 @@ export async function GET(
             menuItem: {
               include: {
                 category: true,
+                customizations: {
+                  include: {
+                    options: true,
+                  },
+                },
               },
             },
           },
@@ -29,35 +34,31 @@ export async function GET(
     });
 
     // If not found by slug, try to find by generated slug from name
-    if (!packageData) {
-      const allPackages = await db.package.findMany({
+    if (!pkg) {
+      const packages = await db.package.findMany({
         where: { isActive: true },
-        select: { id: true, name: true },
-      });
-
-      const matchingPackage = allPackages.find(
-        pkg => generateSlug(pkg.name) === slug
-      );
-
-      if (matchingPackage) {
-        packageData = await db.package.findUnique({
-          where: { id: matchingPackage.id },
-          include: {
-            includedItems: {
-              include: {
-                menuItem: {
-                  include: {
-                    category: true,
+        include: {
+          includedItems: {
+            include: {
+              menuItem: {
+                include: {
+                  category: true,
+                  customizations: {
+                    include: {
+                      options: true,
+                    },
                   },
                 },
               },
             },
           },
-        });
-      }
+        },
+      });
+
+      pkg = packages.find(p => generateSlug(p.name) === slug) || null;
     }
 
-    if (!packageData) {
+    if (!pkg) {
       return NextResponse.json(
         {
           success: false,
@@ -67,23 +68,40 @@ export async function GET(
       );
     }
 
-    // Transform package to match frontend expectations
+    // Transform the data to match frontend expectations
     const transformedPackage = {
-      ...packageData,
-      type: packageData.type.toLowerCase() as 'daily' | 'weekly' | 'monthly',
+      ...pkg,
+      type: pkg.type.toLowerCase() as 'daily' | 'weekly' | 'monthly',
+      slug: pkg.slug || generateSlug(pkg.name),
       features:
-        typeof packageData.features === 'string'
-          ? JSON.parse(packageData.features)
-          : packageData.features,
-      slug: packageData.slug || generateSlug(packageData.name),
-      includedItems: packageData.includedItems.map(item => ({
+        typeof pkg.features === 'string'
+          ? JSON.parse(pkg.features)
+          : pkg.features,
+      includedItems: pkg.includedItems.map(item => ({
         menuItemId: item.menuItemId,
         quantity: item.quantity,
         includedCustomizations:
           typeof item.includedCustomizations === 'string'
             ? JSON.parse(item.includedCustomizations)
             : item.includedCustomizations,
-        menuItem: item.menuItem, // Include the full menu item data
+        menuItem: {
+          ...item.menuItem,
+          basePrice: item.menuItem.basePrice,
+          tags: item.menuItem.tags ? JSON.parse(item.menuItem.tags) : [],
+          status: item.menuItem.status.toLowerCase(),
+          slug: generateSlug(item.menuItem.name),
+          customizations: item.menuItem.customizations.map(customization => ({
+            ...customization,
+            type: customization.type.toLowerCase() as
+              | 'radio'
+              | 'checkbox'
+              | 'text',
+            options: customization.options.map(option => ({
+              ...option,
+              isAvailable: true,
+            })),
+          })),
+        },
       })),
     };
 

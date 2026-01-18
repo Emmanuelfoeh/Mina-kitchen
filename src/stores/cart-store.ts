@@ -41,6 +41,7 @@ export const useCartStore = create<CartStore>()(
         isHydrated: false,
 
         addItem: (item: CartItem) => {
+          console.log('Cart store addItem called with:', item);
           set(state => {
             const existingItemIndex = state.items.findIndex(
               existingItem =>
@@ -57,9 +58,14 @@ export const useCartStore = create<CartStore>()(
               updatedItems[existingItemIndex].totalPrice =
                 updatedItems[existingItemIndex].unitPrice *
                 updatedItems[existingItemIndex].quantity;
+              console.log('Updated existing item quantity');
             } else {
               // Add new item
               updatedItems = [...state.items, item];
+              console.log(
+                'Added new item to cart, total items:',
+                updatedItems.length
+              );
             }
 
             return {
@@ -184,21 +190,71 @@ export const useCartStore = create<CartStore>()(
         validateCartItems: () => {
           // Remove invalid items (items that no longer exist or are unavailable)
           set(state => {
+            console.log(
+              'Validating cart items, current count:',
+              state.items.length
+            );
             const validItems = state.items.filter(item => {
-              // In a real app, this would check against the server
-              // For now, we'll just ensure the item has required fields
-              return (
+              // Check for required fields
+              const hasRequiredFields =
                 item.id &&
                 item.menuItemId &&
+                item.name &&
                 item.quantity > 0 &&
                 item.unitPrice >= 0 &&
-                item.totalPrice >= 0
-              );
+                item.totalPrice >= 0;
+
+              // Check if menuItemId looks like a valid CUID (starts with 'c' and is longer than 10 chars)
+              // This will filter out mock data IDs like "6", "1", etc.
+              const hasValidMenuItemId =
+                item.menuItemId.startsWith('c') && item.menuItemId.length > 10;
+
+              const isValid = hasRequiredFields && hasValidMenuItemId;
+
+              if (!isValid) {
+                console.log('Filtering out invalid item:', {
+                  id: item.id,
+                  menuItemId: item.menuItemId,
+                  name: item.name,
+                  hasRequiredFields,
+                  hasValidMenuItemId,
+                  menuItemIdLength: item.menuItemId?.length,
+                  menuItemIdStartsWithC: item.menuItemId?.startsWith('c'),
+                });
+              }
+
+              return isValid;
             });
 
-            return validItems.length !== state.items.length
+            // Also clean up any customizations that might have invalid data
+            const cleanedItems = validItems.map(item => ({
+              ...item,
+              selectedCustomizations: item.selectedCustomizations.filter(
+                customization =>
+                  customization.customizationId &&
+                  (customization.optionIds.length > 0 ||
+                    customization.textValue)
+              ),
+            }));
+
+            const itemsChanged =
+              validItems.length !== state.items.length ||
+              cleanedItems.some(
+                (item, index) =>
+                  item.selectedCustomizations.length !==
+                  validItems[index].selectedCustomizations.length
+              );
+
+            if (itemsChanged) {
+              console.log(
+                'Cart validation removed items, new count:',
+                cleanedItems.length
+              );
+            }
+
+            return itemsChanged
               ? {
-                  items: validItems,
+                  items: cleanedItems,
                   lastSyncTimestamp: Date.now(),
                 }
               : state;
@@ -212,13 +268,19 @@ export const useCartStore = create<CartStore>()(
           lastSyncTimestamp: state.lastSyncTimestamp,
           // Don't persist isOpen state - should always start closed
         }),
-        version: 2,
+        version: 4,
         // Handle migration from previous versions
         migrate: (persistedState: any, version: number) => {
-          if (version === 0 || version === 1) {
-            // Migration from version 0 or 1 to 2
+          if (
+            version === 0 ||
+            version === 1 ||
+            version === 2 ||
+            version === 3
+          ) {
+            // Migration from version 0, 1, 2, or 3 to 4
+            // Clear cart items to remove any data without customization names
             return {
-              ...persistedState,
+              items: [],
               lastSyncTimestamp: Date.now(),
               isHydrated: false,
             };

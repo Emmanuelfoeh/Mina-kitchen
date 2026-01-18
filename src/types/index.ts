@@ -103,6 +103,8 @@ export interface PackageItem {
 export interface CartItem {
   id: string;
   menuItemId: string;
+  name: string; // Menu item name for display
+  image?: string; // Menu item image for display
   quantity: number;
   selectedCustomizations: SelectedCustomization[];
   specialInstructions?: string;
@@ -112,7 +114,9 @@ export interface CartItem {
 
 export interface SelectedCustomization {
   customizationId: string;
+  customizationName?: string; // Add the actual name for display
   optionIds: string[];
+  optionNames?: string[]; // Add the actual option names for display
   textValue?: string;
 }
 
@@ -145,6 +149,11 @@ export interface OrderItem {
   customizations: SelectedCustomization[];
   specialInstructions?: string;
   totalPrice: number;
+  menuItem?: {
+    id: string;
+    name: string;
+    image?: string;
+  };
 }
 
 export type OrderStatus =

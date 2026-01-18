@@ -4,99 +4,50 @@ import { db } from '@/lib/db';
 
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
-    // Get current date for calculations
-    const now = new Date();
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
 
-    // Get total orders count
-    const totalOrders = await db.order.count();
-
-    // Get pending orders count
-    const pendingOrders = await db.order.count({
-      where: {
-        status: 'PENDING',
-      },
-    });
-
-    // Get completed orders today
-    const completedOrders = await db.order.count({
-      where: {
-        status: 'DELIVERED',
-        createdAt: {
-          gte: startOfDay,
+    // Get order counts by status
+    const [
+      totalOrders,
+      pendingOrders,
+      completedOrders,
+      outForDelivery,
+      todayOrders,
+      todayRevenue,
+    ] = await Promise.all([
+      db.order.count(),
+      db.order.count({ where: { status: 'PENDING' } }),
+      db.order.count({
+        where: {
+          status: 'DELIVERED',
+          createdAt: { gte: today, lt: tomorrow },
         },
-      },
-    });
-
-    // Get orders out for delivery
-    const outForDelivery = await db.order.count({
-      where: {
-        status: 'OUT_FOR_DELIVERY',
-      },
-    });
-
-    // Get today's orders count
-    const todayOrders = await db.order.count({
-      where: {
-        createdAt: {
-          gte: startOfDay,
+      }),
+      db.order.count({ where: { status: 'OUT_FOR_DELIVERY' } }),
+      db.order.count({
+        where: { createdAt: { gte: today, lt: tomorrow } },
+      }),
+      db.order.aggregate({
+        where: {
+          createdAt: { gte: today, lt: tomorrow },
+          status: { not: 'CANCELLED' },
         },
-      },
-    });
+        _sum: { total: true },
+      }),
+    ]);
 
-    // Get today's revenue
-    const todayRevenue = await db.order.aggregate({
-      _sum: {
-        total: true,
-      },
-      where: {
-        status: {
-          in: [
-            'CONFIRMED',
-            'PREPARING',
-            'READY',
-            'OUT_FOR_DELIVERY',
-            'DELIVERED',
-          ],
-        },
-        createdAt: {
-          gte: startOfDay,
-        },
-      },
-    });
+    // Calculate completion rate
+    const totalTodayOrders = todayOrders || 1; // Avoid division by zero
+    const completionRate = (completedOrders / totalTodayOrders) * 100;
 
     // Calculate average order value
-    const avgOrderValue = await db.order.aggregate({
-      _avg: {
-        total: true,
-      },
-      where: {
-        status: {
-          not: 'CANCELLED',
-        },
-      },
+    const avgOrderResult = await db.order.aggregate({
+      where: { status: { not: 'CANCELLED' } },
+      _avg: { total: true },
     });
-
-    // Calculate completion rate (delivered vs total non-cancelled orders today)
-    const todayNonCancelledOrders = await db.order.count({
-      where: {
-        status: {
-          not: 'CANCELLED',
-        },
-        createdAt: {
-          gte: startOfDay,
-        },
-      },
-    });
-
-    const completionRate =
-      todayNonCancelledOrders > 0
-        ? (completedOrders / todayNonCancelledOrders) * 100
-        : 0;
 
     const stats = {
       totalOrders,
@@ -105,8 +56,8 @@ export const GET = requireAdmin(async (request: NextRequest) => {
       outForDelivery,
       todayOrders,
       todayRevenue: todayRevenue._sum.total || 0,
-      avgOrderValue: avgOrderValue._avg.total || 0,
-      completionRate,
+      avgOrderValue: avgOrderResult._avg.total || 0,
+      completionRate: Math.round(completionRate * 10) / 10, // Round to 1 decimal
     };
 
     return NextResponse.json({

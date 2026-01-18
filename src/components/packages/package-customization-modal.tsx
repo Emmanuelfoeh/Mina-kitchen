@@ -54,18 +54,32 @@ export function PackageCustomizationModal({
   const [customizations, setCustomizations] = useState<
     PackageItemCustomization[]
   >(
-    pkg.includedItems.map(item => ({
-      menuItemId: item.menuItemId,
-      quantity: item.quantity,
-      customizations: item.includedCustomizations.map(customization => {
-        const [customizationId, optionId] = customization.split(':');
-        return {
-          customizationId,
-          optionIds: [optionId],
-          textValue: undefined,
-        };
-      }),
-    }))
+    pkg.includedItems.map(item => {
+      // Find the menu item to get customization details
+      const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
+
+      return {
+        menuItemId: item.menuItemId,
+        quantity: item.quantity,
+        customizations: item.includedCustomizations.map(customization => {
+          const [customizationId, optionId] = customization.split(':');
+
+          // Find the customization and option to get their names
+          const customizationObj = menuItem?.customizations.find(
+            c => c.id === customizationId
+          );
+          const option = customizationObj?.options.find(o => o.id === optionId);
+
+          return {
+            customizationId,
+            customizationName: customizationObj?.name,
+            optionIds: [optionId],
+            optionNames: option ? [option.name] : undefined,
+            textValue: undefined,
+          };
+        }),
+      };
+    })
   );
 
   const updateQuantity = (menuItemId: string, newQuantity: number) => {
@@ -86,18 +100,37 @@ export function PackageCustomizationModal({
     textValue?: string
   ) => {
     setCustomizations(prev =>
-      prev.map(item =>
-        item.menuItemId === menuItemId
-          ? {
-              ...item,
-              customizations: item.customizations.map(c =>
-                c.customizationId === customizationId
-                  ? { ...c, optionIds, textValue }
-                  : c
-              ),
-            }
-          : item
-      )
+      prev.map(item => {
+        if (item.menuItemId !== menuItemId) return item;
+
+        // Find the menu item to get customization details
+        const menuItem = menuItems.find(mi => mi.id === menuItemId);
+        const customization = menuItem?.customizations.find(
+          c => c.id === customizationId
+        );
+        const customizationName = customization?.name;
+
+        // Get option names
+        const optionNames = optionIds.map(optionId => {
+          const option = customization?.options.find(o => o.id === optionId);
+          return option?.name || optionId;
+        });
+
+        return {
+          ...item,
+          customizations: item.customizations.map(c =>
+            c.customizationId === customizationId
+              ? {
+                  ...c,
+                  customizationName,
+                  optionIds,
+                  optionNames,
+                  textValue,
+                }
+              : c
+          ),
+        };
+      })
     );
   };
 
@@ -159,6 +192,8 @@ export function PackageCustomizationModal({
         addItem({
           id: `${item.menuItemId}-${Date.now()}-${i}`,
           menuItemId: item.menuItemId,
+          name: menuItem.name,
+          image: menuItem.image,
           quantity: 1,
           selectedCustomizations: item.customizations,
           specialInstructions: `From ${pkg.name} package`,

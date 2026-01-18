@@ -24,7 +24,7 @@ const sidebarItems = [
     title: 'Live Orders',
     href: '/admin/orders',
     icon: ShoppingBag,
-    badge: '12',
+    badge: '',
   },
   {
     title: 'Menu Management',

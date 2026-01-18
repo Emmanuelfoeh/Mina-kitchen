@@ -129,7 +129,7 @@ export const orderSchema = z.object({
 });
 
 export const orderItemSchema = z.object({
-  menuItemId: z.string().cuid('Invalid menu item ID'),
+  menuItemId: z.string().min(1, 'Menu item ID is required'),
   quantity: z
     .number()
     .int()
@@ -138,8 +138,12 @@ export const orderItemSchema = z.object({
   customizations: z
     .array(
       z.object({
-        customizationId: z.string().cuid(),
-        optionIds: z.array(z.string().cuid()).max(10, 'Too many options'),
+        customizationId: z.string().min(1, 'Customization ID is required'),
+        customizationName: z.string().optional(), // Optional display name
+        optionIds: z
+          .array(z.string().min(1, 'Option ID is required'))
+          .max(10, 'Too many options'),
+        optionNames: z.array(z.string()).optional(), // Optional display names
         textValue: z
           .string()
           .max(200, 'Text value too long')

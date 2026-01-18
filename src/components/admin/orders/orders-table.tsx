@@ -118,6 +118,7 @@ export function OrdersTable() {
       });
 
       const response = await fetch(`/api/admin/orders?${params}`);
+
       if (response.ok) {
         const data = await response.json();
         setOrders(data.data.orders);
@@ -278,7 +279,7 @@ export function OrdersTable() {
               </th>
               <th className="px-6 py-4">Order</th>
               <th className="px-6 py-4">Customer</th>
-              <th className="px-6 py-4">Items</th>
+              {/* <th className="px-6 py-4">Items</th> */}
               <th className="px-6 py-4">Total</th>
               <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4">Type</th>
@@ -321,9 +322,9 @@ export function OrdersTable() {
                         {order.customer.email}
                       </div>
                     </td>
-                    <td className="max-w-[200px] truncate px-6 py-4 text-sm text-gray-600">
+                    {/* <td className="max-w-[200px] truncate px-6 py-4 text-sm text-gray-600">
                       {formatOrderItems(order.items)}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 text-sm font-bold text-gray-900">
                       ${order.total.toFixed(2)}
                     </td>

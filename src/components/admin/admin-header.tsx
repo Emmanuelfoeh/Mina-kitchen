@@ -17,7 +17,8 @@ export function AdminHeader() {
   }, [isAuthenticated, initializeAuth]);
 
   // Get user initials for avatar fallback
-  const getUserInitials = (name: string) => {
+  const getUserInitials = (name: string | undefined | null) => {
+    if (!name) return 'U';
     return name
       .split(' ')
       .map(n => n[0])
@@ -40,7 +41,7 @@ export function AdminHeader() {
 
       <div className="flex items-center gap-6">
         {/* View Store Button */}
-        <Link href="/" >
+        <Link href="/">
           <Button
             variant="outline"
             size="sm"
@@ -61,7 +62,7 @@ export function AdminHeader() {
             <>
               <div className="hidden text-right sm:block">
                 <p className="text-sm leading-none font-bold text-gray-900">
-                  {user.name}
+                  {user.name || 'Admin User'}
                 </p>
                 <p className="mt-1 text-xs font-medium text-gray-500">
                   {user.role === 'ADMIN' ? 'Administrator' : 'Manager'}

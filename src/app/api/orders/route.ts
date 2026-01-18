@@ -12,11 +12,11 @@ import { z } from 'zod';
 import type { Order, OrderItem, OrderStatus, PaymentStatus } from '@/types';
 
 const createOrderSchema = z.object({
-  customerId: z.string().cuid('Invalid customer ID'),
+  customerId: z.string().min(1, 'Customer ID is required'),
   items: z
     .array(
       orderItemSchema.extend({
-        menuItemId: z.string().cuid('Invalid menu item ID'),
+        menuItemId: z.string().min(1, 'Menu item ID is required'),
         unitPrice: z.number().positive('Unit price must be positive').max(1000),
         totalPrice: z
           .number()
@@ -26,8 +26,14 @@ const createOrderSchema = z.object({
     )
     .min(1, 'At least one item is required')
     .max(50, 'Too many items in order'),
-  deliveryType: z.enum(['DELIVERY', 'PICKUP']),
-  deliveryAddressId: z.string().cuid().optional(),
+  deliveryType: z
+    .enum(['DELIVERY', 'PICKUP'])
+    .or(z.enum(['delivery', 'pickup']))
+    .transform(val => {
+      // Handle both uppercase and lowercase values
+      return val.toUpperCase() as 'DELIVERY' | 'PICKUP';
+    }),
+  deliveryAddressId: z.string().min(1).optional(),
   scheduledFor: z.string().datetime().optional(),
   specialInstructions: z
     .string()
@@ -73,6 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('Order creation request body:', JSON.stringify(body, null, 2));
 
     // Validate and sanitize input
     const validatedData = createOrderSchema.parse(body);
@@ -127,6 +134,8 @@ export async function POST(request: NextRequest) {
 
     // Verify menu items exist and calculate prices
     const menuItemIds = validatedData.items.map(item => item.menuItemId);
+    console.log('Looking for menu items with IDs:', menuItemIds);
+
     const menuItems = await db.menuItem.findMany({
       where: {
         id: { in: menuItemIds },
@@ -134,10 +143,26 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log(
+      'Found menu items:',
+      menuItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        status: item.status,
+      }))
+    );
+
     if (menuItems.length !== menuItemIds.length) {
+      const foundIds = menuItems.map(item => item.id);
+      const missingIds = menuItemIds.filter(id => !foundIds.includes(id));
+      console.log('Missing menu item IDs:', missingIds);
+
       return SecurityHeaders.applyHeaders(
         NextResponse.json(
-          { success: false, error: 'Some menu items are not available' },
+          {
+            success: false,
+            error: `Menu items not found: ${missingIds.join(', ')}`,
+          },
           { status: 400 }
         )
       );
@@ -230,7 +255,17 @@ export async function POST(request: NextRequest) {
         },
       },
       include: {
-        items: true,
+        items: {
+          include: {
+            menuItem: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
         customer: {
           select: {
             id: true,

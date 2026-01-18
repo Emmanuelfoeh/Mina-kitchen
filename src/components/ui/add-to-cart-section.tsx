@@ -116,6 +116,8 @@ export function AddToCartSection({
       const cartItem: CartItem = {
         id: generateId(),
         menuItemId: item.id,
+        name: item.name,
+        image: item.image,
         quantity,
         selectedCustomizations,
         specialInstructions: specialInstructions || undefined,

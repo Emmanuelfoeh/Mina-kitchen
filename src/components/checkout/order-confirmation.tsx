@@ -286,7 +286,8 @@ export function OrderConfirmation() {
                       <div className="mb-1 flex items-center space-x-2">
                         <Badge variant="secondary">{item.quantity}x</Badge>
                         <span className="font-medium">
-                          Menu Item #{item.menuItemId}
+                          {item.menuItem?.name ||
+                            `Menu Item #${item.menuItemId}`}
                         </span>
                       </div>
 
