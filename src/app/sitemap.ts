@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 
-export default async function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://minakitchen.ca';
 
   // Static pages

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { MenuFilters } from './menu-filters';
 import { MenuGrid } from './menu-grid';
 import { Button } from '@/components/ui/button';
-import { formatCurrency, generateId } from '@/utils';
+import { generateId } from '@/utils';
 import { generateSlug } from '@/lib/utils';
 import { useCartStore } from '@/stores/cart-store';
 import type { MenuItem, MenuCategory, CartItem } from '@/types';
@@ -130,6 +130,7 @@ export function MenuBrowser() {
       <MenuGrid
         menuItems={menuItems}
         isLoading={isLoading}
+        selectedCategory={selectedCategory}
         onCustomizeClick={handleCustomizeClick}
         onQuickAdd={handleQuickAdd}
       />

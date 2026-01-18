@@ -1,9 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MoreHorizontal, Edit, Trash2, Eye, Copy } from 'lucide-react';
+import {
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Eye,
+  Copy,
+  RefreshCw,
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,7 +21,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { mockMenuItems } from '@/lib/mock-data';
 import type { MenuItem } from '@/types';
 
 const statusColors = {
@@ -32,35 +38,149 @@ const statusLabels = {
 };
 
 export function MenuItemsGrid() {
-  const [items, setItems] = useState<MenuItem[]>(mockMenuItems);
+  const [items, setItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleStatusChange = (
-    itemId: string,
-    newStatus: MenuItem['status']
-  ) => {
-    setItems(prev =>
-      prev.map(item =>
-        item.id === itemId ? { ...item, status: newStatus } : item
-      )
-    );
-  };
+  useEffect(() => {
+    fetchMenuItems();
+  }, []);
 
-  const handleDelete = (itemId: string) => {
-    if (confirm('Are you sure you want to delete this menu item?')) {
-      setItems(prev => prev.filter(item => item.id !== itemId));
+  const fetchMenuItems = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/admin/menu/items');
+      const result = await response.json();
+
+      if (result.success) {
+        setItems(result.data);
+      } else {
+        setError('Failed to load menu items');
+      }
+    } catch (error) {
+      console.error('Error fetching menu items:', error);
+      setError('Failed to load menu items');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDuplicate = (item: MenuItem) => {
-    const duplicatedItem: MenuItem = {
-      ...item,
-      id: `${item.id}-copy-${Date.now()}`,
-      name: `${item.name} (Copy)`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setItems(prev => [duplicatedItem, ...prev]);
+  const handleStatusChange = async (
+    itemId: string,
+    newStatus: MenuItem['status']
+  ) => {
+    try {
+      const response = await fetch(`/api/admin/menu/items/${itemId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        setItems(prev =>
+          prev.map(item =>
+            item.id === itemId ? { ...item, status: newStatus } : item
+          )
+        );
+      } else {
+        console.error('Failed to update item status');
+      }
+    } catch (error) {
+      console.error('Error updating item status:', error);
+    }
   };
+
+  const handleDelete = async (itemId: string) => {
+    if (confirm('Are you sure you want to delete this menu item?')) {
+      try {
+        const response = await fetch(`/api/admin/menu/items/${itemId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          setItems(prev => prev.filter(item => item.id !== itemId));
+        } else {
+          console.error('Failed to delete item');
+        }
+      } catch (error) {
+        console.error('Error deleting item:', error);
+      }
+    }
+  };
+
+  const handleDuplicate = async (item: MenuItem) => {
+    try {
+      const duplicatedItem = {
+        ...item,
+        name: `${item.name} (Copy)`,
+        slug: undefined, // Let the API generate a new slug
+      };
+
+      const response = await fetch('/api/admin/menu/items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(duplicatedItem),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setItems(prev => [result.data, ...prev]);
+        }
+      } else {
+        console.error('Failed to duplicate item');
+      }
+    } catch (error) {
+      console.error('Error duplicating item:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <Card key={index} className="overflow-hidden">
+            <div className="relative aspect-video animate-pulse bg-gray-200"></div>
+            <CardContent className="p-4">
+              <div className="space-y-2">
+                <div className="h-6 w-3/4 animate-pulse rounded bg-gray-200"></div>
+                <div className="h-4 w-full animate-pulse rounded bg-gray-200"></div>
+                <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200"></div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <p className="mb-4 text-red-600">{error}</p>
+        <Button onClick={fetchMenuItems} variant="outline">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <p className="mb-4 text-gray-500">No menu items found.</p>
+        <Link href="/admin/menu/new">
+          <Button>Add First Menu Item</Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

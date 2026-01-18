@@ -16,6 +16,8 @@ export default function TestCartPage() {
     const testItem: CartItem = {
       id: generateId(),
       menuItemId: `test-item-${addedItems + 1}`,
+      name: `Test Item ${addedItems + 1}`,
+      image: '/placeholder-food.svg',
       quantity: 1,
       selectedCustomizations: [],
       specialInstructions: `Test item ${addedItems + 1}`,
@@ -31,6 +33,8 @@ export default function TestCartPage() {
     const expensiveItem: CartItem = {
       id: generateId(),
       menuItemId: `expensive-item-${addedItems + 1}`,
+      name: `Expensive Test Item ${addedItems + 1}`,
+      image: '/placeholder-food.svg',
       quantity: 1,
       selectedCustomizations: [],
       specialInstructions: `Expensive test item ${addedItems + 1}`,

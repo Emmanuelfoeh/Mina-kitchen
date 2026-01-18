@@ -3,15 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { PopularDishes } from '@/components/home/popular-dishes';
 import Link from 'next/link';
-import {
-  Check,
-  Star,
-  Mail,
-  Plus,
-  ArrowRight,
-  ShoppingCart,
-} from 'lucide-react';
+import { Check, Star, Mail, ShoppingCart } from 'lucide-react';
 import { generateMetadata } from '@/lib/metadata';
 
 export const metadata: Metadata = generateMetadata({
@@ -142,136 +136,7 @@ export default function Home() {
       </section>
 
       {/* Popular Dishes Section */}
-      <section className="bg-white py-12">
-        <div className="mx-auto max-w-[1280px] px-4 md:px-10 lg:px-40">
-          <div className="mb-8 flex flex-col items-end justify-between gap-4 md:flex-row">
-            <div>
-              <h2 className="text-3xl leading-tight font-bold tracking-[-0.02em] text-[#1c100d]">
-                Popular Dishes
-              </h2>
-              <p className="mt-2 text-[#5c4a45]">
-                Local favorites that our customers can't get enough of.
-              </p>
-            </div>
-            <Link
-              href="/menu"
-              className="flex items-center gap-1 text-sm font-semibold text-[#f2330d] hover:underline"
-            >
-              View Full Menu <ArrowRight className="text-[18px]" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-            {/* Dish Card 1 */}
-            <Card className="group flex flex-col overflow-hidden rounded-xl border border-transparent bg-[#fcf9f8] transition-all duration-300 hover:border-[#f2330d]/20 hover:shadow-lg">
-              <div className="relative aspect-[4/3] w-full overflow-hidden">
-                <div
-                  className="h-full w-full bg-gray-200 bg-cover bg-center bg-no-repeat transition-transform duration-500 group-hover:scale-105"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1546833999-b9f581a1996d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80')",
-                  }}
-                ></div>
-                <div className="absolute top-3 right-3 rounded-md bg-white px-2 py-1 shadow-sm">
-                  <span className="text-xs font-bold text-[#f2330d]">
-                    Top Rated
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-1 flex-col gap-3 p-5">
-                <div className="flex items-start justify-between">
-                  <h3 className="text-lg leading-tight font-bold text-[#1c100d]">
-                    Smokey Jollof Rice
-                  </h3>
-                  <span className="text-lg font-bold text-[#f2330d]">
-                    $18.00
-                  </span>
-                </div>
-                <p className="line-clamp-2 text-sm text-[#5c4a45]">
-                  Fire-wood smoked rice served with spicy grilled chicken and
-                  fried plantain.
-                </p>
-                <Button className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg border border-[#f2330d] bg-white py-2.5 text-sm font-bold text-[#f2330d] transition-colors hover:bg-[#f2330d] hover:text-white">
-                  <Plus className="text-[18px]" />
-                  Add to Order
-                </Button>
-              </div>
-            </Card>
-
-            {/* Dish Card 2 */}
-            <Card className="group flex flex-col overflow-hidden rounded-xl border border-transparent bg-[#fcf9f8] transition-all duration-300 hover:border-[#f2330d]/20 hover:shadow-lg">
-              <div className="relative aspect-[4/3] w-full overflow-hidden">
-                <div
-                  className="h-full w-full bg-gray-200 bg-cover bg-center bg-no-repeat transition-transform duration-500 group-hover:scale-105"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1585032226651-759b368d7246?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80')",
-                  }}
-                ></div>
-              </div>
-              <div className="flex flex-1 flex-col gap-3 p-5">
-                <div className="flex items-start justify-between">
-                  <h3 className="text-lg leading-tight font-bold text-[#1c100d]">
-                    Egusi Soup & Yam
-                  </h3>
-                  <span className="text-lg font-bold text-[#f2330d]">
-                    $22.00
-                  </span>
-                </div>
-                <p className="line-clamp-2 text-sm text-[#5c4a45]">
-                  Rich melon seed soup with spinach and assorted meat, served
-                  with pounded yam.
-                </p>
-                <Button
-                  variant="outline"
-                  className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg border border-[#f2330d] bg-white py-2.5 text-sm font-bold text-[#f2330d] transition-colors hover:bg-[#f2330d] hover:text-white"
-                >
-                  <Plus className="text-[18px]" />
-                  Add to Order
-                </Button>
-              </div>
-            </Card>
-
-            {/* Dish Card 3 */}
-            <Card className="group flex flex-col overflow-hidden rounded-xl border border-transparent bg-[#fcf9f8] transition-all duration-300 hover:border-[#f2330d]/20 hover:shadow-lg">
-              <div className="relative aspect-[4/3] w-full overflow-hidden">
-                <div
-                  className="h-full w-full bg-gray-200 bg-cover bg-center bg-no-repeat transition-transform duration-500 group-hover:scale-105"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1529042410759-befb1204b468?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80')",
-                  }}
-                ></div>
-                <div className="absolute top-3 right-3 rounded-md bg-white px-2 py-1 shadow-sm">
-                  <span className="text-xs font-bold text-orange-600">
-                    Spicy
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-1 flex-col gap-3 p-5">
-                <div className="flex items-start justify-between">
-                  <h3 className="text-lg leading-tight font-bold text-[#1c100d]">
-                    Beef Suya Platter
-                  </h3>
-                  <span className="text-lg font-bold text-[#f2330d]">
-                    $24.00
-                  </span>
-                </div>
-                <p className="line-clamp-2 text-sm text-[#5c4a45]">
-                  Thinly sliced beef marinated in spicy peanut blend, grilled to
-                  perfection with onions.
-                </p>
-                <Button
-                  variant="outline"
-                  className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg border border-[#f2330d] bg-white py-2.5 text-sm font-bold text-[#f2330d] transition-colors hover:bg-[#f2330d] hover:text-white"
-                >
-                  <Plus className="text-[18px]" />
-                  Add to Order
-                </Button>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
+      <PopularDishes />
 
       {/* Meal Packages Section */}
       <section className="relative bg-[#fcf9f8] py-16">

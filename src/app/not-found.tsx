@@ -14,8 +14,12 @@ export default function NotFound() {
 
   useEffect(() => {
     // Get suggested URLs based on the current path
-    const urls = getSuggestedUrls(window.location.pathname);
-    setSuggestedUrls(urls);
+    const fetchSuggestions = async () => {
+      const urls = await getSuggestedUrls(window.location.pathname);
+      setSuggestedUrls(urls);
+    };
+
+    fetchSuggestions();
   }, []);
 
   return (

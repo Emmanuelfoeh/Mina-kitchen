@@ -7,6 +7,7 @@ import type { MenuItem } from '@/types';
 interface MenuGridProps {
   menuItems: MenuItem[];
   isLoading: boolean;
+  selectedCategory: string;
   onCustomizeClick: (menuItem: MenuItem) => void;
   onQuickAdd?: (menuItem: MenuItem) => void;
 }
@@ -14,6 +15,7 @@ interface MenuGridProps {
 export function MenuGrid({
   menuItems,
   isLoading,
+  selectedCategory,
   onCustomizeClick,
   onQuickAdd,
 }: MenuGridProps) {
@@ -49,6 +51,32 @@ export function MenuGrid({
     {} as Record<string, MenuItem[]>
   );
 
+  // If "All Menu" is selected, show items as a flat list without category groupings
+  if (selectedCategory === 'all') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-[#1c100d]">All Menu Items</h2>
+          <span className="text-sm text-[#5c4a45]">
+            {menuItems.length} {menuItems.length === 1 ? 'item' : 'items'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {menuItems.map(item => (
+            <MenuItemCard
+              key={item.id}
+              menuItem={item}
+              onCustomizeClick={() => onCustomizeClick(item)}
+              onQuickAdd={onQuickAdd ? () => onQuickAdd(item) : undefined}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // For specific category selections, group items by category
   return (
     <div className="space-y-12">
       {Object.entries(itemsByCategory).map(([categoryName, items]) => (
