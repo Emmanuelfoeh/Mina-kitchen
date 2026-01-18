@@ -38,32 +38,40 @@ async function main() {
   console.log('Customer user created:', customerUser.email);
 
   // Create menu categories
-  const mainDishes = await db.menuCategory.create({
-    data: {
+  const mainDishes = await db.menuCategory.upsert({
+    where: { name: 'Main Dishes' },
+    update: {},
+    create: {
       name: 'Main Dishes',
       description: 'Hearty traditional African main courses',
       displayOrder: 1,
     },
   });
 
-  const soups = await db.menuCategory.create({
-    data: {
+  const soups = await db.menuCategory.upsert({
+    where: { name: 'Soups' },
+    update: {},
+    create: {
       name: 'Soups',
       description: 'Rich and flavorful African soups',
       displayOrder: 2,
     },
   });
 
-  const sides = await db.menuCategory.create({
-    data: {
+  const sides = await db.menuCategory.upsert({
+    where: { name: 'Sides' },
+    update: {},
+    create: {
       name: 'Sides',
       description: 'Perfect accompaniments to your meal',
       displayOrder: 3,
     },
   });
 
-  const starters = await db.menuCategory.create({
-    data: {
+  const starters = await db.menuCategory.upsert({
+    where: { name: 'Starters' },
+    update: {},
+    create: {
       name: 'Starters',
       description: 'Light bites to start your meal',
       displayOrder: 4,
@@ -71,8 +79,15 @@ async function main() {
   });
 
   // Create menu items
-  const jollofRice = await db.menuItem.create({
-    data: {
+  const jollofRice = await db.menuItem.upsert({
+    where: {
+      categoryId_name: {
+        categoryId: mainDishes.id,
+        name: 'Smokey Jollof Rice',
+      },
+    },
+    update: {},
+    create: {
       name: 'Smokey Jollof Rice',
       description:
         'Fire-wood smoked rice served with spicy grilled chicken and fried plantain.',
@@ -274,6 +289,161 @@ async function main() {
       },
     },
   });
+
+  console.log('Menu items created successfully!');
+
+  // Create packages
+  const dailyPackage = await db.package.create({
+    data: {
+      name: 'Daily Meal Package',
+      description:
+        'Perfect for trying our authentic African cuisine with a complete meal for one day.',
+      type: 'DAILY',
+      price: 35.0,
+      image:
+        'https://images.unsplash.com/photo-1546833999-b9f581a1996d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80',
+      isActive: true,
+      features: JSON.stringify([
+        'Complete meal for one person',
+        'Authentic West African flavors',
+        'Includes main dish, side, and starter',
+        'Perfect portion sizes',
+        'Ready in 30 minutes',
+      ]),
+      includedItems: {
+        create: [
+          {
+            menuItemId: jollofRice.id,
+            quantity: 1,
+            includedCustomizations: JSON.stringify(['pepper-level:medium']),
+          },
+          {
+            menuItemId: friedPlantain.id,
+            quantity: 1,
+            includedCustomizations: JSON.stringify([
+              'preparation-style:regular',
+            ]),
+          },
+          {
+            menuItemId: beefSuya.id,
+            quantity: 1,
+            includedCustomizations: JSON.stringify(['spice-level:medium']),
+          },
+        ],
+      },
+    },
+  });
+
+  const weeklyPackage = await db.package.create({
+    data: {
+      name: 'Weekly Meal Package',
+      description:
+        "A week's worth of delicious African meals with variety and convenience.",
+      type: 'WEEKLY',
+      price: 220.0,
+      image:
+        'https://images.unsplash.com/photo-1585032226651-759b368d7246?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+      isActive: true,
+      features: JSON.stringify([
+        '7 complete meals for the week',
+        'Variety of main dishes and sides',
+        'Includes traditional soups',
+        'Save 15% compared to individual orders',
+        'Meal planning made easy',
+        'Fresh ingredients daily',
+      ]),
+      includedItems: {
+        create: [
+          {
+            menuItemId: jollofRice.id,
+            quantity: 2,
+            includedCustomizations: JSON.stringify(['pepper-level:medium']),
+          },
+          {
+            menuItemId: egusiSoup.id,
+            quantity: 2,
+            includedCustomizations: JSON.stringify(['spice-level:medium']),
+          },
+          {
+            menuItemId: pepperSoup.id,
+            quantity: 1,
+            includedCustomizations: JSON.stringify(['heat-level:medium']),
+          },
+          {
+            menuItemId: friedPlantain.id,
+            quantity: 3,
+            includedCustomizations: JSON.stringify([
+              'preparation-style:regular',
+            ]),
+          },
+          {
+            menuItemId: beefSuya.id,
+            quantity: 1,
+            includedCustomizations: JSON.stringify(['spice-level:medium']),
+          },
+        ],
+      },
+    },
+  });
+
+  const monthlyPackage = await db.package.create({
+    data: {
+      name: 'Monthly Meal Package',
+      description:
+        'The ultimate African cuisine experience with a full month of diverse, authentic meals.',
+      type: 'MONTHLY',
+      price: 850.0,
+      image:
+        'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+      isActive: true,
+      features: JSON.stringify([
+        '30 complete meals for the month',
+        'Maximum variety with all menu categories',
+        'Includes soups, mains, sides, and starters',
+        'Save 25% compared to individual orders',
+        'Priority delivery scheduling',
+        'Customizable meal rotation',
+        'Dedicated customer support',
+        'Free delivery included',
+      ]),
+      includedItems: {
+        create: [
+          {
+            menuItemId: jollofRice.id,
+            quantity: 4,
+            includedCustomizations: JSON.stringify(['pepper-level:medium']),
+          },
+          {
+            menuItemId: egusiSoup.id,
+            quantity: 4,
+            includedCustomizations: JSON.stringify(['spice-level:medium']),
+          },
+          {
+            menuItemId: pepperSoup.id,
+            quantity: 2,
+            includedCustomizations: JSON.stringify(['heat-level:medium']),
+          },
+          {
+            menuItemId: friedPlantain.id,
+            quantity: 8,
+            includedCustomizations: JSON.stringify([
+              'preparation-style:regular',
+            ]),
+          },
+          {
+            menuItemId: beefSuya.id,
+            quantity: 2,
+            includedCustomizations: JSON.stringify(['spice-level:medium']),
+          },
+        ],
+      },
+    },
+  });
+
+  console.log('Packages created successfully!');
+  console.log('Daily Package:', dailyPackage.name);
+  console.log('Weekly Package:', weeklyPackage.name);
+  console.log('Monthly Package:', monthlyPackage.name);
 
   console.log('Seed data created successfully!');
 }

@@ -1,14 +1,48 @@
 import { NextResponse } from 'next/server';
-import { mockPackages } from '@/lib/mock-data';
+import { db } from '@/lib/db';
 
 export async function GET() {
   try {
-    // Filter only active packages
-    const activePackages = mockPackages.filter(pkg => pkg.isActive);
+    // Fetch active packages from database
+    const packages = await db.package.findMany({
+      where: { isActive: true },
+      include: {
+        includedItems: {
+          include: {
+            menuItem: {
+              include: {
+                category: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Transform packages to match frontend expectations
+    const transformedPackages = packages.map(pkg => ({
+      ...pkg,
+      type: pkg.type.toLowerCase() as 'daily' | 'weekly' | 'monthly',
+      features:
+        typeof pkg.features === 'string'
+          ? JSON.parse(pkg.features)
+          : pkg.features,
+      includedItems: pkg.includedItems.map(item => ({
+        menuItemId: item.menuItemId,
+        quantity: item.quantity,
+        includedCustomizations:
+          typeof item.includedCustomizations === 'string'
+            ? JSON.parse(item.includedCustomizations)
+            : item.includedCustomizations,
+      })),
+    }));
 
     return NextResponse.json({
       success: true,
-      data: activePackages,
+      data: transformedPackages,
     });
   } catch (error) {
     console.error('Error fetching packages:', error);

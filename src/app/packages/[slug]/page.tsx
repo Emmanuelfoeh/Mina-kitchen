@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { Suspense } from 'react';
-import { mockPackages, mockMenuItems } from '@/lib/mock-data';
 import { generateSlug } from '@/lib/utils';
 import { BreadcrumbGenerator } from '@/lib/navigation';
 import {
@@ -32,9 +31,70 @@ interface PackagePageProps {
   };
 }
 
+// Fetch package data from API
+async function getPackageBySlug(slug: string): Promise<Package | null> {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/packages/slug/${slug}`,
+      { cache: 'no-store' }
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return data.success ? data.data : null;
+  } catch (error) {
+    console.error('Error fetching package:', error);
+    return null;
+  }
+}
+
+// Fetch all packages for static generation and related packages
+async function getAllPackages(): Promise<Package[]> {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/packages`,
+      { cache: 'no-store' }
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+    return data.success ? data.data : [];
+  } catch (error) {
+    console.error('Error fetching packages:', error);
+    return [];
+  }
+}
+
+// Fetch all menu items
+async function getAllMenuItems(): Promise<MenuItem[]> {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/menu/items`,
+      { cache: 'no-store' }
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+    return data.success ? data.data : [];
+  } catch (error) {
+    console.error('Error fetching menu items:', error);
+    return [];
+  }
+}
+
 // Generate static params for all packages
 export async function generateStaticParams() {
-  return mockPackages.map(pkg => ({
+  const packages = await getAllPackages();
+  return packages.map(pkg => ({
     slug: pkg.slug || generateSlug(pkg.name),
   }));
 }
@@ -44,22 +104,23 @@ export async function generateMetadata({
   params,
 }: PackagePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const pkg = getPackageBySlug(slug);
+  const pkg = await getPackageBySlug(slug);
 
   if (!pkg) {
     return {
-      title: 'Package Not Found - AfroEats',
+      title: 'Package Not Found - Mina Kitchen',
       description: 'The requested meal package could not be found.',
     };
   }
 
   const individualPrice = calculateIndividualPrice(pkg);
   const savings = individualPrice - pkg.price;
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://afroeats.com'}/packages/${slug}`;
+  const canonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://minakitchen.com'}/packages/${slug}`;
 
   return {
     title:
-      pkg.seoTitle || `${pkg.name} - Authentic African Meal Package | AfroEats`,
+      pkg.seoTitle ||
+      `${pkg.name} - Authentic African Meal Package | Mina Kitchen`,
     description:
       pkg.seoDescription ||
       `${pkg.description} Save ${savings.toFixed(2)} with this curated meal package. Order online for delivery or pickup.`,
@@ -73,14 +134,16 @@ export async function generateMetadata({
     openGraph: {
       title: pkg.name,
       description: pkg.description,
-      images: [
-        {
-          url: pkg.image,
-          width: 1200,
-          height: 630,
-          alt: pkg.name,
-        },
-      ],
+      images: pkg.image
+        ? [
+            {
+              url: pkg.image,
+              width: 1200,
+              height: 630,
+              alt: pkg.name,
+            },
+          ]
+        : [],
       type: 'website',
       url: canonicalUrl,
     },
@@ -88,7 +151,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: pkg.name,
       description: pkg.description,
-      images: [pkg.image],
+      images: pkg.image ? [pkg.image] : [],
     },
     alternates: {
       canonical: canonicalUrl,
@@ -96,22 +159,17 @@ export async function generateMetadata({
   };
 }
 
-function getPackageBySlug(slug: string): Package | null {
-  return (
-    mockPackages.find(pkg => (pkg.slug || generateSlug(pkg.name)) === slug) ||
-    null
-  );
-}
-
-function getMenuItemById(id: string): MenuItem | null {
-  return mockMenuItems.find(item => item.id === id) || null;
+function getMenuItemById(menuItems: MenuItem[], id: string): MenuItem | null {
+  return menuItems.find(item => item.id === id) || null;
 }
 
 function calculateIndividualPrice(pkg: Package): number {
   return pkg.includedItems.reduce((total, packageItem) => {
-    const menuItem = getMenuItemById(packageItem.menuItemId);
-    if (menuItem) {
-      return total + menuItem.basePrice * packageItem.quantity;
+    // If the package item includes the menu item data, use it directly
+    if ('menuItem' in packageItem && packageItem.menuItem) {
+      return (
+        total + (packageItem.menuItem as any).basePrice * packageItem.quantity
+      );
     }
     return total;
   }, 0);
@@ -124,11 +182,17 @@ function PackagePageLoadingSkeleton() {
 
 export default async function PackagePage({ params }: PackagePageProps) {
   const { slug } = await params;
-  const pkg = getPackageBySlug(slug);
+  const pkg = await getPackageBySlug(slug);
 
   if (!pkg) {
     notFound();
   }
+
+  // Fetch related data
+  const [allPackages, allMenuItems] = await Promise.all([
+    getAllPackages(),
+    getAllMenuItems(),
+  ]);
 
   // Initialize screen reader support
   if (typeof window !== 'undefined') {
@@ -145,11 +209,11 @@ export default async function PackagePage({ params }: PackagePageProps) {
 
   const breadcrumbItems = BreadcrumbGenerator.forPackage(pkg);
 
-  const images = pkg.images && pkg.images.length > 0 ? pkg.images : [pkg.image];
+  const images = pkg.image ? [pkg.image] : [];
 
   // Get related items and packages for recommendations
-  const relatedItems = getRelatedItemsForPackage(pkg, mockMenuItems, 6);
-  const relatedPackages = getRelatedPackages(pkg, mockPackages, 3);
+  const relatedItems = getRelatedItemsForPackage(pkg, allMenuItems, 6);
+  const relatedPackages = getRelatedPackages(pkg, allPackages, 3);
 
   return (
     <Suspense fallback={<PackagePageLoadingSkeleton />}>
@@ -216,7 +280,7 @@ export default async function PackagePage({ params }: PackagePageProps) {
                   </h3>
                   <PackageCustomizationInterface
                     package={pkg}
-                    menuItems={mockMenuItems}
+                    menuItems={allMenuItems}
                   />
                 </div>
               </div>
@@ -242,10 +306,14 @@ export default async function PackagePage({ params }: PackagePageProps) {
                   <p className="text-lg font-semibold text-gray-900 sm:text-xl">
                     {
                       new Set(
-                        pkg.includedItems.map(item => {
-                          const menuItem = getMenuItemById(item.menuItemId);
-                          return menuItem?.category.name;
-                        })
+                        pkg.includedItems
+                          .map(item => {
+                            if ('menuItem' in item && item.menuItem) {
+                              return (item.menuItem as any).category?.name;
+                            }
+                            return null;
+                          })
+                          .filter(Boolean)
                       ).size
                     }
                   </p>
@@ -268,7 +336,11 @@ export default async function PackagePage({ params }: PackagePageProps) {
 
             <ResponsiveCardGrid variant="default">
               {pkg.includedItems.map((packageItem, index) => {
-                const menuItem = getMenuItemById(packageItem.menuItemId);
+                // Get menu item from the included data
+                const menuItem =
+                  'menuItem' in packageItem
+                    ? (packageItem.menuItem as any)
+                    : null;
                 if (!menuItem) return null;
 
                 return (
@@ -277,11 +349,17 @@ export default async function PackagePage({ params }: PackagePageProps) {
                     className="rounded-lg border p-3 transition-shadow hover:shadow-md sm:p-4"
                   >
                     <div className="mb-3 aspect-video overflow-hidden rounded-md bg-gray-100">
-                      <img
-                        src={menuItem.image}
-                        alt={menuItem.name}
-                        className="h-full w-full object-cover"
-                      />
+                      {menuItem.image ? (
+                        <img
+                          src={menuItem.image}
+                          alt={menuItem.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <span className="text-gray-400">No image</span>
+                        </div>
+                      )}
                     </div>
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <h3 className="text-sm font-semibold text-gray-900 sm:text-base">
@@ -298,18 +376,19 @@ export default async function PackagePage({ params }: PackagePageProps) {
                     </p>
                     <div className="flex items-center justify-between text-xs sm:text-sm">
                       <span className="text-gray-500">
-                        {menuItem.category.name}
+                        {menuItem.category?.name}
                       </span>
                       <span className="font-medium text-green-600">
-                        ${menuItem.basePrice.toFixed(2)} each
+                        ${menuItem.basePrice?.toFixed(2)} each
                       </span>
                     </div>
-                    {packageItem.includedCustomizations.length > 0 && (
-                      <div className="mt-2 text-xs text-gray-500">
-                        Includes:{' '}
-                        {packageItem.includedCustomizations.join(', ')}
-                      </div>
-                    )}
+                    {packageItem.includedCustomizations &&
+                      packageItem.includedCustomizations.length > 0 && (
+                        <div className="mt-2 text-xs text-gray-500">
+                          Includes:{' '}
+                          {packageItem.includedCustomizations.join(', ')}
+                        </div>
+                      )}
                   </div>
                 );
               })}

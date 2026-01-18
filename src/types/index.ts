@@ -89,6 +89,8 @@ export interface Package {
   isActive: boolean;
   features: string[];
   relatedPackageIds?: string[]; // Related package IDs
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface PackageItem {

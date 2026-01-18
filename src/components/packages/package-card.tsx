@@ -69,12 +69,23 @@ export function PackageCard({
     <Card className="group overflow-hidden border-0 shadow-lg transition-all duration-300 hover:shadow-xl">
       {/* Package Image */}
       <div className="relative h-48 overflow-hidden">
-        <Image
-          src={pkg.image}
-          alt={pkg.name}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-        />
+        {pkg.image ? (
+          <Image
+            src={pkg.image}
+            alt={pkg.name}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gray-100">
+            <div className="text-center">
+              <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-gray-200">
+                <Clock className="h-8 w-8 text-gray-400" />
+              </div>
+              <p className="text-sm text-gray-500">No image</p>
+            </div>
+          </div>
+        )}
         <div className="absolute top-4 left-4">
           <Badge className={`${getPackageTypeStyle(pkg.type)} font-semibold`}>
             {pkg.type.charAt(0).toUpperCase() + pkg.type.slice(1)}

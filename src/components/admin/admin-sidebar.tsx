@@ -10,7 +10,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  ExternalLink,
+  Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +30,11 @@ const sidebarItems = [
     title: 'Menu Management',
     href: '/admin/menu',
     icon: BookOpen,
+  },
+  {
+    title: 'Package Management',
+    href: '/admin/packages',
+    icon: Package,
   },
   {
     title: 'Customers',

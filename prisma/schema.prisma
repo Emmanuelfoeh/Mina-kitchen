@@ -87,6 +87,7 @@ model MenuItem {
   orderItems     OrderItem[]
   packageItems   PackageItem[]
 
+  @@unique([categoryId, name])
   @@map("menu_items")
 }
 
@@ -126,12 +127,17 @@ model CustomizationOption {
 model Package {
   id          String      @id @default(cuid())
   name        String
+  slug        String?     @unique
   description String
   type        PackageType
   price       Float
-  image       String
+  image       String?
   isActive    Boolean     @default(true)
   features    String // JSON array stored as string
+  seoTitle    String?
+  seoDescription String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   // Relations
   includedItems PackageItem[]

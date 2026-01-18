@@ -16,7 +16,7 @@ export default function AdminDashboard() {
             Welcome back! Here&apos;s what&apos;s happening at your restaurant today.
           </p>
         </div>
-        <div className="flex gap-3">
+        {/* <div className="flex gap-3">
           <Button variant="outline" className="gap-2 bg-white">
             <Download className="w-4 h-4" />
             Export Report
@@ -25,7 +25,7 @@ export default function AdminDashboard() {
             <Plus className="w-4 h-4" />
             New Item
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Metrics Grid */}
