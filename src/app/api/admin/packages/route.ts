@@ -3,20 +3,6 @@ import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { generateSlug } from '@/lib/utils';
-import type {
-  Package,
-  PackageItem,
-  MenuItem,
-  MenuCategory,
-} from '@prisma/client';
-
-type PackageWithItems = Package & {
-  includedItems: (PackageItem & {
-    menuItem: MenuItem & {
-      category: MenuCategory;
-    };
-  })[];
-};
 
 const packageSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -125,27 +111,21 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     const totalPages = Math.ceil(totalCount / limit);
 
     // Transform packages to match frontend expectations
-    const transformedPackages = packages.map((pkg: PackageWithItems) => ({
+    const transformedPackages = packages.map((pkg: any) => ({
       ...pkg,
       type: pkg.type.toLowerCase() as 'daily' | 'weekly' | 'monthly',
       features:
         typeof pkg.features === 'string'
           ? JSON.parse(pkg.features)
           : pkg.features,
-      includedItems: pkg.includedItems.map(
-        (
-          item: PackageItem & {
-            menuItem: MenuItem & { category: MenuCategory };
-          }
-        ) => ({
-          menuItemId: item.menuItemId,
-          quantity: item.quantity,
-          includedCustomizations:
-            typeof item.includedCustomizations === 'string'
-              ? JSON.parse(item.includedCustomizations)
-              : item.includedCustomizations,
-        })
-      ),
+      includedItems: pkg.includedItems.map((item: any) => ({
+        menuItemId: item.menuItemId,
+        quantity: item.quantity,
+        includedCustomizations:
+          typeof item.includedCustomizations === 'string'
+            ? JSON.parse(item.includedCustomizations)
+            : item.includedCustomizations,
+      })),
     }));
 
     return NextResponse.json({
