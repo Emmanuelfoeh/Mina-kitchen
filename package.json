@@ -23,6 +23,9 @@
     "perf:audit": "lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-report.html",
     "perf:test": "npm run build && npm run start & sleep 5 && npm run perf:audit && kill %1"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.2.0",

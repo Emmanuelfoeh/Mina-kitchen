@@ -1,6 +1,7 @@
 import 'dotenv/config';
-import bcrypt from 'bcryptjs';
+const bcrypt = require('bcryptjs');
 import { db } from '../src/lib/db';
+import type { CustomizationOption } from '@prisma/client';
 
 // Helper function to get actual customization and option IDs
 async function getDefaultCustomizations(
@@ -23,7 +24,9 @@ async function getDefaultCustomizations(
 
     if (customization) {
       // Find the option by name
-      const option = customization.options.find(opt => opt.name === optionName);
+      const option = customization.options.find(
+        (opt: CustomizationOption) => opt.name === optionName
+      );
       if (option) {
         customizations.push(`${customization.id}:${option.id}`);
       }
