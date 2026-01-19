@@ -131,7 +131,7 @@ class AnalyticsManager {
 
     // Initialize gtag
     window.dataLayer = window.dataLayer || [];
-    function gtag(...args: any[]) {
+    function gtag(...args: [string, ...any[]]) {
       window.dataLayer.push(args);
     }
     (window as any).gtag = gtag;
@@ -533,6 +533,6 @@ export default analytics;
 declare global {
   interface Window {
     dataLayer: any[];
-    gtag: (...args: any[]) => void;
+    gtag: (...args: [string, ...any[]]) => void;
   }
 }

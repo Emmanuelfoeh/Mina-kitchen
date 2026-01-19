@@ -85,7 +85,10 @@ export async function generateAnalyticsReport(
 /**
  * Export analytics data to CSV format
  */
-export function exportAnalyticsToCSV(data: any[], filename: string): void {
+export function exportAnalyticsToCSV(
+  data: Record<string, any>[],
+  filename: string
+): void {
   if (data.length === 0) return;
 
   const headers = Object.keys(data[0]);
@@ -131,7 +134,9 @@ export interface FunnelMetrics {
   dropoffPoints: Array<{ step: string; dropoffRate: number }>;
 }
 
-export function calculateConversionFunnel(events: any[]): FunnelMetrics {
+export function calculateConversionFunnel(
+  events: Record<string, any>[]
+): FunnelMetrics {
   const pageViews = events.filter(e => e.event === 'page_view').length;
   const itemViews = events.filter(
     e =>
@@ -189,7 +194,9 @@ export interface EngagementAnalysis {
   topEngagementPages: Array<{ page: string; score: number }>;
 }
 
-export function analyzeUserEngagement(events: any[]): EngagementAnalysis {
+export function analyzeUserEngagement(
+  events: Record<string, any>[]
+): EngagementAnalysis {
   const engagementEvents = events.filter(e => e.event.includes('engagement'));
   const exitEvents = events.filter(e => e.event.includes('exit_point'));
 
@@ -292,7 +299,7 @@ export interface PerformanceInsights {
 }
 
 export function generatePerformanceInsights(
-  events: any[]
+  events: Record<string, any>[]
 ): PerformanceInsights {
   const performanceEvents = events.filter(e => e.event.includes('performance'));
 
@@ -352,9 +359,18 @@ export function generatePerformanceInsights(
 
   return {
     coreWebVitals: {
-      lcp: { value: avgLCP, rating: rateLCP(avgLCP) as any },
-      fid: { value: avgFID, rating: rateFID(avgFID) as any },
-      cls: { value: avgCLS, rating: rateCLS(avgCLS) as any },
+      lcp: {
+        value: avgLCP,
+        rating: rateLCP(avgLCP) as 'good' | 'needs-improvement' | 'poor',
+      },
+      fid: {
+        value: avgFID,
+        rating: rateFID(avgFID) as 'good' | 'needs-improvement' | 'poor',
+      },
+      cls: {
+        value: avgCLS,
+        rating: rateCLS(avgCLS) as 'good' | 'needs-improvement' | 'poor',
+      },
     },
     loadingPerformance: {
       averageLoadTime: 0, // Would be calculated from load_complete metrics

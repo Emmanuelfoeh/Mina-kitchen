@@ -164,7 +164,7 @@ export const PATCH = requireAdmin(async (request: NextRequest) => {
               customerName: order.customer.name,
               status: status,
               estimatedDelivery: order.estimatedDelivery || undefined,
-              deliveryAddress: order.deliveryAddress,
+              deliveryAddress: order.deliveryAddress || undefined,
             });
           } catch (notificationError) {
             console.error(

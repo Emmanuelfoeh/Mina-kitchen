@@ -60,7 +60,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: Record<string, any> = {};
 
     if (search) {
       where.OR = [

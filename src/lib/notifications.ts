@@ -7,7 +7,7 @@ export interface NotificationData {
   customerName: string;
   status: string;
   estimatedDelivery?: Date;
-  deliveryAddress?: any;
+  deliveryAddress?: Record<string, any>;
 }
 
 export class NotificationService {
@@ -274,9 +274,11 @@ export class NotificationService {
   /**
    * Generate order confirmation email content
    */
-  private static generateConfirmationEmailContent(order: any) {
+  private static generateConfirmationEmailContent(order: Record<string, any>) {
     const itemsList = order.items
-      .map((item: any) => `${item.quantity}x ${item.menuItem.name}`)
+      .map(
+        (item: Record<string, any>) => `${item.quantity}x ${item.menuItem.name}`
+      )
       .join(', ');
 
     const html = `

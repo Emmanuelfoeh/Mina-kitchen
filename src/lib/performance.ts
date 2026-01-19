@@ -533,7 +533,7 @@ export function usePerformanceMonitor() {
 // Enhanced optimization utilities
 export const optimizationUtils = {
   // Debounce function for performance
-  debounce<T extends (...args: any[]) => any>(
+  debounce<T extends (...args: any[]) => void>(
     func: T,
     wait: number
   ): (...args: Parameters<T>) => void {
@@ -545,7 +545,7 @@ export const optimizationUtils = {
   },
 
   // Throttle function for performance
-  throttle<T extends (...args: any[]) => any>(
+  throttle<T extends (...args: any[]) => void>(
     func: T,
     limit: number
   ): (...args: Parameters<T>) => void {

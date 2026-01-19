@@ -57,7 +57,7 @@ export class InputSanitizer {
   /**
    * Sanitize and validate JSON input
    */
-  static sanitizeJSON(input: any): any {
+  static sanitizeJSON(input: unknown): Record<string, any> | null {
     try {
       if (typeof input === 'string') {
         const parsed = JSON.parse(input);
@@ -72,7 +72,7 @@ export class InputSanitizer {
   /**
    * Deep sanitize object properties
    */
-  private static deepSanitizeObject(obj: any): any {
+  private static deepSanitizeObject(obj: unknown): any {
     if (obj === null || obj === undefined) return obj;
 
     if (typeof obj === 'string') {
@@ -87,8 +87,8 @@ export class InputSanitizer {
       return obj.map(item => this.deepSanitizeObject(item));
     }
 
-    if (typeof obj === 'object') {
-      const sanitized: any = {};
+    if (typeof obj === 'object' && obj !== null) {
+      const sanitized: Record<string, any> = {};
       for (const [key, value] of Object.entries(obj)) {
         const sanitizedKey = this.sanitizeString(key);
         sanitized[sanitizedKey] = this.deepSanitizeObject(value);

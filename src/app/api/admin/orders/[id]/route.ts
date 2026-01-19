@@ -167,7 +167,7 @@ export const PATCH = requireAdmin(async (request: NextRequest) => {
           customerName: updatedOrder.customer.name,
           status: updatedOrder.status,
           estimatedDelivery: updatedOrder.estimatedDelivery || undefined,
-          deliveryAddress: updatedOrder.deliveryAddress,
+          deliveryAddress: updatedOrder.deliveryAddress || undefined,
         });
       } catch (notificationError) {
         console.error('Failed to send status notification:', notificationError);

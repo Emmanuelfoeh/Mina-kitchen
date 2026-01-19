@@ -5,12 +5,6 @@ import { SecurityHeaders, RateLimiter } from '@/lib/security';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-console.log('Proxy JWT_SECRET check:', {
-  hasEnvVar: !!process.env.JWT_SECRET,
-  secretLength: JWT_SECRET.length,
-  secretPreview: JWT_SECRET.substring(0, 10) + '...',
-});
-
 /**
  * Proxy to handle URL redirects, validation, security headers, and admin authentication
  */
@@ -70,15 +64,7 @@ export async function proxy(request: NextRequest) {
     // Check for unified authentication token
     const authToken = request.cookies.get('auth-token')?.value;
 
-    console.log('Admin route access attempt:', {
-      pathname,
-      hasToken: !!authToken,
-      tokenPreview: authToken ? authToken.substring(0, 20) + '...' : 'missing',
-      cookieCount: request.cookies.size,
-    });
-
     if (!authToken) {
-      console.log('No auth token found, redirecting to login');
       const url = request.nextUrl.clone();
       url.pathname = '/auth/login';
       url.searchParams.set('redirect', pathname);
@@ -89,27 +75,13 @@ export async function proxy(request: NextRequest) {
       const secret = new TextEncoder().encode(JWT_SECRET);
       const { payload } = await jwtVerify(authToken!, secret);
 
-      console.log('Token decoded successfully:', {
-        fullDecoded: payload,
-        role: payload.role,
-        userId: payload.userId,
-        email: payload.email,
-      });
-
       if (payload.role !== 'ADMIN') {
-        console.log(
-          'User is not admin, redirecting to login. Role found:',
-          payload.role
-        );
         const url = request.nextUrl.clone();
         url.pathname = '/auth/login';
         url.searchParams.set('redirect', pathname);
         return NextResponse.redirect(url);
       }
-
-      console.log('Admin access granted for:', pathname);
     } catch (error) {
-      console.log('Token verification failed:', error);
       // Invalid token, redirect to login
       const url = request.nextUrl.clone();
       url.pathname = '/auth/login';

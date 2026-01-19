@@ -14,6 +14,45 @@ interface ViewMenuItemPageProps {
   }>;
 }
 
+// Type for the database result with relations
+type MenuItemWithRelations = {
+  id: string;
+  name: string;
+  description: string;
+  basePrice: number;
+  image: string;
+  status: string;
+  tags: string;
+  chefNotes: string | null;
+  preparationTime: number | null;
+  allergens: string[];
+  seoTitle: string | null;
+  seoDescription: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  categoryId: string;
+  category: {
+    id: string;
+    name: string;
+    description: string;
+    displayOrder: number;
+    isActive: boolean;
+  };
+  customizations: Array<{
+    id: string;
+    name: string;
+    type: string;
+    required: boolean;
+    maxSelections: number | null;
+    options: Array<{
+      id: string;
+      name: string;
+      priceModifier: number;
+      isAvailable: boolean;
+    }>;
+  }>;
+};
+
 const statusColors = {
   ACTIVE: 'bg-green-100 text-green-800 border-green-200',
   INACTIVE: 'bg-gray-100 text-gray-800 border-gray-200',
@@ -34,21 +73,32 @@ export default async function ViewMenuItemPage({
   const { id } = await params;
 
   // Fetch the menu item from database
-  const menuItem = await db.menuItem.findUnique({
-    where: { id },
-    include: {
-      category: true,
-      customizations: {
-        include: {
-          options: true,
+  const rawMenuItem: MenuItemWithRelations | null =
+    await db.menuItem.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        customizations: {
+          include: {
+            options: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!menuItem) {
+  if (!rawMenuItem) {
     notFound();
   }
+
+  // Transform the data to ensure proper typing
+  const menuItem = {
+    ...rawMenuItem,
+    status: rawMenuItem.status as
+      | 'ACTIVE'
+      | 'INACTIVE'
+      | 'SOLD_OUT'
+      | 'LOW_STOCK',
+  };
 
   // Parse tags from JSON string
   const tags = JSON.parse(menuItem.tags || '[]');
