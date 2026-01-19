@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdmin, AuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { generateSlug } from '@/lib/utils';
@@ -55,7 +55,7 @@ const packageUpdateSchema = z.object({
 export const GET = requireAdmin(
   async (
     request: NextRequest,
-    user: any,
+    user: AuthUser,
     context?: { params: Promise<{ id: string }> }
   ) => {
     try {
@@ -126,7 +126,7 @@ export const GET = requireAdmin(
 export const PUT = requireAdmin(
   async (
     request: NextRequest,
-    user: any,
+    user: AuthUser,
     context?: { params: Promise<{ id: string }> }
   ) => {
     try {
@@ -272,7 +272,7 @@ export const PUT = requireAdmin(
 export const PATCH = requireAdmin(
   async (
     request: NextRequest,
-    user: any,
+    user: AuthUser,
     context?: { params: Promise<{ id: string }> }
   ) => {
     try {
@@ -342,7 +342,7 @@ export const PATCH = requireAdmin(
 export const DELETE = requireAdmin(
   async (
     request: NextRequest,
-    user: any,
+    user: AuthUser,
     context?: { params: Promise<{ id: string }> }
   ) => {
     try {

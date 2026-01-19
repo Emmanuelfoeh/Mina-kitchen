@@ -116,7 +116,12 @@ export const PATCH = requireAdmin(async (request: NextRequest) => {
     }
 
     // Update order
-    const updateData: any = {
+    const updateData: {
+      updatedAt: Date;
+      status?: OrderStatus;
+      estimatedDelivery?: Date;
+      specialInstructions?: string | null;
+    } = {
       updatedAt: new Date(),
     };
 

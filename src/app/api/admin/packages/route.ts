@@ -3,6 +3,20 @@ import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { generateSlug } from '@/lib/utils';
+import type {
+  Package,
+  PackageItem,
+  MenuItem,
+  MenuCategory,
+} from '@prisma/client';
+
+type PackageWithItems = Package & {
+  includedItems: (PackageItem & {
+    menuItem: MenuItem & {
+      category: MenuCategory;
+    };
+  })[];
+};
 
 const packageSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -61,7 +75,14 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: {
+      OR?: Array<{
+        name?: { contains: string; mode: 'insensitive' };
+        description?: { contains: string; mode: 'insensitive' };
+      }>;
+      isActive?: boolean;
+      type?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+    } = {};
 
     if (search) {
       where.OR = [
@@ -75,7 +96,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     }
 
     if (type && type !== 'all') {
-      where.type = type.toUpperCase();
+      where.type = type.toUpperCase() as 'DAILY' | 'WEEKLY' | 'MONTHLY';
     }
 
     const [packages, totalCount] = await Promise.all([
@@ -104,21 +125,27 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     const totalPages = Math.ceil(totalCount / limit);
 
     // Transform packages to match frontend expectations
-    const transformedPackages = packages.map(pkg => ({
+    const transformedPackages = packages.map((pkg: PackageWithItems) => ({
       ...pkg,
       type: pkg.type.toLowerCase() as 'daily' | 'weekly' | 'monthly',
       features:
         typeof pkg.features === 'string'
           ? JSON.parse(pkg.features)
           : pkg.features,
-      includedItems: pkg.includedItems.map(item => ({
-        menuItemId: item.menuItemId,
-        quantity: item.quantity,
-        includedCustomizations:
-          typeof item.includedCustomizations === 'string'
-            ? JSON.parse(item.includedCustomizations)
-            : item.includedCustomizations,
-      })),
+      includedItems: pkg.includedItems.map(
+        (
+          item: PackageItem & {
+            menuItem: MenuItem & { category: MenuCategory };
+          }
+        ) => ({
+          menuItemId: item.menuItemId,
+          quantity: item.quantity,
+          includedCustomizations:
+            typeof item.includedCustomizations === 'string'
+              ? JSON.parse(item.includedCustomizations)
+              : item.includedCustomizations,
+        })
+      ),
     }));
 
     return NextResponse.json({

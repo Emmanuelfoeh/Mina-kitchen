@@ -275,7 +275,7 @@ export async function POST(request: NextRequest) {
         tip: 0, // TODO: Add tip functionality
         total: validatedData.total,
         status: 'PENDING',
-        deliveryType: validatedData.deliveryType as any,
+        deliveryType: validatedData.deliveryType as 'DELIVERY' | 'PICKUP',
         deliveryAddressId: validatedData.deliveryAddressId || null,
         scheduledFor,
         estimatedDelivery: scheduledFor

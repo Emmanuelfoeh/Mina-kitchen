@@ -17,7 +17,18 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: {
+      OR?: Array<{
+        orderNumber?: { contains: string; mode: 'insensitive' };
+        customer?: {
+          OR: Array<{
+            name?: { contains: string; mode: 'insensitive' };
+            email?: { contains: string; mode: 'insensitive' };
+          }>;
+        };
+      }>;
+      status?: OrderStatus;
+    } = {};
 
     // Search by order number or customer name/email
     if (search) {

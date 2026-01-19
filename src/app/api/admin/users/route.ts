@@ -39,7 +39,15 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: {
+      OR?: Array<{
+        name?: { contains: string; mode: 'insensitive' };
+        email?: { contains: string; mode: 'insensitive' };
+        id?: { contains: string; mode: 'insensitive' };
+      }>;
+      role?: 'CUSTOMER' | 'ADMIN';
+      isVerified?: boolean;
+    } = {};
 
     // Search filter
     if (search) {
@@ -52,7 +60,7 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
 
     // Role filter
     if (role !== 'all') {
-      where.role = role;
+      where.role = role as 'CUSTOMER' | 'ADMIN';
     }
 
     // Status filter
@@ -211,7 +219,10 @@ export const PATCH = requireAuth(async (request: NextRequest, authUser) => {
     }
 
     // Prepare update data
-    const updateData: any = {};
+    const updateData: {
+      isVerified?: boolean;
+      role?: 'CUSTOMER' | 'ADMIN';
+    } = {};
     if (validatedData.isVerified !== undefined) {
       updateData.isVerified = validatedData.isVerified;
     }

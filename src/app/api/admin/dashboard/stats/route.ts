@@ -184,7 +184,9 @@ export const GET = requireAdmin(async (request: NextRequest) => {
         _count: { menuItemId: number };
         _sum: { quantity: number | null };
       }) => {
-        const menuItem = menuItems.find(item => item.id === dish.menuItemId);
+        const menuItem = menuItems.find(
+          (item: { id: string }) => item.id === dish.menuItemId
+        );
         return {
           ...menuItem,
           orderCount: dish._count.menuItemId,
