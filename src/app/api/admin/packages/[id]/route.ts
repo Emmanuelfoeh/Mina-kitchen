@@ -98,7 +98,7 @@ export const GET = requireAdmin(
           typeof packageData.features === 'string'
             ? JSON.parse(packageData.features)
             : packageData.features,
-        includedItems: packageData.includedItems.map(item => ({
+        includedItems: packageData.includedItems.map((item) => ({
           menuItemId: item.menuItemId,
           quantity: item.quantity,
           includedCustomizations:
@@ -155,7 +155,7 @@ export const PUT = requireAdmin(
       }
 
       // Update package in transaction
-      const updatedPackage = await db.$transaction(async tx => {
+      const updatedPackage = await db.$transaction(async (tx) => {
         // Delete existing package items if new ones are provided
         if (validatedData.includedItems) {
           await tx.packageItem.deleteMany({
@@ -200,7 +200,7 @@ export const PUT = requireAdmin(
             // Create new package items if provided
             ...(validatedData.includedItems && {
               includedItems: {
-                create: validatedData.includedItems.map(item => ({
+                create: validatedData.includedItems.map((item) => ({
                   menuItemId: item.menuItemId,
                   quantity: item.quantity,
                   includedCustomizations: JSON.stringify(
@@ -234,7 +234,7 @@ export const PUT = requireAdmin(
           | 'weekly'
           | 'monthly',
         features: JSON.parse(updatedPackage.features as string),
-        includedItems: updatedPackage.includedItems.map(item => ({
+        includedItems: updatedPackage.includedItems.map((item) => ({
           menuItemId: item.menuItemId,
           quantity: item.quantity,
           includedCustomizations: JSON.parse(
@@ -313,7 +313,7 @@ export const PATCH = requireAdmin(
           typeof updatedPackage.features === 'string'
             ? JSON.parse(updatedPackage.features)
             : updatedPackage.features,
-        includedItems: updatedPackage.includedItems.map(item => ({
+        includedItems: updatedPackage.includedItems.map((item) => ({
           menuItemId: item.menuItemId,
           quantity: item.quantity,
           includedCustomizations:
