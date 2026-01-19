@@ -163,7 +163,9 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     });
 
     // Get menu item details for popular dishes
-    const menuItemIds = popularDishes.map(dish => dish.menuItemId);
+    const menuItemIds = popularDishes.map(
+      (dish: { menuItemId: string }) => dish.menuItemId
+    );
     const menuItems = await db.menuItem.findMany({
       where: {
         id: {
@@ -176,14 +178,20 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     });
 
     // Combine popular dishes with menu item details
-    const popularDishesWithDetails = popularDishes.map(dish => {
-      const menuItem = menuItems.find(item => item.id === dish.menuItemId);
-      return {
-        ...menuItem,
-        orderCount: dish._count.menuItemId,
-        totalQuantity: dish._sum.quantity || 0,
-      };
-    });
+    const popularDishesWithDetails = popularDishes.map(
+      (dish: {
+        menuItemId: string;
+        _count: { menuItemId: number };
+        _sum: { quantity: number | null };
+      }) => {
+        const menuItem = menuItems.find(item => item.id === dish.menuItemId);
+        return {
+          ...menuItem,
+          orderCount: dish._count.menuItemId,
+          totalQuantity: dish._sum.quantity || 0,
+        };
+      }
+    );
 
     // Get recent orders (last 10)
     const recentOrders = await db.order.findMany({
