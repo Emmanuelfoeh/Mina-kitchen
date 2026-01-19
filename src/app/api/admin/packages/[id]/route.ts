@@ -3,7 +3,7 @@ import { requireAdmin, AuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { generateSlug } from '@/lib/utils';
-import type { Prisma } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 
 // Helper function to generate unique slug (excluding current package)
 async function generateUniqueSlug(
@@ -157,7 +157,17 @@ export const PUT = requireAdmin(
 
       // Update package in transaction
       const updatedPackage = await db.$transaction(
-        async (tx: Prisma.TransactionClient) => {
+        async (
+          tx: Omit<
+            PrismaClient,
+            | '$connect'
+            | '$disconnect'
+            | '$on'
+            | '$transaction'
+            | '$use'
+            | '$extends'
+          >
+        ) => {
           // Delete existing package items if new ones are provided
           if (validatedData.includedItems) {
             await tx.packageItem.deleteMany({

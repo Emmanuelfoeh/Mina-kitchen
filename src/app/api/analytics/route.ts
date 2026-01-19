@@ -71,7 +71,15 @@ export async function POST(request: NextRequest) {
 /**
  * Process analytics event - customize this based on your needs
  */
-async function processAnalyticsEvent(payload: any) {
+async function processAnalyticsEvent(
+  payload: AnalyticsEventPayload & {
+    server_timestamp: number;
+    client_ip: string;
+    server_user_agent: string;
+    referer: string | null;
+    origin: string | null;
+  }
+) {
   // Here you can:
   // 1. Store events in a database
   // 2. Forward to external analytics services
@@ -134,7 +142,15 @@ async function processAnalyticsEvent(payload: any) {
 /**
  * Handle cart conversion events
  */
-async function handleCartConversion(payload: any) {
+async function handleCartConversion(
+  payload: AnalyticsEventPayload & {
+    server_timestamp: number;
+    client_ip: string;
+    server_user_agent: string;
+    referer: string | null;
+    origin: string | null;
+  }
+) {
   // Track conversion metrics
   const conversionData = {
     itemId: payload.custom_parameters?.item_id,
@@ -156,7 +172,15 @@ async function handleCartConversion(payload: any) {
 /**
  * Handle customization tracking events
  */
-async function handleCustomizationTracking(payload: any) {
+async function handleCustomizationTracking(
+  payload: AnalyticsEventPayload & {
+    server_timestamp: number;
+    client_ip: string;
+    server_user_agent: string;
+    referer: string | null;
+    origin: string | null;
+  }
+) {
   // Track popular customizations
   const customizationData = {
     itemId: payload.custom_parameters?.item_id,
@@ -177,7 +201,15 @@ async function handleCustomizationTracking(payload: any) {
 /**
  * Handle page view events
  */
-async function handlePageView(payload: any) {
+async function handlePageView(
+  payload: AnalyticsEventPayload & {
+    server_timestamp: number;
+    client_ip: string;
+    server_user_agent: string;
+    referer: string | null;
+    origin: string | null;
+  }
+) {
   // Track page popularity and user journeys
   const pageViewData = {
     pagePath: payload.custom_parameters?.page_path,
@@ -197,7 +229,15 @@ async function handlePageView(payload: any) {
 /**
  * Handle user behavior events
  */
-async function handleUserBehavior(payload: any) {
+async function handleUserBehavior(
+  payload: AnalyticsEventPayload & {
+    server_timestamp: number;
+    client_ip: string;
+    server_user_agent: string;
+    referer: string | null;
+    origin: string | null;
+  }
+) {
   // Track user engagement patterns
   const behaviorData = {
     eventType:

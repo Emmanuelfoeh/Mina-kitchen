@@ -47,6 +47,8 @@ const menuItemSchema = z.object({
     .default([]),
 });
 
+type MenuItemInput = z.infer<typeof menuItemSchema>;
+
 // GET /api/admin/menu/items - List all menu items
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
@@ -146,7 +148,7 @@ export const POST = requireAdmin(async (request: NextRequest) => {
         // Create customizations if provided
         ...(validatedData.customizations.length > 0 && {
           customizations: {
-            create: validatedData.customizations.map((custom: any) => ({
+            create: validatedData.customizations.map(custom => ({
               name: custom.name,
               type: custom.type.toUpperCase() as 'RADIO' | 'CHECKBOX' | 'TEXT',
               required: custom.required,

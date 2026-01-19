@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     let deliveryAddress = null;
     if (validatedData.deliveryAddressId) {
       deliveryAddress = customer.addresses.find(
-        (addr: any) => addr.id === validatedData.deliveryAddressId
+        addr => addr.id === validatedData.deliveryAddressId
       );
 
       if (!deliveryAddress) {

@@ -47,6 +47,8 @@ const menuItemSchema = z.object({
     .optional(),
 });
 
+type MenuItemUpdateInput = z.infer<typeof menuItemSchema>;
+
 // GET /api/admin/menu/items/[id] - Get single menu item
 export const GET = requireAdmin(
   async (
@@ -145,7 +147,7 @@ export const PATCH = requireAdmin(
         // Create new customizations
         if (validatedData.customizations.length > 0) {
           await db.customization.createMany({
-            data: validatedData.customizations.map((custom: any) => ({
+            data: validatedData.customizations.map(custom => ({
               menuItemId: id,
               name: custom.name,
               type: custom.type.toUpperCase() as 'RADIO' | 'CHECKBOX' | 'TEXT',
@@ -166,7 +168,7 @@ export const PATCH = requireAdmin(
 
             if (customization.options.length > 0) {
               await db.customizationOption.createMany({
-                data: customization.options.map((option: any) => ({
+                data: customization.options.map(option => ({
                   customizationId: createdCustomization.id,
                   name: option.name,
                   priceModifier: option.priceModifier,
