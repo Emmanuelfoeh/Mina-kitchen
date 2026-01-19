@@ -155,7 +155,7 @@ export const PUT = requireAdmin(
       }
 
       // Update package in transaction
-      const updatedPackage = await db.$transaction(async tx => {
+      const updatedPackage = await db.$transaction(async (tx: any) => {
         // Delete existing package items if new ones are provided
         if (validatedData.includedItems) {
           await tx.packageItem.deleteMany({
