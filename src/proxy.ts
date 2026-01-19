@@ -5,19 +5,19 @@ import { SecurityHeaders, RateLimiter } from '@/lib/security';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-console.log('Middleware JWT_SECRET check:', {
+console.log('Proxy JWT_SECRET check:', {
   hasEnvVar: !!process.env.JWT_SECRET,
   secretLength: JWT_SECRET.length,
   secretPreview: JWT_SECRET.substring(0, 10) + '...',
 });
 
 /**
- * Middleware to handle URL redirects, validation, security headers, and admin authentication
+ * Proxy to handle URL redirects, validation, security headers, and admin authentication
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files and API routes (except admin API)
+  // Skip proxy for static files and API routes (except admin API)
   if (
     pathname.startsWith('/_next/') ||
     (pathname.startsWith('/api/') && !pathname.startsWith('/api/admin/')) ||
@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/orders')
   ) {
     const clientId = RateLimiter.getClientIdentifier(request);
-    const { allowed, remaining, resetTime } = RateLimiter.checkRateLimit(
+    const { allowed, resetTime } = RateLimiter.checkRateLimit(
       clientId,
       pathname.startsWith('/api/auth/') ? 10 : 50, // Stricter limits for auth
       15 * 60 * 1000 // 15 minutes
@@ -159,7 +159,7 @@ export async function middleware(request: NextRequest) {
 }
 
 /**
- * Simple redirect patterns for middleware (avoiding imports)
+ * Simple redirect patterns for proxy (avoiding imports)
  */
 function getRedirectUrl(pathname: string): string | null {
   // Legacy URL patterns
