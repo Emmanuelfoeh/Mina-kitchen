@@ -58,10 +58,10 @@ async function getMenuItemBySlug(slug: string): Promise<MenuItem | null> {
         | 'sold_out'
         | 'low_stock',
       slug: generateSlug(menuItem.name),
-      customizations: menuItem.customizations.map(customization => ({
+      customizations: menuItem.customizations.map((customization: any) => ({
         ...customization,
         type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
-        options: customization.options.map(option => ({
+        options: customization.options.map((option: any) => ({
           ...option,
           isAvailable: true, // Default to available
         })),
@@ -130,7 +130,7 @@ async function getRelatedItems(
     }
 
     // Transform the data to match the expected format
-    return relatedItems.map(item => ({
+    return relatedItems.map((item: any) => ({
       ...item,
       basePrice: item.basePrice,
       image: item.image || '/placeholder-food.svg',
@@ -142,10 +142,10 @@ async function getRelatedItems(
         | 'sold_out'
         | 'low_stock',
       slug: generateSlug(item.name),
-      customizations: item.customizations.map(customization => ({
+      customizations: item.customizations.map((customization: any) => ({
         ...customization,
         type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
-        options: customization.options.map(option => ({
+        options: customization.options.map((option: any) => ({
           ...option,
           isAvailable: true, // Default to available
         })),
@@ -166,7 +166,7 @@ export async function generateStaticParams() {
       },
     });
 
-    return menuItems.map(item => ({
+    return menuItems.map((item: any) => ({
       slug: generateSlug(item.name),
     }));
   } catch (error) {

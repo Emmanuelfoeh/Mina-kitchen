@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     let deliveryAddress = null;
     if (validatedData.deliveryAddressId) {
       deliveryAddress = customer.addresses.find(
-        addr => addr.id === validatedData.deliveryAddressId
+        (addr: any) => addr.id === validatedData.deliveryAddressId
       );
 
       if (!deliveryAddress) {
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify menu items exist and calculate prices
-    const menuItemIds = validatedData.items.map(item => item.menuItemId);
+    const menuItemIds = validatedData.items.map((item: any) => item.menuItemId);
     console.log('Looking for menu items with IDs:', menuItemIds);
 
     const menuItems = await db.menuItem.findMany({
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
 
     console.log(
       'Found menu items:',
-      menuItems.map(item => ({
+      menuItems.map((item: any) => ({
         id: item.id,
         name: item.name,
         status: item.status,
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (menuItems.length !== menuItemIds.length) {
-      const foundIds = menuItems.map(item => item.id);
+      const foundIds = menuItems.map((item: any) => item.id);
       const missingIds = menuItemIds.filter(id => !foundIds.includes(id));
       console.log('Missing menu item IDs:', missingIds);
 
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
     // Validate pricing (prevent price manipulation)
     let calculatedSubtotal = 0;
     for (const item of validatedData.items) {
-      const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
+      const menuItem = menuItems.find((mi: any) => mi.id === item.menuItemId);
       if (!menuItem) continue;
 
       const expectedTotal = item.quantity * item.unitPrice;
@@ -284,7 +284,7 @@ export async function POST(request: NextRequest) {
         paymentStatus: 'PENDING',
         specialInstructions: validatedData.specialInstructions,
         items: {
-          create: validatedData.items.map(item => ({
+          create: validatedData.items.map((item: any) => ({
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             customizations: JSON.stringify(item.customizations || []),

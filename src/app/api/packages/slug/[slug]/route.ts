@@ -55,7 +55,7 @@ export async function GET(
         },
       });
 
-      pkg = packages.find(p => generateSlug(p.name) === slug) || null;
+      pkg = packages.find((p: any) => generateSlug(p.name) === slug) || null;
     }
 
     if (!pkg) {
@@ -77,7 +77,7 @@ export async function GET(
         typeof pkg.features === 'string'
           ? JSON.parse(pkg.features)
           : pkg.features,
-      includedItems: pkg.includedItems.map(item => ({
+      includedItems: pkg.includedItems.map((item: any) => ({
         menuItemId: item.menuItemId,
         quantity: item.quantity,
         includedCustomizations:
@@ -90,13 +90,13 @@ export async function GET(
           tags: item.menuItem.tags ? JSON.parse(item.menuItem.tags) : [],
           status: item.menuItem.status.toLowerCase(),
           slug: generateSlug(item.menuItem.name),
-          customizations: item.menuItem.customizations.map(customization => ({
+          customizations: item.menuItem.customizations.map((customization: any) => ({
             ...customization,
             type: customization.type.toLowerCase() as
               | 'radio'
               | 'checkbox'
               | 'text',
-            options: customization.options.map(option => ({
+            options: customization.options.map((option: any) => ({
               ...option,
               isAvailable: true,
             })),

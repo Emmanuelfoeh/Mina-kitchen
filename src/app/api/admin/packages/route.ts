@@ -182,7 +182,7 @@ export const POST = requireAdmin(async (request: NextRequest) => {
         // Create package items if provided
         ...(validatedData.includedItems.length > 0 && {
           includedItems: {
-            create: validatedData.includedItems.map(item => ({
+            create: validatedData.includedItems.map((item: any) => ({
               menuItemId: item.menuItemId,
               quantity: item.quantity,
               includedCustomizations: JSON.stringify(

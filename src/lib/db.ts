@@ -1,6 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+// Dynamic import to handle Prisma Client generation
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { PrismaClient } = require('@prisma/client');
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+
+type PrismaClientType = InstanceType<typeof PrismaClient>;
 
 // Load environment variables
 if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
@@ -8,10 +12,10 @@ if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
 }
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+  prisma: PrismaClientType | undefined;
 };
 
-let db: PrismaClient;
+let db: PrismaClientType;
 
 if (globalForPrisma.prisma) {
   db = globalForPrisma.prisma;

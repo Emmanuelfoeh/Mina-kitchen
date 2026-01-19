@@ -68,13 +68,13 @@ export const PATCH = requireAuth(
           for (const customization of validatedData.selectedCustomizations) {
             if (customization.optionIds && customization.optionIds.length > 0) {
               const menuCustomization = cartItem.menuItem.customizations.find(
-                c => c.id === customization.customizationId
+                (c: any) => c.id === customization.customizationId
               );
 
               if (menuCustomization) {
                 for (const optionId of customization.optionIds) {
                   const option = menuCustomization.options.find(
-                    o => o.id === optionId
+                    (o: any) => o.id === optionId
                   );
                   if (option) {
                     unitPrice += option.priceModifier;

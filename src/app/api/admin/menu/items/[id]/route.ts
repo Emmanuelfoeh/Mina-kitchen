@@ -168,7 +168,7 @@ export const PATCH = requireAdmin(
 
             if (customization.options.length > 0) {
               await db.customizationOption.createMany({
-                data: customization.options.map(option => ({
+                data: customization.options.map((option: any) => ({
                   customizationId: createdCustomization.id,
                   name: option.name,
                   priceModifier: option.priceModifier,

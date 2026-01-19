@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform the data to match the expected format
-    const transformedItems = menuItems.map(item => ({
+    const transformedItems = menuItems.map((item: any) => ({
       ...item,
       basePrice: item.basePrice,
       image: item.image || '/placeholder-food.svg',
@@ -64,10 +64,10 @@ export async function GET(request: NextRequest) {
       tags: item.tags ? JSON.parse(item.tags) : [],
       status: item.status.toLowerCase(),
       slug: generateSlug(item.name),
-      customizations: item.customizations.map(customization => ({
+      customizations: item.customizations.map((customization: any) => ({
         ...customization,
         type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
-        options: customization.options.map(option => ({
+        options: customization.options.map((option: any) => ({
           ...option,
           isAvailable: true, // Default to available
         })),

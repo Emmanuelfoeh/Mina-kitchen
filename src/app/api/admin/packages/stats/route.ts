@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 
 // GET /api/admin/packages/stats - Get package statistics
-export const GET = requireAdmin(async (request: NextRequest) => {
+export const GET = requireAdmin(async (_request: NextRequest) => {
   try {
     const [totalPackages, activePackages, packagePrices] = await Promise.all([
       db.package.count(),
@@ -16,7 +16,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 
     // Calculate total revenue (this would be from actual orders in a real system)
     const totalRevenue = packagePrices.reduce(
-      (sum: number, pkg) => sum + pkg.price,
+      (sum: number, pkg: (typeof packagePrices)[number]) => sum + pkg.price,
       0
     );
 

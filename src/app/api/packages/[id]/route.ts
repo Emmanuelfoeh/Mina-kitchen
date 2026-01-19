@@ -51,7 +51,7 @@ export async function GET(
         typeof packageData.features === 'string'
           ? JSON.parse(packageData.features)
           : packageData.features,
-      includedItems: packageData.includedItems.map(item => ({
+      includedItems: packageData.includedItems.map((item: any) => ({
         menuItemId: item.menuItemId,
         quantity: item.quantity,
         includedCustomizations:
