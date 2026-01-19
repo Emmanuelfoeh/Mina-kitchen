@@ -51,6 +51,11 @@ const packageUpdateSchema = z.object({
     .optional(),
 });
 
+type PackageUpdateInput = z.infer<typeof packageUpdateSchema>;
+type PackageItemInput = NonNullable<
+  PackageUpdateInput['includedItems']
+>[number];
+
 // GET /api/admin/packages/[id] - Get single package for admin
 export const GET = requireAdmin(
   async (
@@ -98,14 +103,16 @@ export const GET = requireAdmin(
           typeof packageData.features === 'string'
             ? JSON.parse(packageData.features)
             : packageData.features,
-        includedItems: packageData.includedItems.map((item) => ({
-          menuItemId: item.menuItemId,
-          quantity: item.quantity,
-          includedCustomizations:
-            typeof item.includedCustomizations === 'string'
-              ? JSON.parse(item.includedCustomizations)
-              : item.includedCustomizations,
-        })),
+        includedItems: packageData.includedItems.map(
+          (item: (typeof packageData.includedItems)[number]) => ({
+            menuItemId: item.menuItemId,
+            quantity: item.quantity,
+            includedCustomizations:
+              typeof item.includedCustomizations === 'string'
+                ? JSON.parse(item.includedCustomizations)
+                : item.includedCustomizations,
+          })
+        ),
       };
 
       return NextResponse.json({
@@ -155,7 +162,7 @@ export const PUT = requireAdmin(
       }
 
       // Update package in transaction
-      const updatedPackage = await db.$transaction(async (tx) => {
+      const updatedPackage = await db.$transaction(async tx => {
         // Delete existing package items if new ones are provided
         if (validatedData.includedItems) {
           await tx.packageItem.deleteMany({
@@ -200,13 +207,15 @@ export const PUT = requireAdmin(
             // Create new package items if provided
             ...(validatedData.includedItems && {
               includedItems: {
-                create: validatedData.includedItems.map((item) => ({
-                  menuItemId: item.menuItemId,
-                  quantity: item.quantity,
-                  includedCustomizations: JSON.stringify(
-                    item.includedCustomizations
-                  ),
-                })),
+                create: validatedData.includedItems.map(
+                  (item: PackageItemInput) => ({
+                    menuItemId: item.menuItemId,
+                    quantity: item.quantity,
+                    includedCustomizations: JSON.stringify(
+                      item.includedCustomizations
+                    ),
+                  })
+                ),
               },
             }),
           },
@@ -234,13 +243,15 @@ export const PUT = requireAdmin(
           | 'weekly'
           | 'monthly',
         features: JSON.parse(updatedPackage.features as string),
-        includedItems: updatedPackage.includedItems.map((item) => ({
-          menuItemId: item.menuItemId,
-          quantity: item.quantity,
-          includedCustomizations: JSON.parse(
-            item.includedCustomizations as string
-          ),
-        })),
+        includedItems: updatedPackage.includedItems.map(
+          (item: (typeof updatedPackage.includedItems)[number]) => ({
+            menuItemId: item.menuItemId,
+            quantity: item.quantity,
+            includedCustomizations: JSON.parse(
+              item.includedCustomizations as string
+            ),
+          })
+        ),
       };
 
       return NextResponse.json({
@@ -313,14 +324,16 @@ export const PATCH = requireAdmin(
           typeof updatedPackage.features === 'string'
             ? JSON.parse(updatedPackage.features)
             : updatedPackage.features,
-        includedItems: updatedPackage.includedItems.map((item) => ({
-          menuItemId: item.menuItemId,
-          quantity: item.quantity,
-          includedCustomizations:
-            typeof item.includedCustomizations === 'string'
-              ? JSON.parse(item.includedCustomizations)
-              : item.includedCustomizations,
-        })),
+        includedItems: updatedPackage.includedItems.map(
+          (item: (typeof updatedPackage.includedItems)[number]) => ({
+            menuItemId: item.menuItemId,
+            quantity: item.quantity,
+            includedCustomizations:
+              typeof item.includedCustomizations === 'string'
+                ? JSON.parse(item.includedCustomizations)
+                : item.includedCustomizations,
+          })
+        ),
       };
 
       return NextResponse.json({
