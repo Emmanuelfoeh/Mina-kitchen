@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MenuItemForm } from '@/components/admin/menu/menu-item-form';
 import { db } from '@/lib/db';
 import Link from 'next/link';
+import type { Prisma } from '@prisma/client';
 
 interface EditMenuItemPageProps {
   params: Promise<{
@@ -12,23 +13,35 @@ interface EditMenuItemPageProps {
   }>;
 }
 
+type MenuItemWithRelations = Prisma.MenuItemGetPayload<{
+  include: {
+    category: true;
+    customizations: {
+      include: {
+        options: true;
+      };
+    };
+  };
+}>;
+
 export default async function EditMenuItemPage({
   params,
 }: EditMenuItemPageProps) {
   const { id } = await params;
 
   // Fetch the menu item from database
-  const rawMenuItem = await db.menuItem.findUnique({
-    where: { id },
-    include: {
-      category: true,
-      customizations: {
-        include: {
-          options: true,
+  const rawMenuItem: MenuItemWithRelations | null =
+    await db.menuItem.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        customizations: {
+          include: {
+            options: true,
+          },
         },
       },
-    },
-  });
+    });
 
   if (!rawMenuItem) {
     notFound();
