@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MenuItemForm } from '@/components/admin/menu/menu-item-form';
 import { db } from '@/lib/db';
 import Link from 'next/link';
-import type { Prisma } from '@prisma/client';
 
 interface EditMenuItemPageProps {
   params: Promise<{
@@ -13,16 +12,44 @@ interface EditMenuItemPageProps {
   }>;
 }
 
-type MenuItemWithRelations = Prisma.MenuItemGetPayload<{
-  include: {
-    category: true;
-    customizations: {
-      include: {
-        options: true;
-      };
-    };
+// Type for the database result with relations
+type MenuItemWithRelations = {
+  id: string;
+  name: string;
+  description: string;
+  basePrice: number;
+  image: string;
+  status: string;
+  tags: string;
+  chefNotes: string | null;
+  preparationTime: number | null;
+  allergens: string[];
+  seoTitle: string | null;
+  seoDescription: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  categoryId: string;
+  category: {
+    id: string;
+    name: string;
+    description: string;
+    displayOrder: number;
+    isActive: boolean;
   };
-}>;
+  customizations: Array<{
+    id: string;
+    name: string;
+    type: string;
+    required: boolean;
+    maxSelections: number | null;
+    options: Array<{
+      id: string;
+      name: string;
+      priceModifier: number;
+      isAvailable: boolean;
+    }>;
+  }>;
+};
 
 export default async function EditMenuItemPage({
   params,
@@ -56,6 +83,11 @@ export default async function EditMenuItemPage({
     chefNotes: rawMenuItem.chefNotes || undefined,
     seoTitle: rawMenuItem.seoTitle || undefined,
     seoDescription: rawMenuItem.seoDescription || undefined,
+    status: rawMenuItem.status as
+      | 'ACTIVE'
+      | 'INACTIVE'
+      | 'SOLD_OUT'
+      | 'LOW_STOCK',
     customizations: rawMenuItem.customizations.map(customization => ({
       ...customization,
       type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
