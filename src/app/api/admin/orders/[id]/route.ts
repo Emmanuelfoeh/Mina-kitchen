@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { OrderStatus } from '@prisma/client';
+import { $Enums } from '@prisma/client';
 import { NotificationService } from '@/lib/notifications';
+
+type OrderStatus = $Enums.OrderStatus;
 
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
@@ -81,7 +83,17 @@ export const PATCH = requireAdmin(async (request: NextRequest) => {
     const { status, estimatedDelivery, specialInstructions } = body;
 
     // Validate status if provided
-    if (status && !Object.values(OrderStatus).includes(status)) {
+    const validStatuses: OrderStatus[] = [
+      'PENDING',
+      'CONFIRMED',
+      'PREPARING',
+      'READY',
+      'OUT_FOR_DELIVERY',
+      'DELIVERED',
+      'CANCELLED',
+    ];
+
+    if (status && !validStatuses.includes(status)) {
       return NextResponse.json(
         {
           success: false,
