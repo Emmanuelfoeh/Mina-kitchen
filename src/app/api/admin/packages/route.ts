@@ -198,7 +198,7 @@ export const POST = requireAdmin(async (request: NextRequest) => {
         // Create package items if provided
         ...(validatedData.includedItems.length > 0 && {
           includedItems: {
-            create: validatedData.includedItems.map(item => ({
+            create: validatedData.includedItems.map((item: any) => ({
               menuItemId: item.menuItemId,
               quantity: item.quantity,
               includedCustomizations: JSON.stringify(
@@ -226,7 +226,7 @@ export const POST = requireAdmin(async (request: NextRequest) => {
       ...packageData,
       type: packageData.type.toLowerCase() as 'daily' | 'weekly' | 'monthly',
       features: JSON.parse(packageData.features as string),
-      includedItems: packageData.includedItems.map(item => ({
+      includedItems: packageData.includedItems.map((item: any) => ({
         menuItemId: item.menuItemId,
         quantity: item.quantity,
         includedCustomizations: JSON.parse(

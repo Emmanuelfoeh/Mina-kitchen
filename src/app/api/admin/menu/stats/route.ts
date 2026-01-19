@@ -106,11 +106,17 @@ export const GET = requireAdmin(async (request: NextRequest) => {
           maxPrice: priceRange._max.basePrice || 0,
         },
         distribution: {
-          byCategory: itemsByCategory.map(category => ({
-            categoryId: category.id,
-            categoryName: category.name,
-            itemCount: category._count.menuItems,
-          })),
+          byCategory: itemsByCategory.map(
+            (category: {
+              id: string;
+              name: string;
+              _count: { menuItems: number };
+            }) => ({
+              categoryId: category.id,
+              categoryName: category.name,
+              itemCount: category._count.menuItems,
+            })
+          ),
           byStatus: [
             { status: 'ACTIVE', count: activeItems },
             { status: 'INACTIVE', count: inactiveItems },

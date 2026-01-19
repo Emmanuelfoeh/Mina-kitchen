@@ -145,7 +145,7 @@ export const PATCH = requireAdmin(
         // Create new customizations
         if (validatedData.customizations.length > 0) {
           await db.customization.createMany({
-            data: validatedData.customizations.map(custom => ({
+            data: validatedData.customizations.map((custom: any) => ({
               menuItemId: id,
               name: custom.name,
               type: custom.type.toUpperCase() as 'RADIO' | 'CHECKBOX' | 'TEXT',
@@ -166,7 +166,7 @@ export const PATCH = requireAdmin(
 
             if (customization.options.length > 0) {
               await db.customizationOption.createMany({
-                data: customization.options.map(option => ({
+                data: customization.options.map((option: any) => ({
                   customizationId: createdCustomization.id,
                   name: option.name,
                   priceModifier: option.priceModifier,

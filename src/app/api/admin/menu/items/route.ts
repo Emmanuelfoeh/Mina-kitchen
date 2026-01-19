@@ -146,7 +146,7 @@ export const POST = requireAdmin(async (request: NextRequest) => {
         // Create customizations if provided
         ...(validatedData.customizations.length > 0 && {
           customizations: {
-            create: validatedData.customizations.map(custom => ({
+            create: validatedData.customizations.map((custom: any) => ({
               name: custom.name,
               type: custom.type.toUpperCase() as 'RADIO' | 'CHECKBOX' | 'TEXT',
               required: custom.required,
