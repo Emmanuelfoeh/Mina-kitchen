@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { $Enums } from '@prisma/client';
 import { NotificationService } from '@/lib/notifications';
 
-type OrderStatus = $Enums.OrderStatus;
+type OrderStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'PREPARING'
+  | 'READY'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED'
+  | 'CANCELLED';
 
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
