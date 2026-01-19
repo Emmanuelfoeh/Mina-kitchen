@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { OrderStatus } from '@/generated/prisma/enums';
+import { OrderStatus } from '@prisma/client';
 import { NotificationService } from '@/lib/notifications';
 
 export const GET = requireAdmin(async (request: NextRequest) => {

@@ -1,6 +1,14 @@
 'use client';
 
-import { X, Plus, Minus, ShoppingCart } from 'lucide-react';
+import {
+  X,
+  Plus,
+  Minus,
+  ShoppingCart,
+  Wifi,
+  WifiOff,
+  AlertCircle,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCartSafe } from './cart-provider';
 import { formatCurrency } from '@/utils';
@@ -15,8 +23,17 @@ import type { CartItem, SelectedCustomization } from '@/types';
 export function CartSidebar() {
   const router = useRouter();
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const { items, isOpen, toggleCart, closeCart, removeItem, updateQuantity } =
-    useCartSafe();
+  const {
+    items,
+    isOpen,
+    toggleCart,
+    closeCart,
+    removeItem,
+    updateQuantity,
+    isSyncing,
+    syncError,
+    isAuthenticated,
+  } = useCartSafe();
 
   // Compute values directly from items to ensure reactivity
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
@@ -89,6 +106,31 @@ export function CartSidebar() {
               >
                 {totalItems}
               </Badge>
+            )}
+
+            {/* Sync Status Indicator */}
+            {isAuthenticated && (
+              <div className="flex items-center gap-1">
+                {isSyncing ? (
+                  <div className="flex items-center gap-1 text-xs text-blue-600">
+                    <div className="h-3 w-3 animate-spin rounded-full border-b border-blue-600"></div>
+                    <span>Syncing...</span>
+                  </div>
+                ) : syncError ? (
+                  <div
+                    className="flex items-center gap-1 text-xs text-red-600"
+                    title={syncError}
+                  >
+                    <WifiOff className="h-3 w-3" />
+                    <span>Sync Error</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-xs text-green-600">
+                    <Wifi className="h-3 w-3" />
+                    <span>Synced</span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
           <Button

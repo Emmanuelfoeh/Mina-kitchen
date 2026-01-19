@@ -72,7 +72,7 @@ export function AddressList() {
         </div>
       )}
 
-      {user.addresses.length === 0 ? (
+      {!user.addresses || user.addresses.length === 0 ? (
         <div className="rounded-lg border bg-gray-50 py-8 text-center">
           <p className="mb-4 text-gray-500">No addresses saved yet.</p>
           <Button
@@ -84,7 +84,7 @@ export function AddressList() {
         </div>
       ) : (
         <div className="space-y-4">
-          {user.addresses.map(address => (
+          {(user.addresses || []).map(address => (
             <div
               key={address.id}
               className={`rounded-lg border p-4 ${

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/stores/cart-store';
 import { useUserStore } from '@/stores/user-store';
@@ -9,7 +9,14 @@ import { DeliverySelection } from './delivery-selection';
 import { AddressForm } from './address-form';
 import { OrderScheduling } from './order-scheduling';
 import { OrderSummary } from './order-summary';
-import { CheckCircle, Truck, Calendar, CreditCard } from 'lucide-react';
+import {
+  CheckCircle,
+  Truck,
+  Calendar,
+  CreditCard,
+  AlertCircle,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type CheckoutStep = 'delivery' | 'address' | 'scheduling' | 'summary';
 
@@ -22,13 +29,51 @@ interface CheckoutData {
 
 export function CheckoutFlow() {
   const router = useRouter();
-  const { items, hasItems } = useCartStore();
+  const {
+    items,
+    hasItems,
+    isSyncing,
+    syncError,
+    isAuthenticated: cartIsAuthenticated,
+    syncCart,
+    loadServerCart,
+  } = useCartStore();
   const { isAuthenticated } = useUserStore();
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('delivery');
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     deliveryType: 'delivery',
   });
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Initialize cart sync when component mounts
+  useEffect(() => {
+    const initializeCheckout = async () => {
+      if (isAuthenticated && cartIsAuthenticated) {
+        try {
+          // Sync cart with server to ensure we have the latest data
+          await syncCart();
+        } catch (error) {
+          console.error('Failed to sync cart for checkout:', error);
+        }
+      }
+      setIsInitializing(false);
+    };
+
+    initializeCheckout();
+  }, [isAuthenticated, cartIsAuthenticated, syncCart]);
+
+  // Show loading state during initialization
+  if (isInitializing) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
+          <p className="text-gray-600">Preparing your order...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Redirect if cart is empty
   if (!hasItems()) {
@@ -40,6 +85,41 @@ export function CheckoutFlow() {
   if (!isAuthenticated) {
     router.push('/auth/login?redirect=/checkout');
     return null;
+  }
+
+  // Show sync error if there's an issue
+  if (syncError) {
+    return (
+      <div className="mx-auto max-w-md">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+              <h3 className="mb-2 text-lg font-semibold">Cart Sync Error</h3>
+              <p className="mb-4 text-gray-600">
+                We couldn't sync your cart with the server. Please try again.
+              </p>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => syncCart()}
+                  disabled={isSyncing}
+                  className="w-full"
+                >
+                  {isSyncing ? 'Syncing...' : 'Retry Sync'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/menu')}
+                  className="w-full"
+                >
+                  Back to Menu
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const steps = [
@@ -185,7 +265,9 @@ export function CheckoutFlow() {
               {items.map(item => (
                 <div key={item.id} className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium">{item.quantity}x Item</p>
+                    <p className="text-sm font-medium">
+                      {item.quantity}x {item.name}
+                    </p>
                     <p className="text-xs text-gray-500">
                       {item.selectedCustomizations.length > 0 &&
                         'With customizations'}

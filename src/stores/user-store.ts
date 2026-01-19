@@ -42,11 +42,22 @@ export const useUserStore = create<UserStore>()(
           const result = await response.json();
 
           if (response.ok && result.success) {
+            // Ensure addresses is always an array
+            const userWithAddresses = {
+              ...result.data.user,
+              addresses: result.data.user.addresses || [],
+            };
             set({
-              user: result.data.user,
+              user: userWithAddresses,
               isAuthenticated: true,
               isLoading: false,
             });
+
+            // Notify cart store about authentication change
+            const { useCartStore } = await import('./cart-store');
+            const cartStore = useCartStore.getState();
+            cartStore.setAuthenticated(true);
+            cartStore.setCurrentUserId(result.data.user.id);
           } else {
             throw new Error(result.error || 'Login failed');
           }
@@ -57,6 +68,8 @@ export const useUserStore = create<UserStore>()(
       },
 
       logout: async () => {
+        const currentUser = get().user;
+
         try {
           await fetch('/api/auth/logout', {
             method: 'POST',
@@ -65,11 +78,41 @@ export const useUserStore = create<UserStore>()(
           console.error('Logout error:', error);
         } finally {
           set({ user: null, isAuthenticated: false });
+
+          // Clear user-specific cart storage to prevent data leakage
+          if (currentUser?.id && typeof window !== 'undefined') {
+            try {
+              localStorage.removeItem(`cart-storage-${currentUser.id}`);
+            } catch (error) {
+              console.error(
+                'Failed to clear user cart storage on logout:',
+                error
+              );
+            }
+          }
+
+          // Notify cart store about authentication change
+          const { useCartStore } = await import('./cart-store');
+          const cartStore = useCartStore.getState();
+          cartStore.setAuthenticated(false);
+          cartStore.setCurrentUserId(null);
         }
       },
 
       setUser: (user: User) => {
-        set({ user, isAuthenticated: true });
+        // Ensure addresses is always an array
+        const userWithAddresses = {
+          ...user,
+          addresses: user.addresses || [],
+        };
+        set({ user: userWithAddresses, isAuthenticated: true });
+
+        // Notify cart store about authentication change
+        import('./cart-store').then(({ useCartStore }) => {
+          const cartStore = useCartStore.getState();
+          cartStore.setAuthenticated(true);
+          cartStore.setCurrentUserId(user.id);
+        });
       },
 
       updateProfile: async (updates: Partial<User>) => {
@@ -119,7 +162,7 @@ export const useUserStore = create<UserStore>()(
           if (response.ok && result.success) {
             const updatedUser = {
               ...currentUser,
-              addresses: [...currentUser.addresses, result.data],
+              addresses: [...(currentUser.addresses || []), result.data],
             };
             set({ user: updatedUser, isLoading: false });
           } else {
@@ -147,10 +190,12 @@ export const useUserStore = create<UserStore>()(
           const result = await response.json();
 
           if (response.ok && result.success) {
-            const updatedAddresses = currentUser.addresses.map(addr => ({
-              ...addr,
-              isDefault: addr.id === addressId,
-            }));
+            const updatedAddresses = (currentUser.addresses || []).map(
+              addr => ({
+                ...addr,
+                isDefault: addr.id === addressId,
+              })
+            );
 
             const updatedUser = {
               ...currentUser,
@@ -184,7 +229,7 @@ export const useUserStore = create<UserStore>()(
           const result = await response.json();
 
           if (response.ok && result.success) {
-            const updatedAddresses = currentUser.addresses.map(addr =>
+            const updatedAddresses = (currentUser.addresses || []).map(addr =>
               addr.id === addressId ? result.data : addr
             );
 
@@ -218,7 +263,7 @@ export const useUserStore = create<UserStore>()(
           const result = await response.json();
 
           if (response.ok && result.success) {
-            const updatedAddresses = currentUser.addresses.filter(
+            const updatedAddresses = (currentUser.addresses || []).filter(
               addr => addr.id !== addressId
             );
 
@@ -248,11 +293,48 @@ export const useUserStore = create<UserStore>()(
           if (response.ok) {
             const result = await response.json();
             if (result.success) {
-              set({ user: result.data, isAuthenticated: true });
+              // Ensure addresses is always an array
+              const userWithAddresses = {
+                ...result.data,
+                addresses: result.data.addresses || [],
+              };
+              set({ user: userWithAddresses, isAuthenticated: true });
+
+              // Notify cart store about authentication change
+              const { useCartStore } = await import('./cart-store');
+              const cartStore = useCartStore.getState();
+              cartStore.setAuthenticated(true);
+              cartStore.setCurrentUserId(result.data.id);
+            } else {
+              // User is not authenticated
+              set({ user: null, isAuthenticated: false });
+
+              // Notify cart store about authentication change
+              const { useCartStore } = await import('./cart-store');
+              const cartStore = useCartStore.getState();
+              cartStore.setAuthenticated(false);
+              cartStore.setCurrentUserId(null);
             }
+          } else {
+            // User is not authenticated
+            set({ user: null, isAuthenticated: false });
+
+            // Notify cart store about authentication change
+            const { useCartStore } = await import('./cart-store');
+            const cartStore = useCartStore.getState();
+            cartStore.setAuthenticated(false);
+            cartStore.setCurrentUserId(null);
           }
         } catch (error) {
           console.error('Auth initialization error:', error);
+          // On error, assume user is not authenticated
+          set({ user: null, isAuthenticated: false });
+
+          // Notify cart store about authentication change
+          const { useCartStore } = await import('./cart-store');
+          const cartStore = useCartStore.getState();
+          cartStore.setAuthenticated(false);
+          cartStore.setCurrentUserId(null);
         } finally {
           set({ isLoading: false });
         }

@@ -122,9 +122,13 @@ export const orderSchema = z.object({
     .optional(),
   specialInstructions: z
     .string()
-    .max(500, 'Special instructions must be less than 500 characters')
-    .transform(InputSanitizer.sanitizeString)
-    .optional(),
+    .nullable()
+    .optional()
+    .transform(val => (val ? InputSanitizer.sanitizeString(val) : val))
+    .refine(
+      val => !val || val.length <= 500,
+      'Special instructions must be less than 500 characters'
+    ),
   deliveryAddressId: z.string().cuid().optional(),
 });
 
@@ -155,9 +159,13 @@ export const orderItemSchema = z.object({
     .default([]),
   specialInstructions: z
     .string()
-    .max(200, 'Special instructions must be less than 200 characters')
-    .transform(InputSanitizer.sanitizeString)
-    .optional(),
+    .nullable()
+    .optional()
+    .transform(val => (val ? InputSanitizer.sanitizeString(val) : val))
+    .refine(
+      val => !val || val.length <= 200,
+      'Special instructions must be less than 200 characters'
+    ),
 });
 
 // Package validation schemas with enhanced security

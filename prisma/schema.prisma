@@ -24,6 +24,7 @@ model User {
   // Relations
   addresses Address[]
   orders    Order[]
+  cart      Cart?
 
   @@map("users")
 }
@@ -86,6 +87,7 @@ model MenuItem {
   customizations Customization[]
   orderItems     OrderItem[]
   packageItems   PackageItem[]
+  cartItems      CartItem[]
 
   @@unique([categoryId, name])
   @@map("menu_items")
@@ -157,6 +159,39 @@ model PackageItem {
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
 
   @@map("package_items")
+}
+
+// Cart Models
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id                     String   @id @default(cuid())
+  quantity               Int
+  unitPrice              Float
+  totalPrice             Float
+  selectedCustomizations String   // JSON stored as string for SelectedCustomization[]
+  specialInstructions    String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // Relations
+  cartId     String
+  cart       Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("cart_items")
 }
 
 // Order Models

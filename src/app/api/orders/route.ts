@@ -15,8 +15,49 @@ const createOrderSchema = z.object({
   customerId: z.string().min(1, 'Customer ID is required'),
   items: z
     .array(
-      orderItemSchema.extend({
+      z.object({
         menuItemId: z.string().min(1, 'Menu item ID is required'),
+        quantity: z
+          .number()
+          .int()
+          .positive('Quantity must be a positive integer')
+          .max(50, 'Quantity too high'),
+        customizations: z
+          .array(
+            z.object({
+              customizationId: z
+                .string()
+                .min(1, 'Customization ID is required'),
+              customizationName: z.string().optional(), // Optional display name
+              optionIds: z
+                .array(z.string().min(1, 'Option ID is required'))
+                .max(10, 'Too many options'),
+              optionNames: z.array(z.string()).optional(), // Optional display names
+              textValue: z
+                .string()
+                .max(200, 'Text value too long')
+                .transform(InputSanitizer.sanitizeString)
+                .optional(),
+            })
+          )
+          .max(20, 'Too many customizations')
+          .default([]),
+        specialInstructions: z
+          .union([
+            z
+              .string()
+              .max(
+                200,
+                'Special instructions must be less than 200 characters'
+              ),
+            z.null(),
+          ])
+          .optional()
+          .transform(val =>
+            val && typeof val === 'string'
+              ? InputSanitizer.sanitizeString(val)
+              : val
+          ),
         unitPrice: z.number().positive('Unit price must be positive').max(1000),
         totalPrice: z
           .number()
@@ -36,10 +77,11 @@ const createOrderSchema = z.object({
   deliveryAddressId: z.string().min(1).optional(),
   scheduledFor: z.string().datetime().optional(),
   specialInstructions: z
-    .string()
-    .max(500, 'Special instructions too long')
-    .transform(InputSanitizer.sanitizeString)
-    .optional(),
+    .union([z.string().max(500, 'Special instructions too long'), z.null()])
+    .optional()
+    .transform(val =>
+      val && typeof val === 'string' ? InputSanitizer.sanitizeString(val) : val
+    ),
   subtotal: z.number().positive('Subtotal must be positive').max(50000),
   tax: z.number().min(0, 'Tax cannot be negative').max(10000),
   deliveryFee: z.number().min(0, 'Delivery fee cannot be negative').max(100),

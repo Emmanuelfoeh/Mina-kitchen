@@ -11,19 +11,27 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Create PostgreSQL connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+let db: PrismaClient;
 
-// Create Prisma adapter
-const adapter = new PrismaPg(pool);
+if (globalForPrisma.prisma) {
+  db = globalForPrisma.prisma;
+} else {
+  // Create PostgreSQL connection pool
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+  // Create Prisma adapter
+  const adapter = new PrismaPg(pool);
+
+  db = new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
   });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
+  if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = db;
+  }
+}
+
+export { db };
