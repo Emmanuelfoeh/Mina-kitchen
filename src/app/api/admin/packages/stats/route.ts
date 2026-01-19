@@ -15,7 +15,10 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     ]);
 
     // Calculate total revenue (this would be from actual orders in a real system)
-    const totalRevenue = packagePrices.reduce((sum, pkg) => sum + pkg.price, 0);
+    const totalRevenue = packagePrices.reduce(
+      (sum: number, pkg) => sum + pkg.price,
+      0
+    );
 
     // Calculate average package price
     const averagePackagePrice =

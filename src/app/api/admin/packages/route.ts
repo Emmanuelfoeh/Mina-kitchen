@@ -3,6 +3,12 @@ import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { generateSlug } from '@/lib/utils';
+import type {
+  Package,
+  PackageItem,
+  MenuItem,
+  MenuCategory,
+} from '@prisma/client';
 
 const packageSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -111,22 +117,32 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     const totalPages = Math.ceil(totalCount / limit);
 
     // Transform packages to match frontend expectations
-    const transformedPackages = packages.map((pkg: any) => ({
-      ...pkg,
-      type: pkg.type.toLowerCase() as 'daily' | 'weekly' | 'monthly',
-      features:
-        typeof pkg.features === 'string'
-          ? JSON.parse(pkg.features)
-          : pkg.features,
-      includedItems: pkg.includedItems.map((item: any) => ({
-        menuItemId: item.menuItemId,
-        quantity: item.quantity,
-        includedCustomizations:
-          typeof item.includedCustomizations === 'string'
-            ? JSON.parse(item.includedCustomizations)
-            : item.includedCustomizations,
-      })),
-    }));
+    const transformedPackages = packages.map(
+      (
+        pkg: Package & {
+          includedItems: (PackageItem & {
+            menuItem: MenuItem & {
+              category: MenuCategory;
+            };
+          })[];
+        }
+      ) => ({
+        ...pkg,
+        type: pkg.type.toLowerCase() as 'daily' | 'weekly' | 'monthly',
+        features:
+          typeof pkg.features === 'string'
+            ? JSON.parse(pkg.features)
+            : pkg.features,
+        includedItems: pkg.includedItems.map(item => ({
+          menuItemId: item.menuItemId,
+          quantity: item.quantity,
+          includedCustomizations:
+            typeof item.includedCustomizations === 'string'
+              ? JSON.parse(item.includedCustomizations)
+              : item.includedCustomizations,
+        })),
+      })
+    );
 
     return NextResponse.json({
       success: true,
@@ -178,7 +194,7 @@ export const POST = requireAdmin(async (request: NextRequest) => {
         // Create package items if provided
         ...(validatedData.includedItems.length > 0 && {
           includedItems: {
-            create: validatedData.includedItems.map((item: any) => ({
+            create: validatedData.includedItems.map(item => ({
               menuItemId: item.menuItemId,
               quantity: item.quantity,
               includedCustomizations: JSON.stringify(
@@ -206,7 +222,7 @@ export const POST = requireAdmin(async (request: NextRequest) => {
       ...packageData,
       type: packageData.type.toLowerCase() as 'daily' | 'weekly' | 'monthly',
       features: JSON.parse(packageData.features as string),
-      includedItems: packageData.includedItems.map((item: any) => ({
+      includedItems: packageData.includedItems.map(item => ({
         menuItemId: item.menuItemId,
         quantity: item.quantity,
         includedCustomizations: JSON.parse(

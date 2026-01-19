@@ -3,6 +3,7 @@ import { requireAdmin, AuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { generateSlug } from '@/lib/utils';
+import type { Prisma } from '@prisma/client';
 
 // Helper function to generate unique slug (excluding current package)
 async function generateUniqueSlug(
@@ -54,8 +55,8 @@ const packageUpdateSchema = z.object({
 // GET /api/admin/packages/[id] - Get single package for admin
 export const GET = requireAdmin(
   async (
-    request: NextRequest,
-    user: AuthUser,
+    _request: NextRequest,
+    _user: AuthUser,
     context?: { params: Promise<{ id: string }> }
   ) => {
     try {
@@ -98,7 +99,7 @@ export const GET = requireAdmin(
           typeof packageData.features === 'string'
             ? JSON.parse(packageData.features)
             : packageData.features,
-        includedItems: packageData.includedItems.map((item: any) => ({
+        includedItems: packageData.includedItems.map(item => ({
           menuItemId: item.menuItemId,
           quantity: item.quantity,
           includedCustomizations:
@@ -126,7 +127,7 @@ export const GET = requireAdmin(
 export const PUT = requireAdmin(
   async (
     request: NextRequest,
-    user: AuthUser,
+    _user: AuthUser,
     context?: { params: Promise<{ id: string }> }
   ) => {
     try {
@@ -155,76 +156,81 @@ export const PUT = requireAdmin(
       }
 
       // Update package in transaction
-      const updatedPackage = await db.$transaction(async (tx: any) => {
-        // Delete existing package items if new ones are provided
-        if (validatedData.includedItems) {
-          await tx.packageItem.deleteMany({
-            where: { packageId: id },
-          });
-        }
+      const updatedPackage = await db.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          // Delete existing package items if new ones are provided
+          if (validatedData.includedItems) {
+            await tx.packageItem.deleteMany({
+              where: { packageId: id },
+            });
+          }
 
-        // Generate new slug if name is being updated
-        let newSlug: string | undefined;
-        if (validatedData.name && validatedData.name !== existingPackage.name) {
-          newSlug = await generateUniqueSlug(validatedData.name, id);
-        }
+          // Generate new slug if name is being updated
+          let newSlug: string | undefined;
+          if (
+            validatedData.name &&
+            validatedData.name !== existingPackage.name
+          ) {
+            newSlug = await generateUniqueSlug(validatedData.name, id);
+          }
 
-        // Update package
-        const updated = await tx.package.update({
-          where: { id },
-          data: {
-            ...(validatedData.name && { name: validatedData.name }),
-            ...(newSlug && { slug: newSlug }),
-            ...(validatedData.description && {
-              description: validatedData.description,
-            }),
-            ...(validatedData.type && { type: validatedData.type }),
-            ...(validatedData.price !== undefined && {
-              price: validatedData.price,
-            }),
-            ...(validatedData.image !== undefined && {
-              image: validatedData.image,
-            }),
-            ...(validatedData.isActive !== undefined && {
-              isActive: validatedData.isActive,
-            }),
-            ...(validatedData.features && {
-              features: JSON.stringify(validatedData.features),
-            }),
-            ...(validatedData.seoTitle !== undefined && {
-              seoTitle: validatedData.seoTitle,
-            }),
-            ...(validatedData.seoDescription !== undefined && {
-              seoDescription: validatedData.seoDescription,
-            }),
-            // Create new package items if provided
-            ...(validatedData.includedItems && {
+          // Update package
+          const updated = await tx.package.update({
+            where: { id },
+            data: {
+              ...(validatedData.name && { name: validatedData.name }),
+              ...(newSlug && { slug: newSlug }),
+              ...(validatedData.description && {
+                description: validatedData.description,
+              }),
+              ...(validatedData.type && { type: validatedData.type }),
+              ...(validatedData.price !== undefined && {
+                price: validatedData.price,
+              }),
+              ...(validatedData.image !== undefined && {
+                image: validatedData.image,
+              }),
+              ...(validatedData.isActive !== undefined && {
+                isActive: validatedData.isActive,
+              }),
+              ...(validatedData.features && {
+                features: JSON.stringify(validatedData.features),
+              }),
+              ...(validatedData.seoTitle !== undefined && {
+                seoTitle: validatedData.seoTitle,
+              }),
+              ...(validatedData.seoDescription !== undefined && {
+                seoDescription: validatedData.seoDescription,
+              }),
+              // Create new package items if provided
+              ...(validatedData.includedItems && {
+                includedItems: {
+                  create: validatedData.includedItems.map(item => ({
+                    menuItemId: item.menuItemId,
+                    quantity: item.quantity,
+                    includedCustomizations: JSON.stringify(
+                      item.includedCustomizations
+                    ),
+                  })),
+                },
+              }),
+            },
+            include: {
               includedItems: {
-                create: validatedData.includedItems.map((item: any) => ({
-                  menuItemId: item.menuItemId,
-                  quantity: item.quantity,
-                  includedCustomizations: JSON.stringify(
-                    item.includedCustomizations
-                  ),
-                })),
-              },
-            }),
-          },
-          include: {
-            includedItems: {
-              include: {
-                menuItem: {
-                  include: {
-                    category: true,
+                include: {
+                  menuItem: {
+                    include: {
+                      category: true,
+                    },
                   },
                 },
               },
             },
-          },
-        });
+          });
 
-        return updated;
-      });
+          return updated;
+        }
+      );
 
       // Transform response to match frontend expectations
       const transformedPackage = {
@@ -234,7 +240,7 @@ export const PUT = requireAdmin(
           | 'weekly'
           | 'monthly',
         features: JSON.parse(updatedPackage.features as string),
-        includedItems: updatedPackage.includedItems.map((item: any) => ({
+        includedItems: updatedPackage.includedItems.map(item => ({
           menuItemId: item.menuItemId,
           quantity: item.quantity,
           includedCustomizations: JSON.parse(
@@ -272,7 +278,7 @@ export const PUT = requireAdmin(
 export const PATCH = requireAdmin(
   async (
     request: NextRequest,
-    user: AuthUser,
+    _user: AuthUser,
     context?: { params: Promise<{ id: string }> }
   ) => {
     try {
@@ -313,7 +319,7 @@ export const PATCH = requireAdmin(
           typeof updatedPackage.features === 'string'
             ? JSON.parse(updatedPackage.features)
             : updatedPackage.features,
-        includedItems: updatedPackage.includedItems.map((item: any) => ({
+        includedItems: updatedPackage.includedItems.map(item => ({
           menuItemId: item.menuItemId,
           quantity: item.quantity,
           includedCustomizations:
@@ -341,8 +347,8 @@ export const PATCH = requireAdmin(
 // DELETE /api/admin/packages/[id] - Delete package
 export const DELETE = requireAdmin(
   async (
-    request: NextRequest,
-    user: AuthUser,
+    _request: NextRequest,
+    _user: AuthUser,
     context?: { params: Promise<{ id: string }> }
   ) => {
     try {
