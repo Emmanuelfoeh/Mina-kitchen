@@ -44,7 +44,6 @@ export function Footer() {
               </Link>
             </div>
           </div>
-
           {/* Quick Links */}
           <div>
             <h3 className="mb-4 font-bold text-[#1c100d]">Quick Links</h3>
@@ -83,7 +82,6 @@ export function Footer() {
               </li>
             </ul>
           </div>
-
           {/* Support */}
           <div>
             <h3 className="mb-4 font-bold text-[#1c100d]">Support</h3>
@@ -122,14 +120,13 @@ export function Footer() {
               </li>
             </ul>
           </div>
-
           {/* Contact */}
           <div>
             <h3 className="mb-4 font-bold text-[#1c100d]">Contact</h3>
             <ul className="flex flex-col gap-3 text-sm text-[#5c4a45]">
               <li className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                <span>123 Culinary Ave, Toronto, ON</span>
+                <span>Gloucester Ontario, Ottawa</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
@@ -137,7 +134,7 @@ export function Footer() {
                   href="tel:+14165550123"
                   className="transition-colors hover:text-[#f2330d]"
                 >
-                  (416) 555-0123
+                  (647) 446-5165
                 </a>
               </li>
               <li className="flex items-center gap-2">
@@ -146,7 +143,7 @@ export function Footer() {
                   href="mailto:hello@mina-kitchen.ca"
                   className="transition-colors hover:text-[#f2330d]"
                 >
-                  hello@mina-kitchen.ca
+                  wilmar35000@gmail.com
                 </a>
               </li>
             </ul>

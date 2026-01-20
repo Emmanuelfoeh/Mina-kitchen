@@ -2,6 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Phone, Mail, MapPin } from 'lucide-react';
 
 export function ContactInfo() {
+
+
+//   Contact : 
+// Email : wilmar35000@gmail.com
+// Address: Gloucester Ontario, Ottawa
   return (
     <div className="rounded-3xl border border-orange-100 bg-white p-8 shadow-lg">
       <h3 className="mb-6 flex items-center gap-2 text-2xl font-bold">
@@ -18,7 +23,7 @@ export function ContactInfo() {
               Phone
             </p>
             <p className="text-lg font-semibold text-gray-900">
-              +1 (555) 123-4567
+              (647) 446-5165
             </p>
           </div>
         </div>
@@ -32,7 +37,7 @@ export function ContactInfo() {
               Email
             </p>
             <p className="text-lg font-semibold text-gray-900">
-              hello@chefskitchen.ca
+              wilmar35000@gmail.com
             </p>
           </div>
         </div>
@@ -46,7 +51,7 @@ export function ContactInfo() {
               Service Area
             </p>
             <p className="text-lg font-semibold text-gray-900">
-              Toronto & Greater Toronto Area, Ontario, Canada
+              Gloucester Ontario, Ottawa
             </p>
           </div>
         </div>

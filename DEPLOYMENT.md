@@ -129,9 +129,31 @@ The project includes a `vercel.json` configuration file that should handle most 
 
 ## Post-Deployment Setup
 
-### 1. Database Migration
+### 1. Database Migration (Neon Database)
 
-After successful deployment, you need to run database migrations:
+Since you're using Neon database, after successful deployment, you need to run database migrations on your Neon database:
+
+**Method 1: Using Local Environment (Recommended)**
+
+1. Ensure you have the Neon database URL from Vercel:
+
+   ```bash
+   # Your Neon DATABASE_URL should look like:
+   # postgresql://neondb_owner:password@host-pooler.region.aws.neon.tech/neondb?sslmode=require
+   ```
+
+2. Run migrations against your Neon database:
+
+   ```bash
+   DATABASE_URL="your-neon-database-url-from-vercel" npx prisma migrate deploy
+   ```
+
+3. Seed your database with initial data (optional):
+   ```bash
+   DATABASE_URL="your-neon-database-url-from-vercel" npx prisma db seed
+   ```
+
+**Method 2: Using Vercel CLI**
 
 1. Install Vercel CLI locally:
 
@@ -139,25 +161,41 @@ After successful deployment, you need to run database migrations:
    npm i -g vercel
    ```
 
-2. Link your project:
+2. Link your project and pull environment variables:
 
    ```bash
    vercel link
-   ```
-
-3. Run migrations using Vercel CLI:
-   ```bash
    vercel env pull .env.local
-   npx prisma migrate deploy
    ```
 
-### 2. Seed Database (Optional)
+3. Run migrations:
+   ```bash
+   npx prisma migrate deploy
+   npx prisma db seed  # Optional: for sample data
+   ```
 
-If you want to populate your database with initial data:
+### 2. Verify Neon Database Setup
 
-```bash
-npx prisma db seed
-```
+You can verify your database is properly set up by:
+
+1. **Using Neon Console**: Check your Neon dashboard to see the created tables
+2. **Using Prisma Studio**:
+   ```bash
+   DATABASE_URL="your-neon-database-url" npx prisma studio
+   ```
+3. **Testing API endpoints**: Visit your deployed app and test the menu/packages pages
+
+### 3. Sample Data Created
+
+The seed script creates:
+
+- **Admin user**: `admin@minakitchen.ca` (password: `admin123`)
+- **Customer user**: `customer@minakitchen.ca` (password: `customer123`)
+- **6 menu items** with customizations (Jollof Rice, Egusi Soup, etc.)
+- **5 meal packages** (Daily, Weekly, Monthly plans)
+- **Sample orders** for testing
+
+**Important**: Change the default passwords after deployment for security!
 
 ### 3. Test Your Deployment
 
