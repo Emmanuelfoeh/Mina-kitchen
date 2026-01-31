@@ -32,10 +32,10 @@ export const metadata: Metadata = generateMetadata({
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#fcf9f8]">
+    <div className="min-h-screen bg-background-light">
       {/* Hero Section */}
       <section className="relative w-full overflow-hidden px-4 pt-8 pb-12 md:px-10 lg:px-40 lg:py-16">
-        <div className="mx-auto max-w-[1280px]">
+        <div className="mx-auto max-w-7xl">
           <div className="flex flex-col-reverse gap-8 lg:flex-row lg:items-center">
             {/* Hero Text */}
             <div className="flex flex-1 flex-col gap-6 lg:max-w-[50%]">
@@ -43,12 +43,12 @@ export default function Home() {
                 <Badge className="inline-flex w-fit items-center gap-1 rounded-full border-0 bg-[#f2330d]/10 px-3 py-1 text-xs font-bold tracking-wide text-[#f2330d] uppercase">
                   🇨🇦 Authentic Taste in Canada
                 </Badge>
-                <h1 className="text-4xl leading-[1.1] font-extrabold tracking-[-0.033em] text-[#1c100d] lg:text-6xl">
+                <h1 className="text-4xl leading-[1.1] font-extrabold tracking-[-0.033em] text-text-dark lg:text-6xl">
                   Authentic African{' '}
                   <span className="text-[#f2330d]">Flavors</span>, Delivered to
                   You.
                 </h1>
-                <p className="max-w-[540px] text-base leading-relaxed font-normal text-[#5c4a45] lg:text-lg">
+                <p className="max-w-135 text-base leading-relaxed font-normal text-[#5c4a45] lg:text-lg">
                   Experience the comforting taste of home with Chef's signature
                   Jollof, soups, and grilled specials. Freshly made in Canada,
                   rooted in tradition.
@@ -56,14 +56,14 @@ export default function Home() {
               </div>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link href="/menu">
-                  <Button className="flex h-12 min-w-[140px] cursor-pointer items-center justify-center rounded-lg bg-[#f2330d] px-6 text-base font-bold text-white shadow-lg transition-all hover:scale-[1.02] hover:bg-[#d12b0a]">
+                  <Button className="flex h-12 min-w-35 cursor-pointer items-center justify-center rounded-lg bg-[#f2330d] px-6 text-base font-bold text-white shadow-lg transition-all hover:scale-[1.02] hover:bg-[#d12b0a]">
                     Order Now
                   </Button>
                 </Link>
                 <Link href="/packages">
                   <Button
                     variant="outline"
-                    className="flex h-12 min-w-[140px] cursor-pointer items-center justify-center rounded-lg border border-[#e6dbd9] bg-white px-6 text-base font-bold text-[#1c100d] transition-all hover:bg-gray-50"
+                    className="flex h-12 min-w-35 cursor-pointer items-center justify-center rounded-lg border border-[#e6dbd9] bg-white px-6 text-base font-bold text-[#1c100d] transition-all hover:bg-gray-50"
                   >
                     View Packages
                   </Button>
