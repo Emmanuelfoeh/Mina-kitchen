@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 interface Category {
   id: string;
@@ -63,12 +64,12 @@ export function EditCategoryModal({
     if (!category) return;
 
     if (!formData.name.trim()) {
-      alert('Please enter a category name');
+      toast.error('Please enter a category name');
       return;
     }
 
     if (!formData.description.trim()) {
-      alert('Please enter a description');
+      toast.error('Please enter a description');
       return;
     }
 
@@ -104,7 +105,7 @@ export function EditCategoryModal({
       }
     } catch (error) {
       console.error('Update category error:', error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : 'Failed to update category'
       );
     } finally {

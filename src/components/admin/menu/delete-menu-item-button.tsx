@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface DeleteMenuItemButtonProps {
   itemId: string;
@@ -41,7 +42,7 @@ export function DeleteMenuItemButton({
       }
     } catch (error) {
       console.error('Delete menu item error:', error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : 'Failed to delete menu item'
       );
     } finally {

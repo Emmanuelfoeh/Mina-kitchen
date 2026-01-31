@@ -19,6 +19,7 @@ import { CustomizationBuilder } from './customization-builder';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Info } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface MenuCategory {
   id: string;
@@ -165,7 +166,7 @@ export function MenuItemForm({
       }
     } catch (error) {
       console.error('Save error:', error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : 'Failed to save menu item'
       );
     } finally {

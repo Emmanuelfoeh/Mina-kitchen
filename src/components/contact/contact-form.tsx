@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 export function ContactForm() {
   const [formData, setFormData] = useState({
@@ -32,7 +33,9 @@ export function ContactForm() {
     });
 
     setIsSubmitting(false);
-    alert("Message sent successfully! We'll get back to you within 24 hours.");
+    toast.success(
+      "Message sent successfully! We'll get back to you within 24 hours."
+    );
   };
 
   const handleChange = (field: string, value: string) => {

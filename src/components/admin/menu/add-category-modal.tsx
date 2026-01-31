@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AddCategoryModalProps {
   onCategoryAdded?: () => void;
@@ -31,12 +32,12 @@ export function AddCategoryModal({ onCategoryAdded }: AddCategoryModalProps) {
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      alert('Please enter a category name');
+      toast.error('Please enter a category name');
       return;
     }
 
     if (!formData.description.trim()) {
-      alert('Please enter a description');
+      toast.error('Please enter a description');
       return;
     }
 
@@ -76,7 +77,7 @@ export function AddCategoryModal({ onCategoryAdded }: AddCategoryModalProps) {
       }
     } catch (error) {
       console.error('Create category error:', error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : 'Failed to create category'
       );
     } finally {

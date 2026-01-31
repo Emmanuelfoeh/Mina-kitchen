@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 interface ImageUploadProps {
   value?: string;
@@ -29,14 +30,14 @@ export function ImageUpload({
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Invalid file type. Only JPEG, PNG, and WebP are allowed.');
+      toast.error('Invalid file type. Only JPEG, PNG, and WebP are allowed.');
       return;
     }
 
     // Validate file size (10MB max)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert('File too large. Maximum size is 10MB.');
+      toast.error('File too large. Maximum size is 10MB.');
       return;
     }
 
@@ -57,14 +58,18 @@ export function ImageUpload({
         onChange(result.data.url);
         // Show success message if image was optimized
         if (result.data.optimized) {
-          console.log('Image uploaded and optimized successfully');
+          toast.success('Image uploaded and optimized successfully');
+        } else {
+          toast.success('Image uploaded successfully');
         }
       } else {
         throw new Error(result.error || 'Upload failed');
       }
     } catch (error) {
       console.error('Upload error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to upload image');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to upload image'
+      );
     } finally {
       setUploading(false);
     }

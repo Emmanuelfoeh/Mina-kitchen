@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { EditCategoryModal } from './edit-category-modal';
+import { toast } from 'sonner';
 
 interface Category {
   id: string;
@@ -60,7 +61,7 @@ export function CategoriesManager({ key }: CategoriesManagerProps) {
 
   const handleDeleteCategory = async (category: Category) => {
     if (category._count.menuItems > 0) {
-      alert(
+      toast.error(
         `Cannot delete "${category.name}" because it has ${category._count.menuItems} menu item(s). Please move or delete the menu items first.`
       );
       return;
@@ -90,7 +91,7 @@ export function CategoriesManager({ key }: CategoriesManagerProps) {
       }
     } catch (error) {
       console.error('Delete category error:', error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : 'Failed to delete category'
       );
     }

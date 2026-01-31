@@ -29,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { toast } from 'sonner';
 
 interface MenuItemData {
   id: string;
@@ -148,7 +149,9 @@ export function MenuItemsTable({
       }
     } catch (error) {
       console.error('Status update error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to update status');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update status'
+      );
     }
   };
 
@@ -167,13 +170,13 @@ export function MenuItemsTable({
       if (response.ok && result.success) {
         // Refresh the list
         fetchMenuItems();
-        alert('Menu item deleted successfully');
+        toast.success('Menu item deleted successfully');
       } else {
         throw new Error(result.error || 'Failed to delete menu item');
       }
     } catch (error) {
       console.error('Delete error:', error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : 'Failed to delete menu item'
       );
     }
@@ -200,13 +203,13 @@ export function MenuItemsTable({
       if (response.ok && result.success) {
         // Refresh the list
         fetchMenuItems();
-        alert('Menu item duplicated successfully');
+        toast.success('Menu item duplicated successfully');
       } else {
         throw new Error(result.error || 'Failed to duplicate menu item');
       }
     } catch (error) {
       console.error('Duplicate error:', error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : 'Failed to duplicate menu item'
       );
     }
@@ -334,7 +337,7 @@ export function MenuItemsTable({
                               Edit
                             </Link>
                           </DropdownMenuItem>
-                          
+
                           <DropdownMenuSeparator />
                           <DropdownMenuSeparator />
                           <DropdownMenuItem

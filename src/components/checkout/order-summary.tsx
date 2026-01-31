@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Clock, CreditCard, FileText } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CheckoutData {
   deliveryType: 'delivery' | 'pickup';
@@ -38,7 +39,7 @@ export function OrderSummary({
 
   const handlePlaceOrder = async () => {
     if (!user) {
-      alert('Please log in to place an order');
+      toast.error('Please log in to place an order');
       return;
     }
 
@@ -90,7 +91,7 @@ export function OrderSummary({
       }
     } catch (error) {
       console.error('Order submission failed:', error);
-      alert('Failed to place order. Please try again.');
+      toast.error('Failed to place order. Please try again.');
     } finally {
       setIsProcessing(false);
     }
