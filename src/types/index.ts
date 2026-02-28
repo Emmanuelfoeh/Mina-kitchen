@@ -124,6 +124,12 @@ export interface Order {
   id: string;
   orderNumber: string;
   customerId: string;
+  customer?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
   items: OrderItem[];
   subtotal: number;
   tax: number;

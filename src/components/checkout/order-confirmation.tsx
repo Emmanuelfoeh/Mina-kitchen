@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,9 @@ import {
   ArrowLeft,
   Truck,
   Store,
+  RefreshCw,
 } from 'lucide-react';
+import { useOrder } from '@/hooks/queries/use-order-queries';
 import type { Order } from '@/types';
 
 export function OrderConfirmation() {
@@ -24,35 +25,19 @@ export function OrderConfirmation() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
 
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Fetch order using TanStack Query
+  const {
+    data: order,
+    isLoading,
+    error,
+    refetch,
+  } = useOrder(orderId || undefined);
 
-  useEffect(() => {
-    if (!orderId) {
-      router.push('/');
-      return;
-    }
-
-    fetchOrder();
-  }, [orderId]);
-
-  const fetchOrder = async () => {
-    try {
-      const response = await fetch(`/api/orders?orderId=${orderId}`);
-      const result = await response.json();
-
-      if (result.success) {
-        setOrder(result.data);
-      } else {
-        setError(result.error || 'Failed to load order');
-      }
-    } catch (err) {
-      setError('Failed to load order details');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Redirect to home if no orderId
+  if (!orderId) {
+    router.push('/');
+    return null;
+  }
 
   const formatDateTime = (date: string | Date) => {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
@@ -109,15 +94,30 @@ export function OrderConfirmation() {
     }
   };
 
-  if (loading) {
-    return <div>Loading order details...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-[#f2330d]"></div>
+          <p className="text-gray-600">Loading order details...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error || !order) {
     return (
       <div className="py-12 text-center">
-        <div className="mb-4 text-red-600">{error || 'Order not found'}</div>
-        <Button onClick={() => router.push('/')}>Return to Home</Button>
+        <div className="mb-4 text-red-600">
+          {error instanceof Error ? error.message : 'Order not found'}
+        </div>
+        <div className="flex justify-center gap-4">
+          <Button onClick={() => refetch()} variant="outline">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Try Again
+          </Button>
+          <Button onClick={() => router.push('/')}>Return to Home</Button>
+        </div>
       </div>
     );
   }

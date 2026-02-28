@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { useAdminDashboardStats } from '@/hooks/queries/use-admin-queries';
 
 const timeframes = ['Week', 'Month', 'Year'];
 
@@ -12,34 +13,18 @@ interface DailyRevenue {
 
 export function RevenueChart() {
   const [activeFrame, setActiveFrame] = useState('Week');
-  const [dailyRevenue, setDailyRevenue] = useState<DailyRevenue[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: loading } = useAdminDashboardStats();
 
-  useEffect(() => {
-    async function fetchRevenueData() {
-      try {
-        const response = await fetch('/api/admin/dashboard/stats');
-        if (response.ok) {
-          const data = await response.json();
-          // Process daily revenue data
-          const processedData =
-            data.dailyRevenue?.map((item: any) => ({
-              date: new Date(item.createdAt).toLocaleDateString('en-US', {
-                weekday: 'short',
-              }),
-              revenue: item._sum.total || 0,
-            })) || [];
-          setDailyRevenue(processedData);
-        }
-      } catch (error) {
-        console.error('Failed to fetch revenue data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
+  const dailyRevenue = useMemo(() => {
+    if (!data?.dailyRevenue) return [];
 
-    fetchRevenueData();
-  }, []);
+    return data.dailyRevenue.map((item: any) => ({
+      date: new Date(item.createdAt).toLocaleDateString('en-US', {
+        weekday: 'short',
+      }),
+      revenue: item._sum.total || 0,
+    }));
+  }, [data]);
 
   // Create SVG path command
   const createPath = (points: number[]) => {

@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   MoreHorizontal,
   Eye,
-  Edit,
   CheckCircle,
   Clock,
   Truck,
@@ -32,6 +31,11 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { useAdminOrders } from '@/hooks/queries/use-admin-queries';
+import {
+  useUpdateOrderStatus,
+  useBulkUpdateOrderStatus,
+} from '@/hooks/mutations';
 
 interface OrderItem {
   id: string;
@@ -90,99 +94,45 @@ const statusIcons: Record<string, any> = {
 };
 
 export function OrdersTable() {
-  const [orders, setOrders] = useState<OrderItem[]>([]);
-  const [pagination, setPagination] = useState<
-    OrdersResponse['pagination'] | null
-  >(null);
-  const [loading, setLoading] = useState(true);
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('createdAt');
 
-  useEffect(() => {
-    fetchOrders();
-  }, [currentPage, searchTerm, statusFilter, sortBy]);
+  const { data, isLoading: loading } = useAdminOrders({
+    page: currentPage,
+    limit: 20,
+    search: '',
+    status: undefined,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
 
-  async function fetchOrders() {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: '20',
-        search: searchTerm,
-        status: statusFilter,
-        sortBy: sortBy,
-        sortOrder: 'desc',
-      });
+  const updateStatusMutation = useUpdateOrderStatus();
+  const bulkUpdateMutation = useBulkUpdateOrderStatus();
 
-      const response = await fetch(`/api/admin/orders?${params}`);
+  const orders = data?.orders || [];
+  const pagination = data?.pagination || null;
 
-      if (response.ok) {
-        const data = await response.json();
-        setOrders(data.data.orders);
-        setPagination(data.data.pagination);
-      }
-    } catch (error) {
-      console.error('Failed to fetch orders:', error);
-    } finally {
-      setLoading(false);
-    }
+  function updateOrderStatus(orderId: string, newStatus: string) {
+    updateStatusMutation.mutate({ orderId, status: newStatus });
   }
 
-  async function updateOrderStatus(orderId: string, newStatus: string) {
-    try {
-      const response = await fetch(`/api/admin/orders/${orderId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (response.ok) {
-        // Refresh orders list
-        fetchOrders();
-      }
-    } catch (error) {
-      console.error('Failed to update order status:', error);
-    }
-  }
-
-  async function bulkUpdateStatus(newStatus: string) {
+  function bulkUpdateStatus(newStatus: string) {
     if (selectedOrders.length === 0) return;
 
-    try {
-      const response = await fetch('/api/admin/orders', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
+    bulkUpdateMutation.mutate(
+      { orderIds: selectedOrders, status: newStatus },
+      {
+        onSuccess: () => {
+          setSelectedOrders([]);
         },
-        body: JSON.stringify({
-          orderIds: selectedOrders,
-          status: newStatus,
-          bulkAction: true,
-        }),
-      });
-
-      if (response.ok) {
-        setSelectedOrders([]);
-        fetchOrders();
       }
-    } catch (error) {
-      console.error('Failed to bulk update orders:', error);
-    }
+    );
   }
 
-  const formatOrderItems = (items: OrderItem['items']) => {
-    return items
-      .map(item => `${item.quantity}x ${item.menuItem.name}`)
-      .join(', ');
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateString: string | Date) => {
+    const date =
+      typeof dateString === 'string' ? new Date(dateString) : dateString;
+    return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -190,28 +140,29 @@ export function OrdersTable() {
     });
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedOrders(orders.map(order => order.id));
-    } else {
-      setSelectedOrders([]);
-    }
+  const handleSelectAll = () => {
+    setSelectedOrders(orders.map(order => order.id));
   };
 
-  const handleSelectOrder = (orderId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedOrders(prev => [...prev, orderId]);
-    } else {
-      setSelectedOrders(prev => prev.filter(id => id !== orderId));
-    }
+  const handleDeselectAll = () => {
+    setSelectedOrders([]);
+  };
+
+  const handleSelectOrder = (orderId: string) => {
+    setSelectedOrders(prev => [...prev, orderId]);
+  };
+
+  const handleDeselectOrder = (orderId: string) => {
+    setSelectedOrders(prev => prev.filter(id => id !== orderId));
   };
 
   if (loading) {
     return (
       <div className="space-y-4">
-        {Array.from({ length: 5 }).map((_, index) => (
+        {Array.from({ length: 5 }).map((_, i) => (
           <div
-            key={index}
+            // eslint-disable-next-line react/no-array-index-key
+            key={`skeleton-${i}`}
             className="flex animate-pulse items-center gap-4 p-4"
           >
             <div className="h-4 w-4 rounded bg-gray-200"></div>
@@ -274,7 +225,9 @@ export function OrdersTable() {
                   checked={
                     selectedOrders.length === orders.length && orders.length > 0
                   }
-                  onCheckedChange={handleSelectAll}
+                  onCheckedChange={checked =>
+                    checked ? handleSelectAll() : handleDeselectAll()
+                  }
                 />
               </th>
               <th className="px-6 py-4">Order</th>
@@ -300,7 +253,9 @@ export function OrdersTable() {
                       <Checkbox
                         checked={selectedOrders.includes(order.id)}
                         onCheckedChange={checked =>
-                          handleSelectOrder(order.id, checked as boolean)
+                          checked
+                            ? handleSelectOrder(order.id)
+                            : handleDeselectOrder(order.id)
                         }
                       />
                     </td>
@@ -316,10 +271,10 @@ export function OrdersTable() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-700">
-                        {order.customer.name}
+                        {order.customer?.name || 'Guest'}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {order.customer.email}
+                        {order.customer?.email || order.customerId}
                       </div>
                     </td>
                     {/* <td className="max-w-[200px] truncate px-6 py-4 text-sm text-gray-600">
@@ -370,43 +325,43 @@ export function OrdersTable() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() =>
-                              updateOrderStatus(order.id, 'CONFIRMED')
+                              updateOrderStatus(order.id, 'confirmed')
                             }
-                            disabled={order.status === 'CONFIRMED'}
+                            disabled={order.status === 'confirmed'}
                           >
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Confirm Order
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
-                              updateOrderStatus(order.id, 'PREPARING')
+                              updateOrderStatus(order.id, 'preparing')
                             }
-                            disabled={order.status === 'PREPARING'}
+                            disabled={order.status === 'preparing'}
                           >
                             <Package className="mr-2 h-4 w-4" />
                             Start Preparing
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => updateOrderStatus(order.id, 'READY')}
-                            disabled={order.status === 'READY'}
+                            onClick={() => updateOrderStatus(order.id, 'ready')}
+                            disabled={order.status === 'ready'}
                           >
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Mark Ready
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
-                              updateOrderStatus(order.id, 'OUT_FOR_DELIVERY')
+                              updateOrderStatus(order.id, 'out_for_delivery')
                             }
-                            disabled={order.status === 'OUT_FOR_DELIVERY'}
+                            disabled={order.status === 'out_for_delivery'}
                           >
                             <Truck className="mr-2 h-4 w-4" />
                             Out for Delivery
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>
-                              updateOrderStatus(order.id, 'DELIVERED')
+                              updateOrderStatus(order.id, 'delivered')
                             }
-                            disabled={order.status === 'DELIVERED'}
+                            disabled={order.status === 'delivered'}
                           >
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Mark Delivered
@@ -414,9 +369,9 @@ export function OrdersTable() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() =>
-                              updateOrderStatus(order.id, 'CANCELLED')
+                              updateOrderStatus(order.id, 'cancelled')
                             }
-                            disabled={order.status === 'CANCELLED'}
+                            disabled={order.status === 'cancelled'}
                             className="text-red-600"
                           >
                             <XCircle className="mr-2 h-4 w-4" />

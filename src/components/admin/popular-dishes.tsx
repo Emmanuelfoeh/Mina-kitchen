@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { useAdminDashboardStats } from '@/hooks/queries/use-admin-queries';
 
 interface PopularDish {
   id: string;
@@ -15,26 +14,8 @@ interface PopularDish {
 }
 
 export function PopularDishes() {
-  const [popularItems, setPopularItems] = useState<PopularDish[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchPopularDishes() {
-      try {
-        const response = await fetch('/api/admin/dashboard/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setPopularItems(data.popularDishes || []);
-        }
-      } catch (error) {
-        console.error('Failed to fetch popular dishes:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchPopularDishes();
-  }, []);
+  const { data, isLoading: loading } = useAdminDashboardStats();
+  const popularItems = data?.popularDishes || [];
 
   if (loading) {
     return (
@@ -45,7 +26,11 @@ export function PopularDishes() {
         </div>
         <div className="flex-1 space-y-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="flex animate-pulse items-center gap-4">
+            <div
+              // eslint-disable-next-line react/no-array-index-key
+              key={index}
+              className="flex animate-pulse items-center gap-4"
+            >
               <div className="h-16 w-16 rounded-xl bg-gray-200"></div>
               <div className="flex-1">
                 <div className="mb-2 h-4 w-24 rounded bg-gray-200"></div>
@@ -95,15 +80,15 @@ export function PopularDishes() {
                   {item.name}
                 </h4>
                 <p className="text-xs font-medium text-gray-500">
-                  {item.category.name}
+                  ${item.revenue.toFixed(2)} revenue
                 </p>
               </div>
 
               <div className="text-right">
                 <p className="text-sm font-bold text-gray-900">
-                  {item.totalQuantity}
+                  {item.orderCount}
                 </p>
-                <p className="text-xs font-medium text-gray-400">Sold</p>
+                <p className="text-xs font-medium text-gray-400">Orders</p>
               </div>
             </div>
           ))

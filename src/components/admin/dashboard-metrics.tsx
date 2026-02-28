@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -10,37 +9,12 @@ import {
   Truck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface DashboardMetrics {
-  totalRevenue: { value: number; change: number };
-  totalOrders: { value: number; change: number };
-  avgOrderValue: { value: number; change: number };
-  pendingDeliveries: { value: number };
-}
+import { useAdminDashboardStats } from '@/hooks/queries/use-admin-queries';
 
 export function DashboardMetrics() {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useAdminDashboardStats();
 
-  useEffect(() => {
-    async function fetchMetrics() {
-      try {
-        const response = await fetch('/api/admin/dashboard/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setMetrics(data.metrics);
-        }
-      } catch (error) {
-        console.error('Failed to fetch dashboard metrics:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchMetrics();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
@@ -62,7 +36,7 @@ export function DashboardMetrics() {
     );
   }
 
-  if (!metrics) {
+  if (!data?.metrics) {
     return (
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <div className="col-span-full py-8 text-center text-gray-500">
@@ -71,6 +45,8 @@ export function DashboardMetrics() {
       </div>
     );
   }
+
+  const { metrics } = data;
 
   const metricItems = [
     {

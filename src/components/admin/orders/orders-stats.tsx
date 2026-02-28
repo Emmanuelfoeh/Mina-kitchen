@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
   ShoppingBag,
   Clock,
@@ -11,39 +10,10 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-
-interface OrderStats {
-  totalOrders: number;
-  pendingOrders: number;
-  completedOrders: number;
-  outForDelivery: number;
-  todayOrders: number;
-  todayRevenue: number;
-  avgOrderValue: number;
-  completionRate: number;
-}
+import { useAdminOrderStats } from '@/hooks/queries/use-admin-queries';
 
 export function OrdersStats() {
-  const [stats, setStats] = useState<OrderStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchOrderStats() {
-      try {
-        const response = await fetch('/api/admin/orders/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch order stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchOrderStats();
-  }, []);
+  const { data: stats, isLoading: loading } = useAdminOrderStats();
 
   if (loading) {
     return (
@@ -75,16 +45,16 @@ export function OrdersStats() {
   const statCards = [
     {
       title: 'Total Orders',
-      value: stats.totalOrders.toLocaleString(),
+      value: (stats?.total ?? 0).toLocaleString(),
       icon: ShoppingBag,
-      description: `${stats.todayOrders} orders today`,
-      trend: stats.todayOrders > 0 ? 'up' : 'neutral',
+      description: `${stats?.todayOrders ?? 0} orders today`,
+      trend: (stats?.todayOrders ?? 0) > 0 ? 'up' : 'neutral',
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
     },
     {
       title: 'Pending Orders',
-      value: stats.pendingOrders.toLocaleString(),
+      value: (stats?.pending ?? 0).toLocaleString(),
       icon: Clock,
       description: 'Awaiting confirmation',
       trend: 'neutral',
@@ -93,7 +63,7 @@ export function OrdersStats() {
     },
     {
       title: 'Out for Delivery',
-      value: stats.outForDelivery.toLocaleString(),
+      value: (stats?.outForDelivery ?? 0).toLocaleString(),
       icon: Truck,
       description: 'Currently delivering',
       trend: 'neutral',
@@ -102,13 +72,14 @@ export function OrdersStats() {
     },
     {
       title: 'Completed Today',
-      value: stats.completedOrders.toLocaleString(),
+      value: (stats?.delivered ?? 0).toLocaleString(),
       icon: CheckCircle,
-      description: `${stats.completionRate.toFixed(1)}% completion rate`,
+      description: `${(((stats?.delivered ?? 0) / Math.max(stats?.total ?? 1, 1)) * 100).toFixed(1)}% completion rate`,
       trend:
-        stats.completionRate > 80
+        ((stats?.delivered ?? 0) / Math.max(stats?.total ?? 1, 1)) * 100 > 80
           ? 'up'
-          : stats.completionRate > 60
+          : ((stats?.delivered ?? 0) / Math.max(stats?.total ?? 1, 1)) * 100 >
+              60
             ? 'neutral'
             : 'down',
       color: 'text-green-600',

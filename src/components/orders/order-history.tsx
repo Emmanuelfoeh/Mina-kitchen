@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useUserStore } from '@/stores/user-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,39 +7,14 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Clock, MapPin, Package, ChevronRight, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
+import { useOrders } from '@/hooks/queries/use-order-queries';
 import type { Order } from '@/types';
 
 export function OrderHistory() {
   const { user, isAuthenticated } = useUserStore();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchOrders();
-    }
-  }, [isAuthenticated, user]);
-
-  const fetchOrders = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/orders?customerId=${user.id}`);
-      const result = await response.json();
-
-      if (result.success) {
-        setOrders(result.data.orders);
-      } else {
-        setError(result.error || 'Failed to load orders');
-      }
-    } catch (err) {
-      setError('Failed to load order history');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Fetch orders using TanStack Query - only fetches when user is authenticated
+  const { data: orders = [], isLoading, error, refetch } = useOrders(user?.id);
 
   const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -91,7 +65,7 @@ export function OrderHistory() {
     );
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
         {Array.from({ length: 3 }).map((_, index) => (
@@ -117,8 +91,12 @@ export function OrderHistory() {
   if (error) {
     return (
       <div className="py-12 text-center">
-        <p className="mb-4 text-red-600">{error}</p>
-        <Button onClick={fetchOrders} variant="outline">
+        <p className="mb-4 text-red-600">
+          {error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred'}
+        </p>
+        <Button onClick={() => refetch()} variant="outline">
           <RefreshCw className="mr-2 h-4 w-4" />
           Try Again
         </Button>
@@ -149,7 +127,7 @@ export function OrderHistory() {
         <p className="text-gray-600">
           {orders.length} order{orders.length !== 1 ? 's' : ''} found
         </p>
-        <Button onClick={fetchOrders} variant="outline" size="sm">
+        <Button onClick={() => refetch()} variant="outline" size="sm">
           <RefreshCw className="mr-2 h-4 w-4" />
           Refresh
         </Button>

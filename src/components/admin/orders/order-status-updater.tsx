@@ -30,6 +30,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { useUpdateOrderStatus } from '@/hooks/mutations';
 
 interface OrderStatusUpdaterProps {
   orderId: string;
@@ -83,43 +84,24 @@ export function OrderStatusUpdater({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
   const [notes, setNotes] = useState('');
-  const [isUpdating, setIsUpdating] = useState(false);
   const router = useRouter();
+  const updateStatusMutation = useUpdateOrderStatus();
 
-  async function handleStatusUpdate() {
+  function handleStatusUpdate() {
     if (selectedStatus === currentStatus) {
       setIsOpen(false);
       return;
     }
 
-    setIsUpdating(true);
-
-    try {
-      const response = await fetch(`/api/admin/orders/${orderId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
+    updateStatusMutation.mutate(
+      { orderId, status: selectedStatus },
+      {
+        onSuccess: () => {
+          setIsOpen(false);
+          router.refresh();
         },
-        body: JSON.stringify({
-          status: selectedStatus,
-          specialInstructions: notes || undefined,
-        }),
-      });
-
-      if (response.ok) {
-        toast.success('Order status updated successfully');
-        setIsOpen(false);
-        router.refresh();
-      } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to update order status');
       }
-    } catch (error) {
-      console.error('Failed to update order status:', error);
-      toast.error('Failed to update order status');
-    } finally {
-      setIsUpdating(false);
-    }
+    );
   }
 
   const currentStatusOption = statusOptions.find(
@@ -209,16 +191,18 @@ export function OrderStatusUpdater({
           <Button
             variant="outline"
             onClick={() => setIsOpen(false)}
-            disabled={isUpdating}
+            disabled={updateStatusMutation.isPending}
           >
             Cancel
           </Button>
           <Button
             onClick={handleStatusUpdate}
-            disabled={isUpdating || selectedStatus === currentStatus}
+            disabled={
+              updateStatusMutation.isPending || selectedStatus === currentStatus
+            }
             className="bg-[#f97316] text-white hover:bg-[#ea580c]"
           >
-            {isUpdating ? 'Updating...' : 'Update Status'}
+            {updateStatusMutation.isPending ? 'Updating...' : 'Update Status'}
           </Button>
         </DialogFooter>
       </DialogContent>

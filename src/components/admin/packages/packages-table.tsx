@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Table,
@@ -37,78 +37,38 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { Package } from '@/types';
+import { useAdminPackages } from '@/hooks/queries/use-admin-queries';
+import { useUpdatePackageStatus, useDeletePackage } from '@/hooks/mutations';
 
 interface PackagesTableProps {
   initialPackages?: Package[];
 }
 
-export function PackagesTable({ initialPackages = [] }: PackagesTableProps) {
+export function PackagesTable({
+  initialPackages = [],
+}: Readonly<PackagesTableProps>) {
   const router = useRouter();
-  const [packages, setPackages] = useState<Package[]>(initialPackages);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
-  useEffect(() => {
-    fetchPackages();
-  }, [searchQuery, statusFilter, typeFilter]);
+  const { data, isLoading } = useAdminPackages({
+    search: searchQuery || undefined,
+    status: statusFilter === 'all' ? undefined : statusFilter,
+  });
 
-  const fetchPackages = async () => {
-    try {
-      const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (typeFilter !== 'all') params.append('type', typeFilter);
+  const updateStatusMutation = useUpdatePackageStatus();
+  const deleteMutation = useDeletePackage();
 
-      const response = await fetch(`/api/admin/packages?${params}`, {
-        credentials: 'include', // Include cookies for authentication
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setPackages(data.data.packages || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch packages:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const packages = data?.packages || [];
+
+  const handleStatusChange = (packageId: string, newStatus: boolean) => {
+    updateStatusMutation.mutate({ packageId, isActive: newStatus });
   };
 
-  const handleStatusChange = async (packageId: string, newStatus: boolean) => {
-    try {
-      const response = await fetch(`/api/admin/packages/${packageId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for authentication
-        body: JSON.stringify({ isActive: newStatus }),
-      });
-
-      if (response.ok) {
-        fetchPackages();
-      }
-    } catch (error) {
-      console.error('Failed to update package status:', error);
-    }
-  };
-
-  const handleDelete = async (packageId: string) => {
+  const handleDelete = (packageId: string) => {
     if (!confirm('Are you sure you want to delete this package?')) return;
-
-    try {
-      const response = await fetch(`/api/admin/packages/${packageId}`, {
-        method: 'DELETE',
-        credentials: 'include', // Include cookies for authentication
-      });
-
-      if (response.ok) {
-        fetchPackages();
-      }
-    } catch (error) {
-      console.error('Failed to delete package:', error);
-    }
+    deleteMutation.mutate(packageId);
   };
 
   const getStatusBadge = (isActive: boolean) => {
@@ -138,7 +98,11 @@ export function PackagesTable({ initialPackages = [] }: PackagesTableProps) {
       <div className="p-6">
         <div className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center space-x-4">
+            <div
+              // eslint-disable-next-line react/no-array-index-key
+              key={i}
+              className="flex items-center space-x-4"
+            >
               <div className="h-4 w-4 animate-pulse rounded bg-gray-200" />
               <div className="h-4 flex-1 animate-pulse rounded bg-gray-200" />
               <div className="h-4 w-20 animate-pulse rounded bg-gray-200" />
@@ -197,7 +161,7 @@ export function PackagesTable({ initialPackages = [] }: PackagesTableProps) {
               <TableHead>Items</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
-              <TableHead className="w-[70px]">Actions</TableHead>
+              <TableHead className="w-17.5">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -211,7 +175,7 @@ export function PackagesTable({ initialPackages = [] }: PackagesTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              packages.map(pkg => (
+              packages.map((pkg: Package) => (
                 <TableRow key={pkg.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -240,15 +204,15 @@ export function PackagesTable({ initialPackages = [] }: PackagesTableProps) {
                   </TableCell>
                   <TableCell>
                     {pkg.includedItems?.reduce(
-                      (sum, item) => sum + item.quantity,
+                      (sum: number, item: any) => sum + item.quantity,
                       0
                     ) || 0}{' '}
                     items
                   </TableCell>
                   <TableCell>{getStatusBadge(pkg.isActive)}</TableCell>
                   <TableCell className="text-sm text-gray-500">
-                    {(pkg as any).createdAt
-                      ? formatDistanceToNow(new Date((pkg as any).createdAt), {
+                    {pkg.createdAt
+                      ? formatDistanceToNow(new Date(pkg.createdAt), {
                           addSuffix: true,
                         })
                       : 'N/A'}

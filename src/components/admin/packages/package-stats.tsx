@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, TrendingUp, DollarSign, Users } from 'lucide-react';
+import { useAdminPackageStats } from '@/hooks/queries/use-admin-queries';
 
 interface PackageStatsData {
   totalPackages: number;
@@ -12,34 +12,16 @@ interface PackageStatsData {
 }
 
 export function PackageStats() {
-  const [stats, setStats] = useState<PackageStatsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const response = await fetch('/api/admin/packages/stats', {
-          credentials: 'include', // Include cookies for authentication
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch package stats:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchStats();
-  }, []);
+  const { data: stats, isLoading } = useAdminPackageStats();
 
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
+          <Card
+            // eslint-disable-next-line react/no-array-index-key
+            key={i}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="h-4 w-20 animate-pulse rounded bg-gray-200" />
               <div className="h-4 w-4 animate-pulse rounded bg-gray-200" />

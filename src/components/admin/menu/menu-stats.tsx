@@ -1,18 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Package,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Clock,
-  DollarSign,
-  TrendingUp,
-  Layers,
-} from 'lucide-react';
+import { Package, AlertTriangle, Clock, Layers } from 'lucide-react';
+import { useAdminMenuStats } from '@/hooks/queries/use-admin-queries';
 
 interface MenuStatsData {
   overview: {
@@ -44,36 +35,13 @@ interface MenuStatsData {
 }
 
 export function MenuStats() {
-  const [stats, setStats] = useState<MenuStatsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const response = await fetch('/api/admin/menu/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data.data);
-        } else {
-          throw new Error('Failed to fetch stats');
-        }
-      } catch (error) {
-        console.error('Failed to fetch menu stats:', error);
-        setError('Failed to load statistics');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchStats();
-  }, []);
+  const { data: stats, isLoading: loading, error } = useAdminMenuStats();
 
   if (loading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <Card key={i}>
+          <Card key={`skeleton-${i}`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="h-4 w-20 animate-pulse rounded bg-gray-200"></div>
               <div className="h-4 w-4 animate-pulse rounded bg-gray-200"></div>
@@ -95,7 +63,9 @@ export function MenuStats() {
           <div className="text-center">
             <AlertTriangle className="mx-auto h-8 w-8 text-red-500" />
             <p className="mt-2 text-sm text-gray-500">
-              {error || 'Failed to load statistics'}
+              {error instanceof Error
+                ? error.message
+                : 'Failed to load statistics'}
             </p>
           </div>
         </CardContent>
@@ -103,7 +73,7 @@ export function MenuStats() {
     );
   }
 
-  const { overview, pricing, distribution } = stats;
+  const { overview } = stats;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

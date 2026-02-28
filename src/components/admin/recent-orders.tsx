@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { MoreVertical, ChevronDown, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAdminDashboardStats } from '@/hooks/queries/use-admin-queries';
+import type { OrderItem } from '@/types';
 
 interface RecentOrder {
   id: string;
@@ -33,37 +34,19 @@ const statusColors: Record<string, string> = {
 };
 
 export function RecentOrders() {
-  const [orders, setOrders] = useState<RecentOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: loading } = useAdminDashboardStats();
+  const orders = data?.recentOrders || [];
 
-  useEffect(() => {
-    async function fetchRecentOrders() {
-      try {
-        const response = await fetch('/api/admin/dashboard/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setOrders(data.recentOrders || []);
-        }
-      } catch (error) {
-        console.error('Failed to fetch recent orders:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchRecentOrders();
-  }, []);
-
-  const formatOrderItems = (items: RecentOrder['items']) => {
+  const formatOrderItems = (items: OrderItem[]) => {
     return items
-      .map(item => `${item.quantity}x ${item.menuItem.name}`)
+      .map(item => `${item.quantity}x ${item.menuItem?.name || 'Item'}`)
       .join(', ');
   };
 
   const getCustomerImage = (email: string) => {
     // Generate a consistent avatar based on email
     const hash = email.split('').reduce((a, b) => {
-      a = (a << 5) - a + b.charCodeAt(0);
+      a = (a << 5) - a + (b.codePointAt(0) || 0);
       return a & a;
     }, 0);
     const imageId = Math.abs(hash) % 1000;
@@ -80,6 +63,7 @@ export function RecentOrders() {
         <div className="p-6">
           {Array.from({ length: 5 }).map((_, index) => (
             <div
+              // eslint-disable-next-line react/no-array-index-key
               key={index}
               className="flex animate-pulse items-center gap-4 py-4"
             >
@@ -132,16 +116,20 @@ export function RecentOrders() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <img
-                        src={getCustomerImage(order.customer.email)}
-                        alt={order.customer.name}
+                        src={
+                          order.customer?.email
+                            ? getCustomerImage(order.customer.email)
+                            : '/placeholder-avatar.png'
+                        }
+                        alt={order.customer?.name || 'Customer'}
                         className="h-8 w-8 rounded-full object-cover"
                       />
                       <span className="text-sm font-medium text-gray-700">
-                        {order.customer.name}
+                        {order.customer?.name || 'Guest'}
                       </span>
                     </div>
                   </td>
-                  <td className="max-w-[200px] truncate px-6 py-4 text-sm text-gray-600">
+                  <td className="max-w-50 truncate px-6 py-4 text-sm text-gray-600">
                     {formatOrderItems(order.items)}
                   </td>
                   <td className="px-6 py-4 text-sm font-bold text-gray-900">

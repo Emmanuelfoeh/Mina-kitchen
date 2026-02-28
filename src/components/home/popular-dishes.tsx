@@ -1,39 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useCartStore } from '@/stores/cart-store';
 import { generateId } from '@/utils';
+import { useMenuItems } from '@/hooks/queries/use-menu-queries';
 import type { MenuItem, CartItem } from '@/types';
 
 export function PopularDishes() {
-  const [dishes, setDishes] = useState<MenuItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const { addItem } = useCartStore();
 
-  useEffect(() => {
-    fetchPopularDishes();
-  }, []);
-
-  const fetchPopularDishes = async () => {
-    try {
-      setLoading(true);
-      // Fetch menu items and get the first 3 active ones as "popular"
-      const response = await fetch('/api/menu/items?status=ACTIVE&limit=3');
-      const result = await response.json();
-
-      if (result.success) {
-        setDishes(result.data);
-      }
-    } catch (error) {
-      console.error('Error fetching popular dishes:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Fetch the first 3 active menu items as "popular dishes"
+  const { data: dishes = [], isLoading } = useMenuItems({
+    status: 'ACTIVE',
+    limit: 3,
+  });
 
   const handleAddToCart = (dish: MenuItem) => {
     const cartItem: CartItem = {
@@ -50,7 +33,7 @@ export function PopularDishes() {
     addItem(cartItem);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <section className="bg-white py-12">
         <div className="mx-auto max-w-[1280px] px-4 md:px-10 lg:px-40">

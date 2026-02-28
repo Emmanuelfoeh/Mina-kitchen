@@ -1,61 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PackageCard } from './package-card';
 import { PackageSkeleton } from './package-skeleton';
 import { generateSlug } from '@/lib/utils';
-import type { Package, MenuItem } from '@/types';
+import { usePackages } from '@/hooks/queries/use-package-queries';
+import { useMenuItems } from '@/hooks/queries/use-menu-queries';
+import type { Package } from '@/types';
 
 export function PackageBrowser() {
   const router = useRouter();
-  const [packages, setPackages] = useState<Package[]>([]);
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Fetch packages and menu items in parallel using TanStack Query
+  const {
+    data: packages = [],
+    isLoading: packagesLoading,
+    error: packagesError,
+    refetch: refetchPackages,
+  } = usePackages();
 
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
+  const {
+    data: menuItems = [],
+    isLoading: menuItemsLoading,
+    error: menuItemsError,
+  } = useMenuItems();
 
-      // Fetch packages and menu items in parallel
-      const [packagesResponse, menuItemsResponse] = await Promise.all([
-        fetch('/api/packages'),
-        fetch('/api/menu/items'),
-      ]);
-
-      if (!packagesResponse.ok || !menuItemsResponse.ok) {
-        throw new Error('Failed to fetch data');
-      }
-
-      const packagesData = await packagesResponse.json();
-      const menuItemsData = await menuItemsResponse.json();
-
-      if (packagesData.success) {
-        // Add slug to packages that don't have one
-        const packagesWithSlugs = (packagesData.data || []).map(
-          (pkg: Package) => ({
-            ...pkg,
-            slug: pkg.slug || generateSlug(pkg.name),
-          })
-        );
-        setPackages(packagesWithSlugs);
-      }
-
-      if (menuItemsData.success) {
-        setMenuItems(menuItemsData.data || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch packages:', error);
-      setError('Failed to load packages. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const isLoading = packagesLoading || menuItemsLoading;
+  const error = packagesError || menuItemsError;
 
   const handleSelectPackage = (pkg: Package) => {
     const slug = pkg.slug || generateSlug(pkg.name);
@@ -69,9 +40,13 @@ export function PackageBrowser() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <p className="mb-4 text-red-600">{error}</p>
+        <p className="mb-4 text-red-600">
+          {error instanceof Error
+            ? error.message
+            : 'Failed to load packages. Please try again.'}
+        </p>
         <button
-          onClick={fetchData}
+          onClick={() => refetchPackages()}
           className="rounded-lg bg-orange-600 px-4 py-2 text-white hover:bg-orange-700"
         >
           Try Again
@@ -90,9 +65,15 @@ export function PackageBrowser() {
     );
   }
 
+  // Add slugs to packages that don't have one
+  const packagesWithSlugs = packages.map(pkg => ({
+    ...pkg,
+    slug: pkg.slug || generateSlug(pkg.name),
+  }));
+
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-      {packages.map(pkg => (
+      {packagesWithSlugs.map(pkg => (
         <PackageCard
           key={pkg.id}
           package={pkg}

@@ -9,3 +9,22 @@ export {
   useTouchDevice,
   useMobileFeatures,
 } from './use-mobile-viewport';
+
+// Cart integration
+export { useIntegratedCart, useCartAuthSync } from './use-integrated-cart';
+
+// Error recovery hooks
+export {
+  useQueryErrorReset,
+  useRetryWithBackoff,
+  useMutationErrorHandler,
+  useErrorState,
+  useOnlineErrorRecovery,
+  useErrorHandler,
+} from './use-error-recovery';
+
+// Export query hooks
+export * from './queries';
+
+// Export mutation hooks
+export * from './mutations';

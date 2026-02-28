@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/stores/cart-store';
 import { useUserStore } from '@/stores/user-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Clock, CreditCard, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCreateOrder } from '@/hooks/mutations';
 
 interface CheckoutData {
   deliveryType: 'delivery' | 'pickup';
@@ -30,12 +29,11 @@ export function OrderSummary({
   checkoutData,
   onBack,
   onSpecialInstructionsChange,
-}: OrderSummaryProps) {
-  const router = useRouter();
-  const { items, getSubtotal, getTax, getDeliveryFee, getTotal } =
+}: Readonly<OrderSummaryProps>) {
+  const { items, getSubtotal, getTax, getDeliveryFee, clearCart } =
     useCartStore();
   const { user } = useUserStore();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const createOrderMutation = useCreateOrder();
 
   const handlePlaceOrder = async () => {
     if (!user) {
@@ -43,58 +41,29 @@ export function OrderSummary({
       return;
     }
 
-    setIsProcessing(true);
+    const orderData = {
+      items: items.map(item => ({
+        menuItemId: item.menuItemId,
+        quantity: item.quantity,
+        customizations: item.selectedCustomizations,
+      })),
+      deliveryType: checkoutData.deliveryType.toUpperCase() as
+        | 'DELIVERY'
+        | 'PICKUP',
+      scheduledFor: checkoutData.scheduledFor?.toISOString(),
+      notes: checkoutData.specialInstructions,
+      deliveryAddress:
+        checkoutData.deliveryType === 'delivery'
+          ? checkoutData.deliveryAddress
+          : undefined,
+    };
 
-    try {
-      const orderData = {
-        customerId: user.id,
-        items: items.map(item => ({
-          menuItemId: item.menuItemId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          customizations: item.selectedCustomizations,
-          specialInstructions: item.specialInstructions,
-          totalPrice: item.totalPrice,
-        })),
-        deliveryType: checkoutData.deliveryType.toUpperCase(),
-        deliveryAddressId: checkoutData.deliveryAddress?.id,
-        scheduledFor: checkoutData.scheduledFor?.toISOString(),
-        specialInstructions: checkoutData.specialInstructions,
-        subtotal: getSubtotal(),
-        tax: getTax(),
-        deliveryFee:
-          checkoutData.deliveryType === 'pickup' ? 0 : getDeliveryFee(),
-        total:
-          getSubtotal() +
-          getTax() +
-          (checkoutData.deliveryType === 'pickup' ? 0 : getDeliveryFee()),
-      };
-
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
+    createOrderMutation.mutate(orderData, {
+      onSuccess: () => {
         // Clear cart after successful order
-        useCartStore.getState().clearCart();
-
-        // Redirect to confirmation page
-        router.push(`/order-confirmation?orderId=${result.data.id}`);
-      } else {
-        throw new Error(result.error || 'Failed to place order');
-      }
-    } catch (error) {
-      console.error('Order submission failed:', error);
-      toast.error('Failed to place order. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
+        clearCart();
+      },
+    });
   };
 
   const formatDateTime = (date: Date) => {
@@ -108,6 +77,11 @@ export function OrderSummary({
       hour12: true,
     });
   };
+
+  // Calculate order total
+  const deliveryFee =
+    checkoutData.deliveryType === 'pickup' ? 0 : getDeliveryFee();
+  const orderTotal = (getSubtotal() + getTax() + deliveryFee).toFixed(2);
 
   return (
     <div className="space-y-6">
@@ -136,29 +110,29 @@ export function OrderSummary({
 
                   {item.selectedCustomizations.length > 0 && (
                     <div className="ml-6 space-y-1">
-                      {item.selectedCustomizations.map(
-                        (customization, index) => (
-                          <div key={index} className="text-sm text-gray-600">
-                            <span className="font-medium">
-                              {customization.customizationName ||
-                                'Customization'}
-                              :
+                      {item.selectedCustomizations.map(customization => (
+                        <div
+                          key={customization.customizationId}
+                          className="text-sm text-gray-600"
+                        >
+                          <span className="font-medium">
+                            {customization.customizationName || 'Customization'}
+                            :
+                          </span>
+                          {customization.optionIds.length > 0 && (
+                            <span className="ml-1">
+                              {customization.optionNames?.length
+                                ? customization.optionNames.join(', ')
+                                : customization.optionIds.join(', ')}
                             </span>
-                            {customization.optionIds.length > 0 && (
-                              <span className="ml-1">
-                                {customization.optionNames?.length
-                                  ? customization.optionNames.join(', ')
-                                  : customization.optionIds.join(', ')}
-                              </span>
-                            )}
-                            {customization.textValue && (
-                              <span className="ml-1 italic">
-                                "{customization.textValue}"
-                              </span>
-                            )}
-                          </div>
-                        )
-                      )}
+                          )}
+                          {customization.textValue && (
+                            <span className="ml-1 italic">
+                              "{customization.textValue}"
+                            </span>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
 
@@ -336,18 +310,22 @@ export function OrderSummary({
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack}>
+        <Button
+          variant="outline"
+          onClick={onBack}
+          disabled={createOrderMutation.isPending}
+        >
           Back
         </Button>
         <Button
           onClick={handlePlaceOrder}
-          disabled={isProcessing}
+          disabled={createOrderMutation.isPending}
           size="lg"
           className="px-8"
         >
-          {isProcessing
+          {createOrderMutation.isPending
             ? 'Processing...'
-            : `Place Order - $${(getSubtotal() + getTax() + (checkoutData.deliveryType === 'pickup' ? 0 : getDeliveryFee())).toFixed(2)}`}
+            : `Place Order - $${orderTotal}`}
         </Button>
       </div>
     </div>

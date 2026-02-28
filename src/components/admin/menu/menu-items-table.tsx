@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -8,7 +8,6 @@ import {
   Edit,
   Trash2,
   Eye,
-  Copy,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -29,7 +28,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { toast } from 'sonner';
+import { useAdminMenuItems } from '@/hooks/queries/use-admin-queries';
+import {
+  useUpdateMenuItemStatus,
+  useDeleteMenuItem,
+  useDuplicateMenuItem,
+} from '@/hooks/mutations';
+import type { MenuItem } from '@/types';
 
 interface MenuItemData {
   id: string;
@@ -66,153 +71,53 @@ interface MenuItemsTableProps {
 }
 
 const statusColors = {
-  ACTIVE: 'bg-green-100 text-green-800 border-green-200',
-  INACTIVE: 'bg-gray-100 text-gray-800 border-gray-200',
-  SOLD_OUT: 'bg-red-100 text-red-800 border-red-200',
-  LOW_STOCK: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  active: 'bg-green-100 text-green-800 border-green-200',
+  inactive: 'bg-gray-100 text-gray-800 border-gray-200',
+  sold_out: 'bg-red-100 text-red-800 border-red-200',
+  low_stock: 'bg-yellow-100 text-yellow-800 border-yellow-200',
 };
 
 const statusLabels = {
-  ACTIVE: 'Active',
-  INACTIVE: 'Inactive',
-  SOLD_OUT: 'Sold Out',
-  LOW_STOCK: 'Low Stock',
+  active: 'Active',
+  inactive: 'Inactive',
+  sold_out: 'Sold Out',
+  low_stock: 'Low Stock',
 };
 
 export function MenuItemsTable({
   searchTerm = '',
   categoryFilter = 'all',
   statusFilter = 'all',
-}: MenuItemsTableProps) {
-  const [items, setItems] = useState<MenuItemData[]>([]);
-  const [pagination, setPagination] = useState<
-    MenuItemsResponse['pagination'] | null
-  >(null);
-  const [loading, setLoading] = useState(true);
+}: Readonly<MenuItemsTableProps>) {
   const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchMenuItems = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: '10',
-        search: searchTerm,
-        categoryId: categoryFilter,
-        status: statusFilter,
-      });
+  const { data, isLoading: loading } = useAdminMenuItems({
+    page: currentPage,
+    limit: 10,
+    search: searchTerm,
+    category: categoryFilter === 'all' ? undefined : categoryFilter,
+    status: statusFilter === 'all' ? undefined : statusFilter,
+  });
 
-      const response = await fetch(`/api/admin/menu/items?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        setItems(data.data.items);
-        setPagination(data.data.pagination);
-      }
-    } catch (error) {
-      console.error('Failed to fetch menu items:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, searchTerm, categoryFilter, statusFilter]);
+  const updateStatusMutation = useUpdateMenuItemStatus();
+  const deleteMutation = useDeleteMenuItem();
+  const duplicateMutation = useDuplicateMenuItem();
 
-  useEffect(() => {
-    fetchMenuItems();
-  }, [fetchMenuItems]);
+  const items = data?.items || [];
+  const pagination = data?.pagination || null;
 
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, categoryFilter, statusFilter]);
-
-  const handleStatusChange = async (
+  const handleStatusChange = (
     itemId: string,
-    newStatus: MenuItemData['status']
+    newStatus: MenuItem['status']
   ) => {
-    try {
-      const response = await fetch(`/api/admin/menu/items/${itemId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        // Update local state
-        setItems(prev =>
-          prev.map(item =>
-            item.id === itemId ? { ...item, status: newStatus } : item
-          )
-        );
-      } else {
-        throw new Error(result.error || 'Failed to update status');
-      }
-    } catch (error) {
-      console.error('Status update error:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to update status'
-      );
-    }
+    updateStatusMutation.mutate({ itemId, status: newStatus });
   };
 
-  const handleDelete = async (itemId: string) => {
+  const handleDelete = (itemId: string) => {
     if (!confirm('Are you sure you want to delete this menu item?')) {
       return;
     }
-
-    try {
-      const response = await fetch(`/api/admin/menu/items/${itemId}`, {
-        method: 'DELETE',
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        // Refresh the list
-        fetchMenuItems();
-        toast.success('Menu item deleted successfully');
-      } else {
-        throw new Error(result.error || 'Failed to delete menu item');
-      }
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to delete menu item'
-      );
-    }
-  };
-
-  const handleDuplicate = async (item: MenuItemData) => {
-    try {
-      const response = await fetch('/api/admin/menu/items', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: `${item.name} (Copy)`,
-          description: item.description,
-          basePrice: item.basePrice,
-          categoryId: item.category.id,
-          status: 'INACTIVE', // Set as inactive by default
-          image: item.image,
-          tags: JSON.parse(item.tags || '[]'),
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        // Refresh the list
-        fetchMenuItems();
-        toast.success('Menu item duplicated successfully');
-      } else {
-        throw new Error(result.error || 'Failed to duplicate menu item');
-      }
-    } catch (error) {
-      console.error('Duplicate error:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to duplicate menu item'
-      );
-    }
+    deleteMutation.mutate(itemId);
   };
 
   const parseTags = (tagsString: string): string[] => {
@@ -226,9 +131,9 @@ export function MenuItemsTable({
   if (loading) {
     return (
       <div className="space-y-4">
-        {Array.from({ length: 5 }).map((_, index) => (
+        {Array.from({ length: 5 }).map((_, i) => (
           <div
-            key={index}
+            key={`skeleton-${i}`}
             className="flex animate-pulse items-center gap-4 p-4"
           >
             <div className="h-12 w-12 rounded-lg bg-gray-200"></div>
@@ -261,8 +166,10 @@ export function MenuItemsTable({
           </TableHeader>
           <TableBody>
             {items.length > 0 ? (
-              items.map(item => {
-                const tags = parseTags(item.tags);
+              items.map((item: MenuItem) => {
+                const tags = Array.isArray(item.tags)
+                  ? item.tags
+                  : parseTags(item.tags);
                 return (
                   <TableRow key={item.id}>
                     <TableCell>
@@ -344,11 +251,11 @@ export function MenuItemsTable({
                             onClick={() =>
                               handleStatusChange(
                                 item.id,
-                                item.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
+                                item.status === 'active' ? 'inactive' : 'active'
                               )
                             }
                           >
-                            {item.status === 'ACTIVE'
+                            {item.status === 'active'
                               ? 'Deactivate'
                               : 'Activate'}
                           </DropdownMenuItem>
