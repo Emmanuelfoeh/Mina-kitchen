@@ -129,7 +129,6 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log('Order creation request body:', JSON.stringify(body, null, 2));
 
     // Validate and sanitize input
     const validatedData = createOrderSchema.parse(body);
@@ -208,7 +207,6 @@ export async function POST(request: NextRequest) {
 
     // Verify menu items exist and calculate prices
     const menuItemIds = validatedData.items.map((item: any) => item.menuItemId);
-    console.log('Looking for menu items with IDs:', menuItemIds);
 
     const menuItems = await db.menuItem.findMany({
       where: {
@@ -218,19 +216,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log(
-      'Found menu items:',
-      menuItems.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        status: item.status,
-      }))
-    );
-
     if (menuItems.length !== menuItemIds.length) {
       const foundIds = menuItems.map((item: any) => item.id);
       const missingIds = menuItemIds.filter(id => !foundIds.includes(id));
-      console.log('Missing menu item IDs:', missingIds);
 
       return SecurityHeaders.applyHeaders(
         NextResponse.json(
@@ -315,6 +303,9 @@ export async function POST(request: NextRequest) {
         estimatedDelivery: scheduledFor
           ? new Date(scheduledFor.getTime() + 45 * 60000)
           : null, // 45 min after scheduled time
+        // Manual payment model: payment is arranged out-of-band after the
+        // order is placed, so it starts PENDING. Seam for a payment provider:
+        // advance this to COMPLETED from a provider webhook when integrated.
         paymentStatus: 'PENDING',
         specialInstructions: validatedData.specialInstructions,
         items: {

@@ -56,13 +56,13 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     if (selectedOrders.length === 0) return;
 
     try {
-      // TODO: Implement actual API call
-      const response = await fetch('/api/admin/orders/bulk-update', {
+      const response = await fetch('/api/admin/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderIds: selectedOrders,
           status,
+          bulkAction: 'updateStatus',
         }),
       });
 

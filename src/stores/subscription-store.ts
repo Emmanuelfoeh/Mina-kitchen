@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 export interface Subscription {
   id: string;
@@ -41,102 +40,145 @@ interface SubscriptionStore {
   isLoading: boolean;
   error: string | null;
 
-  // Actions
+  // Actions (server-backed)
+  fetchSubscriptions: () => Promise<void>;
   addSubscription: (
     subscription: Omit<Subscription, 'id' | 'createdAt' | 'updatedAt'>
-  ) => void;
-  updateSubscription: (id: string, updates: Partial<Subscription>) => void;
-  pauseSubscription: (id: string) => void;
-  resumeSubscription: (id: string) => void;
-  cancelSubscription: (id: string) => void;
+  ) => Promise<void>;
+  updateSubscription: (
+    id: string,
+    updates: Partial<Subscription>
+  ) => Promise<void>;
+  pauseSubscription: (id: string) => Promise<void>;
+  resumeSubscription: (id: string) => Promise<void>;
+  cancelSubscription: (id: string) => Promise<void>;
   updateDeliverySchedule: (
     id: string,
     schedule: Subscription['deliverySchedule']
-  ) => void;
+  ) => Promise<void>;
   updateDeliveryAddress: (
     id: string,
     address: Subscription['deliveryAddress']
-  ) => void;
+  ) => Promise<void>;
   updateCustomizations: (
     id: string,
     customizations: Subscription['customizations']
-  ) => void;
+  ) => Promise<void>;
   getActiveSubscriptions: () => Subscription[];
   getSubscriptionById: (id: string) => Subscription | undefined;
   clearError: () => void;
 }
 
-export const useSubscriptionStore = create<SubscriptionStore>()(
-  persist(
-    (set, get) => ({
-      subscriptions: [],
-      isLoading: false,
-      error: null,
+// API returns ISO strings; the Subscription contract uses Date instances.
+function reviveDates(sub: any): Subscription {
+  return {
+    ...sub,
+    startDate: new Date(sub.startDate),
+    nextDelivery: new Date(sub.nextDelivery),
+    createdAt: new Date(sub.createdAt),
+    updatedAt: new Date(sub.updatedAt),
+  };
+}
 
-      addSubscription: subscriptionData => {
-        const newSubscription: Subscription = {
-          ...subscriptionData,
-          id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
+async function readError(res: Response): Promise<string> {
+  try {
+    const json = await res.json();
+    return json.error || 'Request failed';
+  } catch {
+    return 'Request failed';
+  }
+}
 
-        set(state => ({
-          subscriptions: [...state.subscriptions, newSubscription],
-          error: null,
-        }));
-      },
+export const useSubscriptionStore = create<SubscriptionStore>()((set, get) => ({
+  subscriptions: [],
+  isLoading: false,
+  error: null,
 
-      updateSubscription: (id, updates) => {
-        set(state => ({
-          subscriptions: state.subscriptions.map(sub =>
-            sub.id === id ? { ...sub, ...updates, updatedAt: new Date() } : sub
-          ),
-          error: null,
-        }));
-      },
-
-      pauseSubscription: id => {
-        get().updateSubscription(id, { status: 'paused' });
-      },
-
-      resumeSubscription: id => {
-        get().updateSubscription(id, { status: 'active' });
-      },
-
-      cancelSubscription: id => {
-        get().updateSubscription(id, { status: 'cancelled' });
-      },
-
-      updateDeliverySchedule: (id, schedule) => {
-        get().updateSubscription(id, { deliverySchedule: schedule });
-      },
-
-      updateDeliveryAddress: (id, address) => {
-        get().updateSubscription(id, { deliveryAddress: address });
-      },
-
-      updateCustomizations: (id, customizations) => {
-        get().updateSubscription(id, { customizations });
-      },
-
-      getActiveSubscriptions: () => {
-        return get().subscriptions.filter(sub => sub.status === 'active');
-      },
-
-      getSubscriptionById: id => {
-        return get().subscriptions.find(sub => sub.id === id);
-      },
-
-      clearError: () => {
-        set({ error: null });
-      },
-    }),
-    {
-      name: 'subscription-store',
-      partialize: state => ({
-        subscriptions: state.subscriptions,
-      }),
+  fetchSubscriptions: async () => {
+    set({ isLoading: true });
+    try {
+      const res = await fetch('/api/subscriptions');
+      if (!res.ok) throw new Error(await readError(res));
+      const json = await res.json();
+      set({
+        subscriptions: (json.data || []).map(reviveDates),
+        isLoading: false,
+        error: null,
+      });
+    } catch (error) {
+      set({
+        isLoading: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to load subscriptions',
+      });
     }
-  )
-);
+  },
+
+  addSubscription: async subscriptionData => {
+    set({ error: null });
+    const res = await fetch('/api/subscriptions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subscriptionData),
+    });
+    if (!res.ok) {
+      const message = await readError(res);
+      set({ error: message });
+      throw new Error(message);
+    }
+    const json = await res.json();
+    set(state => ({
+      subscriptions: [reviveDates(json.data), ...state.subscriptions],
+      error: null,
+    }));
+  },
+
+  updateSubscription: async (id, updates) => {
+    set({ error: null });
+    const res = await fetch(`/api/subscriptions/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) {
+      const message = await readError(res);
+      set({ error: message });
+      throw new Error(message);
+    }
+    const json = await res.json();
+    set(state => ({
+      subscriptions: state.subscriptions.map(sub =>
+        sub.id === id ? reviveDates(json.data) : sub
+      ),
+      error: null,
+    }));
+  },
+
+  pauseSubscription: id => get().updateSubscription(id, { status: 'paused' }),
+  resumeSubscription: id => get().updateSubscription(id, { status: 'active' }),
+  cancelSubscription: id =>
+    get().updateSubscription(id, { status: 'cancelled' }),
+
+  updateDeliverySchedule: (id, schedule) =>
+    get().updateSubscription(id, { deliverySchedule: schedule }),
+
+  updateDeliveryAddress: (id, address) =>
+    get().updateSubscription(id, { deliveryAddress: address }),
+
+  updateCustomizations: (id, customizations) =>
+    get().updateSubscription(id, { customizations }),
+
+  getActiveSubscriptions: () => {
+    return get().subscriptions.filter(sub => sub.status === 'active');
+  },
+
+  getSubscriptionById: id => {
+    return get().subscriptions.find(sub => sub.id === id);
+  },
+
+  clearError: () => {
+    set({ error: null });
+  },
+}));

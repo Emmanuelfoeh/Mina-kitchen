@@ -1,4 +1,11 @@
 import { db } from '@/lib/db';
+import { Resend } from 'resend';
+
+const CONTACT_EMAIL = process.env.CONTACT_EMAIL || 'hello@minakitchen.ca';
+const CONTACT_PHONE = process.env.CONTACT_PHONE || '';
+const CONTACT_LINE = CONTACT_PHONE
+  ? `${CONTACT_EMAIL} | ${CONTACT_PHONE}`
+  : CONTACT_EMAIL;
 
 export interface NotificationData {
   orderId: string;
@@ -12,38 +19,80 @@ export interface NotificationData {
 
 export class NotificationService {
   /**
+   * Send an email via Resend. When RESEND_API_KEY is not configured this is a
+   * no-op that logs a structured line and reports success (so unconfigured
+   * environments aren't treated as failures). This is the single seam to swap
+   * or extend the email provider.
+   */
+  private static async sendEmail(message: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+  }): Promise<boolean> {
+    const apiKey = process.env.RESEND_API_KEY;
+    const from =
+      process.env.RESEND_FROM_EMAIL || "Mina's Kitchen <onboarding@resend.dev>";
+
+    if (!apiKey) {
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          msg: 'email.skipped (RESEND_API_KEY not set)',
+          to: message.to,
+          subject: message.subject,
+        })
+      );
+      return true;
+    }
+
+    try {
+      const resend = new Resend(apiKey);
+      const { error } = await resend.emails.send({
+        from,
+        to: message.to,
+        subject: message.subject,
+        html: message.html,
+        text: message.text,
+      });
+      if (error) {
+        console.error('Resend send error:', error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      return false;
+    }
+  }
+
+  /**
    * Send order status notification to customer
    */
   static async sendOrderStatusNotification(
     data: NotificationData
   ): Promise<boolean> {
     try {
-      // In a real application, this would integrate with an email service like:
-      // - SendGrid
-      // - AWS SES
-      // - Mailgun
-      // - Resend
-
       const emailContent = this.generateStatusEmailContent(data);
 
-      // For now, we'll log the notification and store it in the database
-      console.log('📧 Order Status Notification:', {
+      const sent = await this.sendEmail({
         to: data.customerEmail,
         subject: emailContent.subject,
-        content: emailContent.html,
+        html: emailContent.html,
+        text: emailContent.text,
       });
 
-      // Store notification in database for tracking
+      // Track the outcome (currently structured logs; no notifications table).
       await this.storeNotification({
         orderId: data.orderId,
         customerEmail: data.customerEmail,
         type: 'order_status_update',
         subject: emailContent.subject,
         content: emailContent.html,
-        status: 'sent',
+        status: sent ? 'sent' : 'failed',
       });
 
-      return true;
+      return sent;
     } catch (error) {
       console.error('Failed to send order status notification:', error);
 
@@ -168,7 +217,7 @@ export class NotificationService {
             
             <div class="footer">
               <p> Mina’s Kitchen | Authentic African Cuisine</p>
-              <p>Contact us: info@afrieats.com | (555) 123-4567</p>
+              <p>Contact us: ${CONTACT_LINE}</p>
             </div>
           </div>
         </body>
@@ -195,20 +244,18 @@ export class NotificationService {
     error?: string;
   }) {
     try {
-      // In a real application, you would have a notifications table
-      // For now, we'll just log it
-      console.log('📝 Storing notification:', {
-        ...notification,
-        timestamp: new Date().toISOString(),
-      });
-
-      // TODO: Implement actual database storage when notifications table is created
-      // await db.notification.create({
-      //   data: {
-      //     ...notification,
-      //     sentAt: new Date(),
-      //   },
-      // });
+      // No notifications table yet — emit a structured audit line. This is the
+      // seam to persist to a Notification model later.
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          msg: 'notification',
+          orderId: notification.orderId,
+          type: notification.type,
+          status: notification.status,
+          timestamp: new Date().toISOString(),
+        })
+      );
     } catch (error) {
       console.error('Failed to store notification:', error);
     }
@@ -249,10 +296,11 @@ export class NotificationService {
 
       const emailContent = this.generateConfirmationEmailContent(order);
 
-      console.log('📧 Order Confirmation Notification:', {
+      const sent = await this.sendEmail({
         to: order.customer.email,
         subject: emailContent.subject,
-        content: emailContent.html,
+        html: emailContent.html,
+        text: emailContent.text,
       });
 
       await this.storeNotification({
@@ -261,10 +309,10 @@ export class NotificationService {
         type: 'order_confirmation',
         subject: emailContent.subject,
         content: emailContent.html,
-        status: 'sent',
+        status: sent ? 'sent' : 'failed',
       });
 
-      return true;
+      return sent;
     } catch (error) {
       console.error('Failed to send order confirmation:', error);
       return false;
@@ -331,7 +379,7 @@ export class NotificationService {
             
             <div class="footer">
               <p>Mina’s Kitchen | Authentic African Cuisine</p>
-              <p>Contact us: info@afrieats.com | (555) 123-4567</p>
+              <p>Contact us: ${CONTACT_LINE}</p>
             </div>
           </div>
         </body>

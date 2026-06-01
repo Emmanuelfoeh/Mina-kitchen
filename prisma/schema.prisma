@@ -46,6 +46,7 @@ model Tenant {
   packages       Package[]
   orders         Order[]
   carts          Cart[]
+  subscriptions  Subscription[]
 
   @@map("tenants")
 }
@@ -67,9 +68,10 @@ model User {
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Relations
-  addresses Address[]
-  orders    Order[]
-  cart      Cart?
+  addresses     Address[]
+  orders        Order[]
+  cart          Cart?
+  subscriptions Subscription[]
 
   @@unique([tenantId, email]) // Email unique per tenant
   @@index([tenantId, createdAt]) // Admin user listing (filter tenant, sort recent)
@@ -207,6 +209,7 @@ model Package {
 
   // Relations
   includedItems PackageItem[]
+  subscriptions Subscription[]
 
   @@unique([tenantId, slug]) // Slug unique per tenant
   @@index([tenantId, createdAt]) // Admin package listing (filter tenant, sort recent)
@@ -324,6 +327,38 @@ model OrderItem {
   @@map("order_items")
 }
 
+// Subscription Models
+model Subscription {
+  id           String                @id @default(cuid())
+  status       SubscriptionStatus    @default(ACTIVE)
+  frequency    SubscriptionFrequency
+  price        Float
+  startDate    DateTime              @default(now())
+  nextDelivery DateTime
+
+  // JSON snapshots (schedule, delivery address, per-item customizations)
+  deliverySchedule String
+  deliveryAddress  String
+  customizations   String @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Tenant relation
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Relations
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packageId String
+  package   Package @relation(fields: [packageId], references: [id])
+
+  @@index([tenantId, userId])
+  @@index([packageId])
+  @@map("subscriptions")
+}
+
 // Enums
 enum UserRole {
   CUSTOMER
@@ -390,4 +425,16 @@ enum PaymentStatus {
 enum DeliveryType {
   DELIVERY
   PICKUP
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+enum SubscriptionFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
 }

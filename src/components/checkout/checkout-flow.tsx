@@ -126,7 +126,7 @@ export function CheckoutFlow() {
     { id: 'delivery', title: 'Delivery Method', icon: Truck },
     { id: 'address', title: 'Address', icon: CheckCircle },
     { id: 'scheduling', title: 'Schedule', icon: Calendar },
-    { id: 'summary', title: 'Review & Pay', icon: CreditCard },
+    { id: 'summary', title: 'Review & Confirm', icon: CreditCard },
   ];
 
   const currentStepIndex = steps.findIndex(step => step.id === currentStep);

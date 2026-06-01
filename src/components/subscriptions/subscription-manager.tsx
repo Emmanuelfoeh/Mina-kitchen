@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import { SubscriptionCard } from './subscription-card';
 import { SubscriptionEditModal } from './subscription-edit-modal';
@@ -12,10 +12,16 @@ import Link from 'next/link';
 import type { Subscription } from '@/stores/subscription-store';
 
 export function SubscriptionManager() {
-  const { subscriptions, getActiveSubscriptions } = useSubscriptionStore();
+  const { subscriptions, getActiveSubscriptions, fetchSubscriptions } =
+    useSubscriptionStore();
   const [selectedSubscription, setSelectedSubscription] =
     useState<Subscription | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Load the user's subscriptions from the server on mount.
+  useEffect(() => {
+    fetchSubscriptions();
+  }, [fetchSubscriptions]);
 
   const activeSubscriptions = getActiveSubscriptions();
   const pausedSubscriptions = subscriptions.filter(

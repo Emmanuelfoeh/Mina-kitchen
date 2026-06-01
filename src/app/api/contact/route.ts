@@ -60,21 +60,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In a real application, you would:
-    // 1. Save the inquiry to a database
-    // 2. Send an email notification to the restaurant
-    // 3. Send a confirmation email to the customer
-    // 4. Integrate with a CRM system
-
-    // For now, we'll just log the inquiry and return success
-    console.log('Contact form submission:', {
-      ...validatedData,
+    // Record receipt without logging PII (name/email/message).
+    // TODO: persist the inquiry and/or send an email via the notification layer.
+    console.log('Contact form submission received', {
+      subject: validatedData.subject,
       timestamp: new Date().toISOString(),
-      ip: request.headers.get('x-forwarded-for') || 'unknown',
     });
-
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 500));
 
     return SecurityHeaders.applyHeaders(
       NextResponse.json(
