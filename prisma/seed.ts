@@ -37,13 +37,36 @@ async function getDefaultCustomizations(
 }
 
 async function main() {
+  // Get or create the default tenant
+  const defaultTenant = await db.tenant.upsert({
+    where: { subdomain: 'default' },
+    update: {},
+    create: {
+      id: 'default_tenant_id',
+      name: 'Mina Kitchen',
+      subdomain: 'default',
+      businessEmail: 'admin@minakitchen.com',
+      businessPhone: '1-800-MINA-FOOD',
+      plan: 'ENTERPRISE',
+      status: 'ACTIVE',
+      settings: '{}',
+    },
+  });
+
+  console.log('Default tenant created/found:', defaultTenant.name);
+
   // Hash passwords
   const adminPasswordHash = await bcrypt.hash('admin123', 12);
   const customerPasswordHash = await bcrypt.hash('customer123', 12);
 
   // Create admin user
   const adminUser = await db.user.upsert({
-    where: { email: 'admin@minakitchen.ca' },
+    where: {
+      tenantId_email: {
+        tenantId: defaultTenant.id,
+        email: 'admin@minakitchen.ca',
+      },
+    },
     update: {},
     create: {
       email: 'admin@minakitchen.ca',
@@ -51,6 +74,7 @@ async function main() {
       passwordHash: adminPasswordHash,
       role: 'ADMIN',
       isVerified: true,
+      tenantId: defaultTenant.id,
     },
   });
 
@@ -58,7 +82,12 @@ async function main() {
 
   // Create customer user
   const customerUser = await db.user.upsert({
-    where: { email: 'customer@minakitchen.ca' },
+    where: {
+      tenantId_email: {
+        tenantId: defaultTenant.id,
+        email: 'customer@minakitchen.ca',
+      },
+    },
     update: {},
     create: {
       email: 'customer@minakitchen.ca',
@@ -66,6 +95,7 @@ async function main() {
       passwordHash: customerPasswordHash,
       role: 'CUSTOMER',
       isVerified: true,
+      tenantId: defaultTenant.id,
     },
   });
 
@@ -73,49 +103,74 @@ async function main() {
 
   // Create menu categories
   const mainDishes = await db.menuCategory.upsert({
-    where: { name: 'Main Dishes' },
+    where: {
+      tenantId_name: {
+        tenantId: defaultTenant.id,
+        name: 'Main Dishes',
+      },
+    },
     update: {},
     create: {
       name: 'Main Dishes',
       description: 'Hearty traditional African main courses',
       displayOrder: 1,
+      tenantId: defaultTenant.id,
     },
   });
 
   const soups = await db.menuCategory.upsert({
-    where: { name: 'Soups' },
+    where: {
+      tenantId_name: {
+        tenantId: defaultTenant.id,
+        name: 'Soups',
+      },
+    },
     update: {},
     create: {
       name: 'Soups',
       description: 'Rich and flavorful African soups',
       displayOrder: 2,
+      tenantId: defaultTenant.id,
     },
   });
 
   const sides = await db.menuCategory.upsert({
-    where: { name: 'Sides' },
+    where: {
+      tenantId_name: {
+        tenantId: defaultTenant.id,
+        name: 'Sides',
+      },
+    },
     update: {},
     create: {
       name: 'Sides',
       description: 'Perfect accompaniments to your meal',
       displayOrder: 3,
+      tenantId: defaultTenant.id,
     },
   });
 
   const starters = await db.menuCategory.upsert({
-    where: { name: 'Starters' },
+    where: {
+      tenantId_name: {
+        tenantId: defaultTenant.id,
+        name: 'Starters',
+      },
+    },
     update: {},
     create: {
       name: 'Starters',
       description: 'Light bites to start your meal',
       displayOrder: 4,
+      tenantId: defaultTenant.id,
     },
   });
 
   // Create menu items
   const jollofRice = await db.menuItem.upsert({
     where: {
-      categoryId_name: {
+      tenantId_categoryId_name: {
+        tenantId: defaultTenant.id,
         categoryId: mainDishes.id,
         name: 'Smokey Jollof Rice',
       },
@@ -127,6 +182,7 @@ async function main() {
         'Fire-wood smoked rice served with spicy grilled chicken and fried plantain.',
       basePrice: 18.0,
       categoryId: mainDishes.id,
+      tenantId: defaultTenant.id,
       image:
         'https://images.unsplash.com/photo-1546833999-b9f581a1996d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80',
       tags: JSON.stringify(['spicy', 'popular', 'chicken']),
@@ -171,7 +227,8 @@ async function main() {
 
   const egusiSoup = await db.menuItem.upsert({
     where: {
-      categoryId_name: {
+      tenantId_categoryId_name: {
+        tenantId: defaultTenant.id,
         categoryId: soups.id,
         name: 'Egusi Soup & Yam',
       },
@@ -183,6 +240,7 @@ async function main() {
         'Rich melon seed soup with spinach and assorted meat, served with pounded yam.',
       basePrice: 22.0,
       categoryId: soups.id,
+      tenantId: defaultTenant.id,
       image:
         'https://images.unsplash.com/photo-1585032226651-759b368d7246?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
       tags: JSON.stringify(['traditional', 'soup', 'meat']),
@@ -221,7 +279,8 @@ async function main() {
 
   const beefSuya = await db.menuItem.upsert({
     where: {
-      categoryId_name: {
+      tenantId_categoryId_name: {
+        tenantId: defaultTenant.id,
         categoryId: starters.id,
         name: 'Beef Suya Platter',
       },
@@ -233,6 +292,7 @@ async function main() {
         'Thinly sliced beef marinated in spicy peanut blend, grilled to perfection with onions.',
       basePrice: 24.0,
       categoryId: starters.id,
+      tenantId: defaultTenant.id,
       image:
         'https://images.unsplash.com/photo-1529042410759-befb1204b468?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
       tags: JSON.stringify(['spicy', 'grilled', 'beef', 'popular']),
@@ -270,7 +330,8 @@ async function main() {
 
   const friedPlantain = await db.menuItem.upsert({
     where: {
-      categoryId_name: {
+      tenantId_categoryId_name: {
+        tenantId: defaultTenant.id,
         categoryId: sides.id,
         name: 'Sweet Fried Plantain',
       },
@@ -282,6 +343,7 @@ async function main() {
         'Golden fried ripe plantains, perfectly caramelized and sweet.',
       basePrice: 8.0,
       categoryId: sides.id,
+      tenantId: defaultTenant.id,
       image:
         'https://images.unsplash.com/photo-1606491956689-2ea866880c84?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
       tags: JSON.stringify(['vegetarian', 'sweet', 'side']),
@@ -306,7 +368,8 @@ async function main() {
 
   const pepperSoup = await db.menuItem.upsert({
     where: {
-      categoryId_name: {
+      tenantId_categoryId_name: {
+        tenantId: defaultTenant.id,
         categoryId: soups.id,
         name: 'Goat Meat Pepper Soup',
       },
@@ -318,6 +381,7 @@ async function main() {
         'Spicy and aromatic soup with tender goat meat and traditional African spices.',
       basePrice: 19.0,
       categoryId: soups.id,
+      tenantId: defaultTenant.id,
       image:
         'https://images.unsplash.com/photo-1547592166-23ac45744acd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
       tags: JSON.stringify(['spicy', 'soup', 'goat', 'traditional']),
@@ -356,7 +420,12 @@ async function main() {
 
   // Create packages
   const dailyPackage = await db.package.upsert({
-    where: { slug: 'daily-meal-package' },
+    where: {
+      tenantId_slug: {
+        tenantId: defaultTenant.id,
+        slug: 'daily-meal-package',
+      },
+    },
     update: {},
     create: {
       name: 'Daily Meal Package',
@@ -365,6 +434,7 @@ async function main() {
         'Perfect for trying our authentic African cuisine with a complete meal for one day.',
       type: 'DAILY',
       price: 35.0,
+      tenantId: defaultTenant.id,
       image:
         'https://images.unsplash.com/photo-1546833999-b9f581a1996d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80',
       isActive: true,
@@ -416,7 +486,12 @@ async function main() {
   });
 
   const weeklyPackage = await db.package.upsert({
-    where: { slug: 'weekly-meal-package' },
+    where: {
+      tenantId_slug: {
+        tenantId: defaultTenant.id,
+        slug: 'weekly-meal-package',
+      },
+    },
     update: {},
     create: {
       name: 'Weekly Meal Package',
@@ -425,6 +500,7 @@ async function main() {
         "A week's worth of delicious African meals with variety and convenience.",
       type: 'WEEKLY',
       price: 220.0,
+      tenantId: defaultTenant.id,
       image:
         'https://images.unsplash.com/photo-1585032226651-759b368d7246?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
       isActive: true,
@@ -492,7 +568,12 @@ async function main() {
   });
 
   const monthlyPackage = await db.package.upsert({
-    where: { slug: 'monthly-meal-package' },
+    where: {
+      tenantId_slug: {
+        tenantId: defaultTenant.id,
+        slug: 'monthly-meal-package',
+      },
+    },
     update: {},
     create: {
       name: 'Monthly Meal Package',
@@ -501,6 +582,7 @@ async function main() {
         'The ultimate African cuisine experience with a full month of diverse, authentic meals.',
       type: 'MONTHLY',
       price: 850.0,
+      tenantId: defaultTenant.id,
       image:
         'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
       isActive: true,
@@ -592,6 +674,7 @@ async function main() {
     data: {
       orderNumber: 'ORD-001',
       customerId: customerUser.id,
+      tenantId: defaultTenant.id,
       status: 'PENDING',
       deliveryType: 'DELIVERY',
       subtotal: 45.0,
@@ -643,6 +726,7 @@ async function main() {
     data: {
       orderNumber: 'ORD-002',
       customerId: customerUser.id,
+      tenantId: defaultTenant.id,
       status: 'CONFIRMED',
       deliveryType: 'PICKUP',
       subtotal: 28.0,
@@ -681,6 +765,7 @@ async function main() {
     data: {
       orderNumber: 'ORD-003',
       customerId: customerUser.id,
+      tenantId: defaultTenant.id,
       status: 'PREPARING',
       deliveryType: 'DELIVERY',
       subtotal: 35.0,
@@ -690,8 +775,7 @@ async function main() {
       total: 50.05,
       paymentStatus: 'COMPLETED',
       deliveryAddressId: customerAddress.id,
-      scheduledFor: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
-      estimatedDelivery: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
+      scheduledFor: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now\n      estimatedDelivery: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
       items: {
         create: [
           {

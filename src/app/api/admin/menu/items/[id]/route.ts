@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { z } from 'zod';
 
 const menuItemSchema = z.object({
@@ -57,6 +58,14 @@ export const GET = requireAdmin(
     context?: { params: Promise<{ id: string }> }
   ) => {
     try {
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) {
+        return NextResponse.json(
+          { error: 'Tenant not found' },
+          { status: 404 }
+        );
+      }
+
       if (!context?.params) {
         return NextResponse.json(
           { error: 'Menu item ID is required' },
@@ -66,8 +75,11 @@ export const GET = requireAdmin(
 
       const { id } = await context.params;
 
-      const menuItem = await db.menuItem.findUnique({
-        where: { id },
+      const menuItem = await db.menuItem.findFirst({
+        where: {
+          id,
+          tenantId,
+        },
         include: {
           category: true,
           customizations: {
@@ -107,6 +119,14 @@ export const PATCH = requireAdmin(
     context?: { params: Promise<{ id: string }> }
   ) => {
     try {
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) {
+        return NextResponse.json(
+          { error: 'Tenant not found' },
+          { status: 404 }
+        );
+      }
+
       if (!context?.params) {
         return NextResponse.json(
           { error: 'Menu item ID is required' },
@@ -118,9 +138,12 @@ export const PATCH = requireAdmin(
       const body = await request.json();
       const validatedData = menuItemSchema.parse(body);
 
-      // Check if menu item exists
-      const existingItem = await db.menuItem.findUnique({
-        where: { id },
+      // Check if menu item exists and belongs to tenant
+      const existingItem = await db.menuItem.findFirst({
+        where: {
+          id,
+          tenantId,
+        },
         include: {
           customizations: {
             include: {
@@ -260,6 +283,14 @@ export const DELETE = requireAdmin(
     context?: { params: Promise<{ id: string }> }
   ) => {
     try {
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) {
+        return NextResponse.json(
+          { error: 'Tenant not found' },
+          { status: 404 }
+        );
+      }
+
       if (!context?.params) {
         return NextResponse.json(
           { error: 'Menu item ID is required' },
@@ -269,9 +300,12 @@ export const DELETE = requireAdmin(
 
       const { id } = await context.params;
 
-      // Check if menu item exists
-      const existingItem = await db.menuItem.findUnique({
-        where: { id },
+      // Check if menu item exists and belongs to tenant
+      const existingItem = await db.menuItem.findFirst({
+        where: {
+          id,
+          tenantId,
+        },
       });
 
       if (!existingItem) {

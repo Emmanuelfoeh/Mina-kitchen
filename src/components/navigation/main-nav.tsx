@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { usePathname, useRouter } from 'next/navigation';
 import { announceToScreenReader } from '@/lib/accessibility';
+import { TenantLogo } from '@/components/tenant/tenant-logo';
 
 export function MainNav() {
   const { getTotalItems, toggleCart } = useCartSafe();
@@ -61,20 +62,7 @@ export function MainNav() {
 
   return (
     <ResponsiveNav
-      brand={
-        <Link
-          href="/"
-          className="flex items-center space-x-2 rounded-md focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-none"
-          aria-label="Mina Kitchen - Go to homepage"
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-600">
-            <span className="text-sm font-bold text-white" aria-hidden="true">
-              MK
-            </span>
-          </div>
-          <span className="text-xl font-bold text-gray-900">Mina Kitchen</span>
-        </Link>
-      }
+      brand={<TenantLogo size="md" showName={true} />}
       actions={
         <div className="flex items-center space-x-4">
           {/* Cart Button */}
@@ -100,8 +88,21 @@ export function MainNav() {
           {/* User Menu */}
           {isAuthenticated ? (
             <div className="flex items-center space-x-2">
-              {/* Admin Button - Only show for admin users */}
-              {user?.role === 'ADMIN' && (
+              {/* Super Admin Button - Only show for super admin users */}
+              {user?.role === 'SUPER_ADMIN' && (
+                <Button variant="default" size="sm" asChild>
+                  <Link
+                    href="/admin/super-admin"
+                    className="flex items-center gap-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span className="hidden sm:inline">Super Admin</span>
+                  </Link>
+                </Button>
+              )}
+
+              {/* Admin Button - Show for admin and super admin users */}
+              {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/admin" className="flex items-center gap-2">
                     <Settings className="h-4 w-4" />

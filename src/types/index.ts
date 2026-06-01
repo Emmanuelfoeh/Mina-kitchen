@@ -1,12 +1,67 @@
 // Core Data Models for Food Ordering Platform
 
+// Tenant Model (Multi-Tenant/White-Label Support)
+export interface Tenant {
+  id: string;
+  name: string; // Restaurant name
+  subdomain: string; // e.g., "jollofhub"
+  customDomain?: string; // Optional custom domain
+
+  // Branding
+  logo?: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+
+  // Business Info
+  businessEmail: string;
+  businessPhone: string;
+  description?: string;
+
+  // Features & Billing
+  plan: TenantPlan;
+  status: TenantStatus;
+  trialEndsAt?: Date;
+  billingCycle: BillingCycle;
+
+  // Settings
+  settings: TenantSettings;
+
+  // Counts (for super admin stats)
+  _count?: {
+    users?: number;
+    orders?: number;
+    menuItems?: number;
+    packages?: number;
+  };
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type TenantPlan = 'TRIAL' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE';
+export type TenantStatus = 'TRIAL' | 'ACTIVE' | 'SUSPENDED' | 'CANCELLED';
+export type BillingCycle = 'MONTHLY' | 'ANNUAL';
+
+export interface TenantSettings {
+  allowCustomDomain?: boolean;
+  maxMenuItems?: number;
+  maxOrders?: number;
+  enableAnalytics?: boolean;
+  enableMarketingTools?: boolean;
+  customCss?: string;
+  [key: string]: any; // Allow additional settings
+}
+
 // User and Authentication Models
 export interface User {
   id: string;
   email: string;
   name: string;
   phone?: string;
-  role: 'CUSTOMER' | 'ADMIN';
+  role: 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN';
+  tenantId?: string; // Optional for backwards compatibility
+  tenant?: Tenant; // Populated tenant data
   addresses: Address[];
   createdAt: Date;
   updatedAt: Date;
@@ -43,6 +98,7 @@ export interface MenuItem {
   customizations: Customization[];
   tags: string[];
   relatedItemIds?: string[]; // Related product IDs
+  tenantId: string; // Multi-tenant support
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +109,7 @@ export interface MenuCategory {
   description: string;
   displayOrder: number;
   isActive: boolean;
+  tenantId: string; // Multi-tenant support
 }
 
 export interface Customization {
@@ -89,6 +146,7 @@ export interface Package {
   isActive: boolean;
   features: string[];
   relatedPackageIds?: string[]; // Related package IDs
+  tenantId: string; // Multi-tenant support
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -143,6 +201,7 @@ export interface Order {
   estimatedDelivery?: Date;
   paymentStatus: PaymentStatus;
   specialInstructions?: string;
+  tenantId: string; // Multi-tenant support
   createdAt: Date;
   updatedAt: Date;
 }

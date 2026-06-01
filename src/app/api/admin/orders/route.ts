@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { NotificationService } from '@/lib/notifications';
 
 type OrderStatus =
@@ -14,6 +15,11 @@ type OrderStatus =
 
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -24,8 +30,9 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 
     const skip = (page - 1) * limit;
 
-    // Build where clause
+    // Build where clause with tenant filter
     const where: {
+      tenantId: string;
       OR?: Array<{
         orderNumber?: { contains: string; mode: 'insensitive' };
         customer?: {
@@ -36,7 +43,9 @@ export const GET = requireAdmin(async (request: NextRequest) => {
         };
       }>;
       status?: OrderStatus;
-    } = {};
+    } = {
+      tenantId,
+    };
 
     // Search by order number or customer name/email
     if (search) {

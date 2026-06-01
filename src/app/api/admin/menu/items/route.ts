@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { z } from 'zod';
 
 const menuItemSchema = z.object({
@@ -52,6 +53,11 @@ type MenuItemInput = z.infer<typeof menuItemSchema>;
 // GET /api/admin/menu/items - List all menu items
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -61,8 +67,10 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 
     const skip = (page - 1) * limit;
 
-    // Build where clause
-    const where: Record<string, any> = {};
+    // Build where clause with tenant filter
+    const where: Record<string, any> = {
+      tenantId,
+    };
 
     if (search) {
       where.OR = [
@@ -127,6 +135,11 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 // POST /api/admin/menu/items - Create new menu item
 export const POST = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const validatedData = menuItemSchema.parse(body);
 
@@ -137,6 +150,7 @@ export const POST = requireAdmin(async (request: NextRequest) => {
         description: validatedData.description,
         basePrice: validatedData.basePrice,
         categoryId: validatedData.categoryId,
+        tenantId,
         status: validatedData.status,
         image: validatedData.image || '/placeholder-food.svg',
         tags: JSON.stringify(validatedData.tags),

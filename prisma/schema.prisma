@@ -9,10 +9,51 @@ datasource db {
   provider = "postgresql"
 }
 
+// Tenant Model (White-Label/Franchise)
+model Tenant {
+  id           String  @id @default(cuid())
+  name         String // Restaurant name
+  subdomain    String  @unique // e.g., "jollofhub"
+  customDomain String? @unique // Optional custom domain
+
+  // Branding
+  logo           String?
+  primaryColor   String  @default("#FF6B35")
+  secondaryColor String  @default("#004E89")
+  accentColor    String  @default("#F7931E")
+
+  // Business Info
+  businessEmail String
+  businessPhone String
+  description   String?
+
+  // Features & Billing
+  plan         TenantPlan   @default(STARTER)
+  status       TenantStatus @default(TRIAL)
+  trialEndsAt  DateTime?
+  billingCycle BillingCycle @default(MONTHLY)
+
+  // Settings
+  settings String // JSON object for tenant-specific settings
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users          User[]
+  menuCategories MenuCategory[]
+  menuItems      MenuItem[]
+  packages       Package[]
+  orders         Order[]
+  carts          Cart[]
+
+  @@map("tenants")
+}
+
 // User and Authentication Models
 model User {
   id           String   @id @default(cuid())
-  email        String   @unique
+  email        String
   name         String
   phone        String?
   passwordHash String
@@ -21,11 +62,16 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Tenant relation
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   // Relations
   addresses Address[]
   orders    Order[]
   cart      Cart?
 
+  @@unique([tenantId, email]) // Email unique per tenant
   @@map("users")
 }
 
@@ -53,14 +99,19 @@ model Address {
 // Menu and Product Models
 model MenuCategory {
   id           String  @id @default(cuid())
-  name         String  @unique
+  name         String
   description  String
   displayOrder Int     @default(0)
   isActive     Boolean @default(true)
 
+  // Tenant relation
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   // Relations
   menuItems MenuItem[]
 
+  @@unique([tenantId, name]) // Category name unique per tenant
   @@map("menu_categories")
 }
 
@@ -80,6 +131,10 @@ model MenuItem {
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
+  // Tenant relation
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   // Relations
   categoryId String
   category   MenuCategory @relation(fields: [categoryId], references: [id])
@@ -89,7 +144,7 @@ model MenuItem {
   packageItems   PackageItem[]
   cartItems      CartItem[]
 
-  @@unique([categoryId, name])
+  @@unique([tenantId, categoryId, name]) // Menu item name unique per category per tenant
   @@map("menu_items")
 }
 
@@ -127,29 +182,34 @@ model CustomizationOption {
 
 // Package Models
 model Package {
-  id          String      @id @default(cuid())
-  name        String
-  slug        String?     @unique
-  description String
-  type        PackageType
-  price       Float
-  image       String?
-  isActive    Boolean     @default(true)
-  features    String // JSON array stored as string
-  seoTitle    String?
+  id             String      @id @default(cuid())
+  name           String
+  slug           String?
+  description    String
+  type           PackageType
+  price          Float
+  image          String?
+  isActive       Boolean     @default(true)
+  features       String // JSON array stored as string
+  seoTitle       String?
   seoDescription String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Tenant relation
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Relations
   includedItems PackageItem[]
 
+  @@unique([tenantId, slug]) // Slug unique per tenant
   @@map("packages")
 }
 
 model PackageItem {
-  id       String @id @default(cuid())
-  quantity Int    @default(1)
+  id                     String @id @default(cuid())
+  quantity               Int    @default(1)
   includedCustomizations String // JSON array stored as string
 
   // Relations
@@ -169,6 +229,10 @@ model Cart {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Tenant relation
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   // Relations
   items CartItem[]
 
@@ -180,7 +244,7 @@ model CartItem {
   quantity               Int
   unitPrice              Float
   totalPrice             Float
-  selectedCustomizations String   // JSON stored as string for SelectedCustomization[]
+  selectedCustomizations String // JSON stored as string for SelectedCustomization[]
   specialInstructions    String?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
@@ -196,21 +260,25 @@ model CartItem {
 
 // Order Models
 model Order {
-  id                   String        @id @default(cuid())
-  orderNumber          String        @unique
-  subtotal             Float
-  tax                  Float
-  deliveryFee          Float
-  tip                  Float         @default(0)
-  total                Float
-  status               OrderStatus   @default(PENDING)
-  deliveryType         DeliveryType
-  scheduledFor         DateTime?
-  estimatedDelivery    DateTime?
-  paymentStatus        PaymentStatus @default(PENDING)
-  specialInstructions  String?
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
+  id                  String        @id @default(cuid())
+  orderNumber         String
+  subtotal            Float
+  tax                 Float
+  deliveryFee         Float
+  tip                 Float         @default(0)
+  total               Float
+  status              OrderStatus   @default(PENDING)
+  deliveryType        DeliveryType
+  scheduledFor        DateTime?
+  estimatedDelivery   DateTime?
+  paymentStatus       PaymentStatus @default(PENDING)
+  specialInstructions String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  // Tenant relation
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Relations
   customerId        String
@@ -220,11 +288,12 @@ model Order {
 
   items OrderItem[]
 
+  @@unique([tenantId, orderNumber]) // Order number unique per tenant
   @@map("orders")
 }
 
 model OrderItem {
-  id                  String @id @default(cuid())
+  id                  String  @id @default(cuid())
   quantity            Int
   unitPrice           Float
   totalPrice          Float
@@ -244,6 +313,26 @@ model OrderItem {
 enum UserRole {
   CUSTOMER
   ADMIN
+  SUPER_ADMIN // For platform admin managing all tenants
+}
+
+enum TenantPlan {
+  TRIAL
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
 }
 
 enum ItemStatus {

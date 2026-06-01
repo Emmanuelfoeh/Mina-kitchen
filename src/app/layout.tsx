@@ -21,6 +21,7 @@ import {
 } from '@/lib/metadata';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { TenantProvider } from '@/components/tenant/tenant-provider';
 import './globals.css';
 
 const geistSans = Geist({
@@ -94,22 +95,24 @@ export default function RootLayout({
         <SkipLink href="#main-content">Skip to main content</SkipLink>
         <AccessibilityProvider>
           <QueryProvider>
-            <ErrorBoundary>
-              <AnalyticsProvider>
-                <AuthProvider>
-                  <NavigationTracker />
-                  <ConditionalNav />
-                  <main id="main-content" tabIndex={-1}>
-                    {children}
-                  </main>
-                  <ConditionalFooter />
-                  <ConditionalCartSidebar />
-                  <Toaster position="top-right" />
-                  {/* <AnalyticsDebugPanel /> */}
-                  {/* <ContrastChecker /> */}
-                </AuthProvider>
-              </AnalyticsProvider>
-            </ErrorBoundary>
+            <TenantProvider>
+              <ErrorBoundary>
+                <AnalyticsProvider>
+                  <AuthProvider>
+                    <NavigationTracker />
+                    <ConditionalNav />
+                    <main id="main-content" tabIndex={-1}>
+                      {children}
+                    </main>
+                    <ConditionalFooter />
+                    <ConditionalCartSidebar />
+                    <Toaster position="top-right" />
+                    {/* <AnalyticsDebugPanel /> */}
+                    {/* <ContrastChecker /> */}
+                  </AuthProvider>
+                </AnalyticsProvider>
+              </ErrorBoundary>
+            </TenantProvider>
           </QueryProvider>
         </AccessibilityProvider>
       </body>

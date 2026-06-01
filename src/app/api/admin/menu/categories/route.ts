@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { z } from 'zod';
 
 const categorySchema = z.object({
@@ -13,10 +14,15 @@ const categorySchema = z.object({
 // GET /api/admin/menu/categories - List all categories
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get('includeInactive') === 'true';
 
-    const where = includeInactive ? {} : { isActive: true };
+    const where = includeInactive ? { tenantId } : { tenantId, isActive: true };
 
     const categories = await db.menuCategory.findMany({
       where,
@@ -46,12 +52,18 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 // POST /api/admin/menu/categories - Create new category
 export const POST = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const validatedData = categorySchema.parse(body);
 
-    // Check if category name already exists
+    // Check if category name already exists for this tenant
     const existingCategory = await db.menuCategory.findFirst({
       where: {
+        tenantId,
         name: {
           equals: validatedData.name,
           mode: 'insensitive',
@@ -70,6 +82,7 @@ export const POST = requireAdmin(async (request: NextRequest) => {
     let displayOrder = validatedData.displayOrder;
     if (displayOrder === undefined) {
       const lastCategory = await db.menuCategory.findFirst({
+        where: { tenantId },
         orderBy: { displayOrder: 'desc' },
       });
       displayOrder = (lastCategory?.displayOrder || 0) + 1;
@@ -78,6 +91,7 @@ export const POST = requireAdmin(async (request: NextRequest) => {
     const category = await db.menuCategory.create({
       data: {
         name: validatedData.name,
+        tenantId,
         description: validatedData.description,
         displayOrder,
         isActive: validatedData.isActive ?? true,

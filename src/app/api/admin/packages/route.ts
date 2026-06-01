@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { z } from 'zod';
 import { generateSlug } from '@/lib/utils';
 
@@ -26,15 +27,21 @@ const packageSchema = z.object({
 });
 
 // Helper function to generate unique slug
-async function generateUniqueSlug(name: string): Promise<string> {
+async function generateUniqueSlug(
+  name: string,
+  tenantId: string
+): Promise<string> {
   const baseSlug = generateSlug(name);
   let slug = baseSlug;
   let counter = 1;
 
-  // Ensure slug is unique
+  // Ensure slug is unique within tenant
   while (true) {
-    const existingPackage = await db.package.findUnique({
-      where: { slug },
+    const existingPackage = await db.package.findFirst({
+      where: {
+        slug,
+        tenantId,
+      },
     });
 
     if (!existingPackage) {
@@ -51,6 +58,11 @@ async function generateUniqueSlug(name: string): Promise<string> {
 // GET /api/admin/packages - List all packages for admin
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -60,15 +72,18 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 
     const skip = (page - 1) * limit;
 
-    // Build where clause
+    // Build where clause with tenant filter
     const where: {
+      tenantId: string;
       OR?: Array<{
         name?: { contains: string; mode: 'insensitive' };
         description?: { contains: string; mode: 'insensitive' };
       }>;
       isActive?: boolean;
       type?: 'DAILY' | 'WEEKLY' | 'MONTHLY';
-    } = {};
+    } = {
+      tenantId,
+    };
 
     if (search) {
       where.OR = [
@@ -158,17 +173,23 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 // POST /api/admin/packages - Create new package
 export const POST = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const validatedData = packageSchema.parse(body);
 
-    // Generate unique slug
-    const slug = await generateUniqueSlug(validatedData.name);
+    // Generate unique slug for this tenant
+    const slug = await generateUniqueSlug(validatedData.name, tenantId);
 
     // Create package with related data
     const packageData = await db.package.create({
       data: {
         name: validatedData.name,
         slug: slug,
+        tenantId,
         description: validatedData.description,
         type: validatedData.type,
         price: validatedData.price,

@@ -1,8 +1,13 @@
+'use client';
+
 import Link from 'next/link';
 import { MapPin, Phone, Mail } from 'lucide-react';
+import { TenantLogo } from '@/components/tenant/tenant-logo';
+import { useTenantContext } from '@/components/tenant/tenant-provider';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const { branding } = useTenantContext();
 
   return (
     <footer className="border-t border-[#f4e9e7] bg-[#fcf9f8] pt-12 pb-8">
@@ -10,11 +15,8 @@ export function Footer() {
         <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-4 lg:gap-12">
           {/* Brand Section */}
           <div className="col-span-2 md:col-span-1">
-            <div className="mb-4 flex items-center gap-2 text-[#1c100d]">
-              <div className="flex size-6 items-center justify-center rounded-md bg-[#f2330d]/10 text-[#f2330d]">
-                <span className="text-[18px]">🍳</span>
-              </div>
-              <span className="text-lg font-bold">Mina's Kitchen</span>
+            <div className="mb-4">
+              <TenantLogo size="md" showName={true} />
             </div>
             <p className="mb-4 text-sm text-[#5c4a45]">
               Bringing the warmth of African hospitality and the bold flavors of
@@ -128,24 +130,28 @@ export function Footer() {
                 <MapPin className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                 <span>Gloucester Ontario, Ottawa</span>
               </li>
-              <li className="flex items-center gap-2">
-                <Phone className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                <a
-                  href="tel:+14165550123"
-                  className="transition-colors hover:text-[#f2330d]"
-                >
-                  (647) 446-5165
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                <a
-                  href="mailto:hello@mina-kitchen.ca"
-                  className="transition-colors hover:text-[#f2330d]"
-                >
-                  wilmar35000@gmail.com
-                </a>
-              </li>
+              {branding?.businessPhone && (
+                <li className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                  <a
+                    href={`tel:${branding.businessPhone}`}
+                    className="transition-colors hover:text-[#f2330d]"
+                  >
+                    {branding.businessPhone}
+                  </a>
+                </li>
+              )}
+              {branding?.businessEmail && (
+                <li className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+                  <a
+                    href={`mailto:${branding.businessEmail}`}
+                    className="transition-colors hover:text-[#f2330d]"
+                  >
+                    {branding.businessEmail}
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>
@@ -153,7 +159,8 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="flex flex-col items-center justify-between gap-4 border-t border-[#f4e9e7] pt-8 md:flex-row">
           <p className="text-xs text-[#5c4a45]">
-            © {currentYear} Mina's Kitchen. All rights reserved.
+            © {currentYear} {branding?.name || "Mina's Kitchen"}. All rights
+            reserved.
           </p>
           <div className="flex gap-4">
             {/* Payment Icons placeholders */}
