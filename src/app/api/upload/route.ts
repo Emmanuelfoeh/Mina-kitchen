@@ -1,78 +1,104 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
-import { getAuthUser } from '@/lib/auth';
+import { put } from '@vercel/blob';
+import { requireAdmin } from '@/lib/auth';
 
-export async function POST(request: NextRequest) {
-  try {
-    // Check authentication
-    const user = await getAuthUser(request);
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
+export const runtime = 'nodejs';
+
+// MIME -> file extension. The extension is derived from the validated content
+// type, never from the user-supplied filename.
+const ALLOWED_TYPES: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+};
+
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+/**
+ * Verify the file's magic bytes match its declared image type, so a spoofed
+ * Content-Type can't smuggle a non-image (or a different image) through.
+ */
+function hasValidImageSignature(buffer: Buffer, mime: string): boolean {
+  const b = buffer;
+  switch (mime) {
+    case 'image/jpeg':
+      return b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+    case 'image/png':
+      return b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47;
+    case 'image/gif':
+      return b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x38;
+    case 'image/webp':
+      return (
+        b[0] === 0x52 &&
+        b[1] === 0x49 &&
+        b[2] === 0x46 &&
+        b[3] === 0x46 &&
+        b[8] === 0x57 &&
+        b[9] === 0x45 &&
+        b[10] === 0x42 &&
+        b[11] === 0x50
       );
-    }
+    default:
+      return false;
+  }
+}
 
+export const POST = requireAdmin(async (request: NextRequest) => {
+  try {
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const folder = (formData.get('folder') as string) || 'uploads';
+    const file = formData.get('file') as File | null;
+    const folderRaw = (formData.get('folder') as string) || 'uploads';
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
-    const allowedTypes = [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/gif',
-      'image/webp',
-    ];
-    if (!allowedTypes.includes(file.type)) {
+    // Sanitize folder against path traversal — allow a single safe segment.
+    if (!/^[a-z0-9-]{1,40}$/.test(folderRaw)) {
+      return NextResponse.json(
+        { error: 'Invalid folder name' },
+        { status: 400 }
+      );
+    }
+    const folder = folderRaw;
+
+    const extension = ALLOWED_TYPES[file.type];
+    if (!extension) {
       return NextResponse.json(
         { error: 'Invalid file type. Only images are allowed.' },
         { status: 400 }
       );
     }
 
-    // Validate file size (10MB limit)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
+    if (file.size > MAX_SIZE) {
       return NextResponse.json(
         { error: 'File too large. Maximum size is 10MB.' },
         { status: 400 }
       );
     }
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(2, 8);
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const filename = `${folder}-${timestamp}-${randomString}.${extension}`;
-
-    // Create upload directory if it doesn't exist
-    const uploadDir = join(process.cwd(), 'public', 'uploads', folder);
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (!hasValidImageSignature(buffer, file.type)) {
+      return NextResponse.json(
+        { error: 'File content does not match an allowed image type.' },
+        { status: 400 }
+      );
     }
 
-    // Convert file to buffer and save
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const filepath = join(uploadDir, filename);
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 8);
+    const key = `${folder}/${timestamp}-${randomString}.${extension}`;
 
-    await writeFile(filepath, buffer);
-
-    // Return the public URL
-    const url = `/uploads/${folder}/${filename}`;
+    const blob = await put(key, buffer, {
+      access: 'public',
+      contentType: file.type,
+    });
 
     return NextResponse.json({
       success: true,
-      url,
-      filename,
+      url: blob.url,
+      filename: key,
       size: file.size,
       type: file.type,
     });
@@ -83,16 +109,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Handle OPTIONS for CORS
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
-}
+});

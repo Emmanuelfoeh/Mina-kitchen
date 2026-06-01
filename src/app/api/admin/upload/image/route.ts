@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { put } from '@vercel/blob';
 import { requireAdmin } from '@/lib/auth';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
 import sharp from 'sharp';
 
-// POST /api/admin/upload/image - Upload and optimize image
+export const runtime = 'nodejs';
+
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+// POST /api/admin/upload/image - Upload, optimize, and store an image
 export const POST = requireAdmin(async (request: NextRequest) => {
   try {
     const formData = await request.formData();
-    const file = formData.get('file') as File;
+    const file = formData.get('file') as File | null;
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -24,33 +27,16 @@ export const POST = requireAdmin(async (request: NextRequest) => {
     }
 
     // Validate file size (10MB max)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
+    if (file.size > MAX_SIZE) {
       return NextResponse.json(
         { error: 'File too large. Maximum size is 10MB.' },
         { status: 400 }
       );
     }
 
-    // Generate unique filename
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(2, 8);
-    const extension = 'webp'; // Always convert to WebP for optimization
-    const filename = `menu-item-${timestamp}-${randomString}.${extension}`;
-
-    // Create upload directory if it doesn't exist
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'menu-items');
-    try {
-      await mkdir(uploadDir, { recursive: true });
-    } catch (error) {
-      // Directory might already exist, ignore error
-    }
-
-    // Convert file to buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Optimize image with Sharp
+    // Re-encode through Sharp — this both optimizes and strips any non-image
+    // payload (Sharp throws on input it can't decode as an image).
+    const buffer = Buffer.from(await file.arrayBuffer());
     const optimizedBuffer = await sharp(buffer)
       .resize(800, 600, {
         fit: 'cover',
@@ -59,18 +45,20 @@ export const POST = requireAdmin(async (request: NextRequest) => {
       .webp({ quality: 85 })
       .toBuffer();
 
-    // Save optimized image
-    const filePath = join(uploadDir, filename);
-    await writeFile(filePath, optimizedBuffer);
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 8);
+    const key = `menu-items/menu-item-${timestamp}-${randomString}.webp`;
 
-    // Return the URL path
-    const imageUrl = `/uploads/menu-items/${filename}`;
+    const blob = await put(key, optimizedBuffer, {
+      access: 'public',
+      contentType: 'image/webp',
+    });
 
     return NextResponse.json({
       success: true,
       data: {
-        url: imageUrl,
-        filename,
+        url: blob.url,
+        filename: key,
         size: optimizedBuffer.length,
         optimized: true,
       },

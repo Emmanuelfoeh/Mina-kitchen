@@ -6,6 +6,7 @@
  */
 
 import { toast } from 'sonner';
+import * as Sentry from '@sentry/nextjs';
 
 /**
  * Standard error response from API
@@ -251,22 +252,21 @@ export function logError(
     ...context,
   };
 
-  // Log to console in development
   if (process.env.NODE_ENV === 'development') {
     console.error('[Error]', errorInfo, error);
+    return;
   }
 
-  // Error monitoring service integration (e.g., Sentry) can be added here for production
-  // Example:
-  // if (process.env.NODE_ENV === 'production') {
-  //   Sentry.captureException(error, {
-  //     tags: {
-  //       category: errorInfo.category,
-  //       component: context?.component,
-  //     },
-  //     extra: errorInfo,
-  //   });
-  // }
+  // Production: emit a structured line (captured by log aggregation) and
+  // forward to Sentry. captureException no-ops when Sentry has no DSN.
+  console.error(JSON.stringify({ level: 'error', ...errorInfo }));
+  Sentry.captureException(error, {
+    tags: {
+      category: errorInfo.category,
+      component: context?.component,
+    },
+    extra: errorInfo,
+  });
 }
 
 /**

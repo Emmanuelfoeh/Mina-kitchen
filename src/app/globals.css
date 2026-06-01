@@ -124,7 +124,6 @@
   --tenant-secondary: #f97316;
   --tenant-accent: #eab308;
 }
-}
 
 .dark {
   --background: oklch(0.145 0 0);
