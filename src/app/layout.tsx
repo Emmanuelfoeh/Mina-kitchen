@@ -15,10 +15,11 @@ import {
 } from '@/components/analytics/analytics-provider';
 // import { AnalyticsDebugPanel } from '@/components/analytics/analytics-debug-panel';
 import {
-  generateMetadata,
+  generateMetadata as buildMetadata,
   generateOrganizationSchema,
   generateWebsiteSchema,
 } from '@/lib/metadata';
+import { getRequestBaseUrl } from '@/lib/tenant-metadata';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { TenantProvider } from '@/components/tenant/tenant-provider';
@@ -36,27 +37,33 @@ const geistMono = Geist_Mono({
   display: 'swap',
 });
 
-export const metadata: Metadata = generateMetadata({
-  title: 'Mina Kitchen - Authentic African Cuisine in Toronto',
-  description:
-    'Order authentic West African dishes online. Experience traditional Jollof rice, Egusi soup, Suya, and more. Fresh ingredients, bold flavors, delivered to your door in Toronto and GTA.',
-  keywords: [
-    'African food Toronto',
-    'West African cuisine',
-    'Jollof rice delivery',
-    'Nigerian food Toronto',
-    'Ghanaian food',
-    'African restaurant',
-    'Egusi soup',
-    'Suya Toronto',
-    'authentic African food',
-    'food delivery Toronto',
-    'meal packages',
-    'African catering',
-  ],
-  url: '/',
-  type: 'website',
-});
+export async function generateMetadata(): Promise<Metadata> {
+  // Resolve the tenant's own host so canonical/OG/metadataBase are correct
+  // per tenant instead of all pointing at a single hardcoded domain.
+  const baseUrl = await getRequestBaseUrl();
+  return buildMetadata({
+    title: 'Mina Kitchen - Authentic African Cuisine in Toronto',
+    description:
+      'Order authentic West African dishes online. Experience traditional Jollof rice, Egusi soup, Suya, and more. Fresh ingredients, bold flavors, delivered to your door in Toronto and GTA.',
+    keywords: [
+      'African food Toronto',
+      'West African cuisine',
+      'Jollof rice delivery',
+      'Nigerian food Toronto',
+      'Ghanaian food',
+      'African restaurant',
+      'Egusi soup',
+      'Suya Toronto',
+      'authentic African food',
+      'food delivery Toronto',
+      'meal packages',
+      'African catering',
+    ],
+    url: '/',
+    type: 'website',
+    baseUrl,
+  });
+}
 
 export default function RootLayout({
   children,

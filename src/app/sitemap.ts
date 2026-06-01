@@ -1,7 +1,10 @@
 import { MetadataRoute } from 'next';
+import { getRequestBaseUrl } from '@/lib/tenant-metadata';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://minakitchen.ca';
+  // Per-tenant: derive the base URL from the request host so each tenant's
+  // sitemap references its own domain.
+  const baseUrl = await getRequestBaseUrl();
 
   // Static pages
   const staticPages = [
@@ -40,8 +43,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     // Fetch dynamic menu items and packages from API
     const [menuItemsResponse, packagesResponse] = await Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || baseUrl}/api/menu/items`),
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || baseUrl}/api/packages`),
+      fetch(`${baseUrl}/api/menu/items`),
+      fetch(`${baseUrl}/api/packages`),
     ]);
 
     let menuItemPages: any[] = [];

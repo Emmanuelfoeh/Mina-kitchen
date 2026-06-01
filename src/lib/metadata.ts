@@ -10,6 +10,8 @@ export interface SEOConfig {
   author?: string;
   publishedTime?: string;
   modifiedTime?: string;
+  /** Per-request/tenant base URL; falls back to the configured site URL. */
+  baseUrl?: string;
 }
 
 const defaultConfig = {
@@ -32,20 +34,23 @@ export function generateMetadata(config: SEOConfig): Metadata {
     author = defaultConfig.author,
     publishedTime,
     modifiedTime,
+    baseUrl,
   } = config;
+
+  // Prefer the per-tenant base URL when provided so canonical/OG URLs point at
+  // the tenant's own domain rather than a single hardcoded site.
+  const siteUrl = baseUrl || defaultConfig.siteUrl;
 
   const fullTitle = title.includes(defaultConfig.siteName)
     ? title
     : `${title} | ${defaultConfig.siteName}`;
 
-  const fullUrl = url
-    ? `${defaultConfig.siteUrl}${url}`
-    : defaultConfig.siteUrl;
-  const fullImageUrl = image.startsWith('http')
-    ? image
-    : `${defaultConfig.siteUrl}${image}`;
+  const fullUrl = url ? `${siteUrl}${url}` : siteUrl;
+  const fullImageUrl = image.startsWith('http') ? image : `${siteUrl}${image}`;
 
   const metadata: Metadata = {
+    metadataBase: new URL(siteUrl),
+    alternates: { canonical: url || '/' },
     title: fullTitle,
     description,
     keywords: keywords.join(', '),

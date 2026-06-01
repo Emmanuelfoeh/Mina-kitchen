@@ -3,6 +3,22 @@ import { headers } from 'next/headers';
 import { getTenantFromHostname } from '@/lib/tenant';
 
 /**
+ * Derive the absolute base URL for the current request from the host headers
+ * set by middleware. This is what makes per-tenant canonical/sitemap/robots
+ * URLs correct instead of all pointing at a single hardcoded domain.
+ */
+export async function getRequestBaseUrl(): Promise<string> {
+  const headersList = await headers();
+  const host =
+    headersList.get('x-tenant-hostname') || headersList.get('host') || '';
+  if (!host) {
+    return process.env.NEXT_PUBLIC_SITE_URL || 'https://minakitchen.ca';
+  }
+  const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1');
+  return `${isLocal ? 'http' : 'https'}://${host}`;
+}
+
+/**
  * Generate tenant-specific metadata for SEO
  */
 export async function generateTenantMetadata(
