@@ -134,14 +134,22 @@ export async function POST(request: NextRequest) {
     // Validate and sanitize input
     const validatedData = createOrderSchema.parse(body);
 
-    // Non-admin users may only create orders for themselves
+    // Order creation requires authentication (fail closed). Checkout is an
+    // authenticated flow — the cart routes already require a logged-in user.
     const authUser = await getAuthUser(request);
-    if (
-      authUser &&
-      authUser.role !== 'ADMIN' &&
-      authUser.role !== 'SUPER_ADMIN' &&
-      authUser.id !== validatedData.customerId
-    ) {
+    if (!authUser) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          { success: false, error: 'Authentication required' },
+          { status: 401 }
+        )
+      );
+    }
+
+    // Non-admin users may only create orders for themselves.
+    const isAdmin =
+      authUser.role === 'ADMIN' || authUser.role === 'SUPER_ADMIN';
+    if (!isAdmin && authUser.id !== validatedData.customerId) {
       return SecurityHeaders.applyHeaders(
         NextResponse.json(
           { success: false, error: 'Forbidden' },
