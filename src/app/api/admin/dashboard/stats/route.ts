@@ -90,17 +90,16 @@ export const GET = requireAdmin(async (request: NextRequest) => {
       },
     });
 
+    // _sum.total is a Prisma Decimal | null — convert to number for arithmetic.
+    const totalRevenueNum = Number(totalRevenue._sum.total ?? 0);
+    const prevRevenueNum = Number(previousMonthRevenue._sum.total ?? 0);
+
     // Calculate average order value
-    const avgOrderValue =
-      totalRevenue._sum.total && totalOrders > 0
-        ? totalRevenue._sum.total / totalOrders
-        : 0;
+    const avgOrderValue = totalOrders > 0 ? totalRevenueNum / totalOrders : 0;
 
     // Calculate previous month average for comparison
     const prevMonthAvg =
-      previousMonthRevenue._sum.total && previousMonthOrders > 0
-        ? previousMonthRevenue._sum.total / previousMonthOrders
-        : 0;
+      previousMonthOrders > 0 ? prevRevenueNum / previousMonthOrders : 0;
 
     // Count pending deliveries
     const pendingDeliveries = await db.order.count({
@@ -114,12 +113,10 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     });
 
     // Calculate percentage changes
-    const revenueChange = previousMonthRevenue._sum.total
-      ? (((totalRevenue._sum.total || 0) -
-          (previousMonthRevenue._sum.total || 0)) /
-          (previousMonthRevenue._sum.total || 1)) *
-        100
-      : 0;
+    const revenueChange =
+      prevRevenueNum > 0
+        ? ((totalRevenueNum - prevRevenueNum) / prevRevenueNum) * 100
+        : 0;
 
     const ordersChange =
       previousMonthOrders > 0
@@ -245,7 +242,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     return Response.json({
       metrics: {
         totalRevenue: {
-          value: totalRevenue._sum.total || 0,
+          value: totalRevenueNum,
           change: Math.round(revenueChange * 100) / 100,
         },
         totalOrders: {

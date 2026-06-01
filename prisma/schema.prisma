@@ -123,7 +123,7 @@ model MenuItem {
   id              String     @id @default(cuid())
   name            String
   description     String
-  basePrice       Float
+  basePrice       Decimal    @db.Decimal(10, 2)
   image           String
   status          ItemStatus @default(ACTIVE)
   tags            String // JSON array stored as string
@@ -174,7 +174,7 @@ model Customization {
 model CustomizationOption {
   id            String  @id @default(cuid())
   name          String
-  priceModifier Float   @default(0)
+  priceModifier Decimal @default(0) @db.Decimal(10, 2)
   isAvailable   Boolean @default(true)
 
   // Relations
@@ -194,7 +194,7 @@ model Package {
   slug           String?
   description    String
   type           PackageType
-  price          Float
+  price          Decimal     @db.Decimal(10, 2)
   image          String?
   isActive       Boolean     @default(true)
   features       String // JSON array stored as string
@@ -253,8 +253,8 @@ model Cart {
 model CartItem {
   id                     String   @id @default(cuid())
   quantity               Int
-  unitPrice              Float
-  totalPrice             Float
+  unitPrice              Decimal  @db.Decimal(10, 2)
+  totalPrice             Decimal  @db.Decimal(10, 2)
   selectedCustomizations String // JSON stored as string for SelectedCustomization[]
   specialInstructions    String?
   createdAt              DateTime @default(now())
@@ -275,11 +275,11 @@ model CartItem {
 model Order {
   id                  String        @id @default(cuid())
   orderNumber         String
-  subtotal            Float
-  tax                 Float
-  deliveryFee         Float
-  tip                 Float         @default(0)
-  total               Float
+  subtotal            Decimal       @db.Decimal(10, 2)
+  tax                 Decimal       @db.Decimal(10, 2)
+  deliveryFee         Decimal       @db.Decimal(10, 2)
+  tip                 Decimal       @default(0) @db.Decimal(10, 2)
+  total               Decimal       @db.Decimal(10, 2)
   status              OrderStatus   @default(PENDING)
   deliveryType        DeliveryType
   scheduledFor        DateTime?
@@ -311,8 +311,8 @@ model Order {
 model OrderItem {
   id                  String  @id @default(cuid())
   quantity            Int
-  unitPrice           Float
-  totalPrice          Float
+  unitPrice           Decimal @db.Decimal(10, 2)
+  totalPrice          Decimal @db.Decimal(10, 2)
   customizations      String // JSON stored as string for SelectedCustomization[]
   specialInstructions String?
 
@@ -332,7 +332,7 @@ model Subscription {
   id           String                @id @default(cuid())
   status       SubscriptionStatus    @default(ACTIVE)
   frequency    SubscriptionFrequency
-  price        Float
+  price        Decimal               @db.Decimal(10, 2)
   startDate    DateTime              @default(now())
   nextDelivery DateTime
 

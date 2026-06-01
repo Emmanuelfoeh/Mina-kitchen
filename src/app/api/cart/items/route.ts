@@ -16,10 +16,7 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
   try {
     const tenantId = await getCurrentTenantId();
     if (!tenantId) {
-      return Response.json(
-        { error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return Response.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -51,8 +48,9 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
       );
     }
 
-    // Calculate price including customizations
-    let unitPrice = menuItem.basePrice;
+    // Calculate price including customizations. basePrice/priceModifier are
+    // Prisma Decimal — convert to number before arithmetic.
+    let unitPrice = Number(menuItem.basePrice);
 
     if (validatedData.selectedCustomizations.length > 0) {
       for (const customization of validatedData.selectedCustomizations) {
@@ -68,7 +66,7 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
                 (o: any) => o.id === optionId
               );
               if (option) {
-                unitPrice += option.priceModifier;
+                unitPrice += Number(option.priceModifier);
               }
             }
           }

@@ -27,10 +27,7 @@ export const PATCH = requireAuth(
 
       const tenantId = await getCurrentTenantId();
       if (!tenantId) {
-        return Response.json(
-          { error: 'Tenant not found' },
-          { status: 404 }
-        );
+        return Response.json({ error: 'Tenant not found' }, { status: 404 });
       }
 
       const { id } = await context.params;
@@ -67,12 +64,13 @@ export const PATCH = requireAuth(
         );
       }
 
-      // Calculate new price if customizations changed
-      let unitPrice = cartItem.unitPrice;
+      // Calculate new price if customizations changed. unitPrice/basePrice/
+      // priceModifier are Prisma Decimal — convert to number before arithmetic.
+      let unitPrice = Number(cartItem.unitPrice);
 
       if (validatedData.selectedCustomizations !== undefined) {
         // Recalculate price based on new customizations
-        unitPrice = cartItem.menuItem.basePrice;
+        unitPrice = Number(cartItem.menuItem.basePrice);
 
         if (validatedData.selectedCustomizations.length > 0) {
           for (const customization of validatedData.selectedCustomizations) {
@@ -87,7 +85,7 @@ export const PATCH = requireAuth(
                     (o: any) => o.id === optionId
                   );
                   if (option) {
-                    unitPrice += option.priceModifier;
+                    unitPrice += Number(option.priceModifier);
                   }
                 }
               }
@@ -182,10 +180,7 @@ export const DELETE = requireAuth(
 
       const tenantId = await getCurrentTenantId();
       if (!tenantId) {
-        return Response.json(
-          { error: 'Tenant not found' },
-          { status: 404 }
-        );
+        return Response.json({ error: 'Tenant not found' }, { status: 404 });
       }
 
       const { id } = await context.params;

@@ -45,10 +45,11 @@ async function getMenuItemBySlug(slug: string): Promise<MenuItem | null> {
       return null;
     }
 
-    // Transform the data to match the expected format
+    // Transform the data to match the expected format. Convert Decimal money
+    // fields to numbers so they can cross the server->client component boundary.
     return {
       ...menuItem,
-      basePrice: menuItem.basePrice,
+      basePrice: Number(menuItem.basePrice),
       image: menuItem.image || '/placeholder-food.svg',
       images: menuItem.image ? [menuItem.image] : ['/placeholder-food.svg'],
       tags: menuItem.tags ? JSON.parse(menuItem.tags) : [],
@@ -63,6 +64,7 @@ async function getMenuItemBySlug(slug: string): Promise<MenuItem | null> {
         type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
         options: customization.options.map((option: any) => ({
           ...option,
+          priceModifier: Number(option.priceModifier),
           isAvailable: true, // Default to available
         })),
       })),
@@ -129,10 +131,11 @@ async function getRelatedItems(
       relatedItems.push(...additionalItems);
     }
 
-    // Transform the data to match the expected format
+    // Transform the data to match the expected format. Convert Decimal money
+    // fields to numbers so they can cross the server->client component boundary.
     return relatedItems.map((item: any) => ({
       ...item,
-      basePrice: item.basePrice,
+      basePrice: Number(item.basePrice),
       image: item.image || '/placeholder-food.svg',
       images: item.image ? [item.image] : ['/placeholder-food.svg'],
       tags: item.tags ? JSON.parse(item.tags) : [],
@@ -147,6 +150,7 @@ async function getRelatedItems(
         type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
         options: customization.options.map((option: any) => ({
           ...option,
+          priceModifier: Number(option.priceModifier),
           isAvailable: true, // Default to available
         })),
       })),
