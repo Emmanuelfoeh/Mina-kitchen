@@ -61,14 +61,16 @@ const where = { tenantId /* ...other filters */ };
 JWT-based, in `src/lib/auth.ts`, using `jose` (Edge-compatible) for verification. Token comes from the `auth-token` cookie or `Authorization: Bearer` header. Wrap route handlers with:
 
 - `requireAuth(handler)` — requires any authenticated user.
-- `requireAdmin(handler)` — requires `role === 'ADMIN'`.
+- `requireAdmin(handler)` — requires `ADMIN` or `SUPER_ADMIN`.
+- `requireSuperAdmin(handler)` — requires `SUPER_ADMIN` (cross-tenant platform endpoints).
 
-Note: `requireAdmin` currently checks `role !== 'ADMIN'` exactly, so it does **not** admit `SUPER_ADMIN`. Roles are `CUSTOMER | ADMIN | SUPER_ADMIN` (`UserRole` enum). Verify the intended role gate when adding super-admin endpoints.
+Auth is **tenant-bound**: the JWT carries `tenantId`, and `getAuthUser` rejects a token presented against a different tenant. `SUPER_ADMIN` is exempt (operates across tenants). `getJwtSecret()` throws if `JWT_SECRET` is missing/<32 chars — there is no insecure fallback. `AuthUser` includes `tenantId`. Roles are `CUSTOMER | ADMIN | SUPER_ADMIN` (`UserRole` enum).
 
 ### Database access
 
 - `src/lib/db.ts` exports a singleton `db` (PrismaClient) using the `@prisma/adapter-pg` driver adapter over a `pg` Pool. Always import `{ db }` from `@/lib/db`; do not instantiate PrismaClient elsewhere.
 - Postgres provider. Some fields are JSON-encoded **strings** in the DB and parsed in app code (e.g. `Tenant.settings`, `MenuItem.tags`, `Package.features`) — `allergens` is a real `String[]`. Be careful which is which when reading/writing.
+- Money columns are `Decimal(10,2)`. `db.ts` patches `Prisma.Decimal.toJSON` to emit a **number**, so API responses stay numeric — but in server-side arithmetic a Decimal read from the DB must be wrapped with `Number(...)` (it is not a JS number), and Decimal values must be converted before crossing the server→client component boundary.
 
 ### Data layer on the client
 
@@ -90,7 +92,7 @@ Request bodies are validated with **Zod** schemas defined inline in route files 
 
 - Path alias `@/*` → `./src/*`.
 - React Compiler is enabled (`reactCompiler: true` in `next.config.ts`).
-- Testing is dual-mode: standard Jest/RTL unit tests plus **property-based tests** with `fast-check` (see `src/**/__tests__/`). Tests live in `__tests__/` dirs or `*.test.ts(x)`.
+- Testing: Jest + React Testing Library (jsdom). Tests live in `__tests__/` dirs or `*.test.ts(x)`. `jest.setup.js` mocks the router and polyfills `fetch`/`TextEncoder`; `@/` is mapped in `jest.config.js`. Focused auth/tenant tests live in `src/lib/__tests__/`. (`fast-check` is a dependency but not currently used.)
 - `prisma/seed.ts` is excluded from `tsconfig` and run via `tsx`.
 
 ## Reference docs
