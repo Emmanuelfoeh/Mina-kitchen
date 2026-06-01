@@ -7,7 +7,8 @@ import {
   SecurityHeaders,
   InputSanitizer,
 } from '@/lib/security';
-import { requireAuth } from '@/lib/auth';
+import { getAuthUser } from '@/lib/auth';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { z } from 'zod';
 import type { Order, OrderItem, OrderStatus, PaymentStatus } from '@/types';
 
@@ -120,23 +121,46 @@ export async function POST(request: NextRequest) {
       return SecurityHeaders.applyHeaders(response);
     }
 
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
+      );
+    }
+
     const body = await request.json();
     console.log('Order creation request body:', JSON.stringify(body, null, 2));
 
     // Validate and sanitize input
     const validatedData = createOrderSchema.parse(body);
 
-    // Verify customer exists and matches authenticated user
-    const customer = await db.user.findUnique({
-      where: { id: validatedData.customerId },
+    // Non-admin users may only create orders for themselves
+    const authUser = await getAuthUser(request);
+    if (
+      authUser &&
+      authUser.role !== 'ADMIN' &&
+      authUser.role !== 'SUPER_ADMIN' &&
+      authUser.id !== validatedData.customerId
+    ) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json(
+          { success: false, error: 'Forbidden' },
+          { status: 403 }
+        )
+      );
+    }
+
+    // Verify customer exists, belongs to tenant, and matches authenticated user
+    const customer = await db.user.findFirst({
+      where: { id: validatedData.customerId, tenantId },
       include: { addresses: true },
     });
 
     if (!customer) {
       return SecurityHeaders.applyHeaders(
         NextResponse.json(
-          { success: false, error: 'Customer not found' },
-          { status: 404 }
+          { success: false, error: 'Invalid customer' },
+          { status: 400 }
         )
       );
     }
@@ -182,6 +206,7 @@ export async function POST(request: NextRequest) {
       where: {
         id: { in: menuItemIds },
         status: 'ACTIVE',
+        tenantId,
       },
     });
 
@@ -268,6 +293,7 @@ export async function POST(request: NextRequest) {
     const order = await db.order.create({
       data: {
         orderNumber,
+        tenantId,
         customerId: validatedData.customerId,
         subtotal: validatedData.subtotal,
         tax: validatedData.tax,
@@ -398,6 +424,13 @@ export async function GET(request: NextRequest) {
       return SecurityHeaders.applyHeaders(response);
     }
 
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json({ error: 'Tenant not found' }, { status: 404 })
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get('customerId');
     const orderId = searchParams.get('orderId');
@@ -415,8 +448,8 @@ export async function GET(request: NextRequest) {
       }
 
       // Get specific order
-      const order = await db.order.findUnique({
-        where: { id: orderId },
+      const order = await db.order.findFirst({
+        where: { id: orderId, tenantId },
         include: {
           items: {
             include: {
@@ -469,6 +502,28 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      // Prevent enumerating arbitrary customers: require authenticated user
+      // who either owns the customer record or is an admin.
+      const authUser = await getAuthUser(request);
+      if (!authUser) {
+        return SecurityHeaders.applyHeaders(
+          NextResponse.json(
+            { success: false, error: 'Unauthorized' },
+            { status: 401 }
+          )
+        );
+      }
+      const isAdmin =
+        authUser.role === 'ADMIN' || authUser.role === 'SUPER_ADMIN';
+      if (!isAdmin && authUser.id !== customerId) {
+        return SecurityHeaders.applyHeaders(
+          NextResponse.json(
+            { success: false, error: 'Forbidden' },
+            { status: 403 }
+          )
+        );
+      }
+
       // Get customer orders with pagination
       const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
       const limit = Math.min(
@@ -479,7 +534,7 @@ export async function GET(request: NextRequest) {
 
       const [orders, totalCount] = await Promise.all([
         db.order.findMany({
-          where: { customerId },
+          where: { customerId, tenantId },
           include: {
             items: {
               include: {
@@ -499,7 +554,7 @@ export async function GET(request: NextRequest) {
           take: limit,
         }),
         db.order.count({
-          where: { customerId },
+          where: { customerId, tenantId },
         }),
       ]);
 

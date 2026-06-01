@@ -1,39 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 // GET /api/admin/menu/stats - Get menu statistics
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 404 }
+      );
+    }
+
     // Get total menu items count
-    const totalItems = await db.menuItem.count();
+    const totalItems = await db.menuItem.count({
+      where: { tenantId },
+    });
 
     // Get active items count
     const activeItems = await db.menuItem.count({
-      where: { status: 'ACTIVE' },
+      where: { tenantId, status: 'ACTIVE' },
     });
 
     // Get inactive items count
     const inactiveItems = await db.menuItem.count({
-      where: { status: 'INACTIVE' },
+      where: { tenantId, status: 'INACTIVE' },
     });
 
     // Get sold out items count
     const soldOutItems = await db.menuItem.count({
-      where: { status: 'SOLD_OUT' },
+      where: { tenantId, status: 'SOLD_OUT' },
     });
 
     // Get low stock items count
     const lowStockItems = await db.menuItem.count({
-      where: { status: 'LOW_STOCK' },
+      where: { tenantId, status: 'LOW_STOCK' },
     });
 
     // Get total categories count
-    const totalCategories = await db.menuCategory.count();
+    const totalCategories = await db.menuCategory.count({
+      where: { tenantId },
+    });
 
     // Get active categories count
     const activeCategories = await db.menuCategory.count({
-      where: { isActive: true },
+      where: { tenantId, isActive: true },
     });
 
     // Calculate average price
@@ -42,6 +55,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
         basePrice: true,
       },
       where: {
+        tenantId,
         status: 'ACTIVE',
       },
     });
@@ -55,12 +69,14 @@ export const GET = requireAdmin(async (request: NextRequest) => {
         basePrice: true,
       },
       where: {
+        tenantId,
         status: 'ACTIVE',
       },
     });
 
     // Get items by category
     const itemsByCategory = await db.menuCategory.findMany({
+      where: { tenantId },
       select: {
         id: true,
         name: true,
@@ -81,6 +97,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 
     const recentItems = await db.menuItem.count({
       where: {
+        tenantId,
         createdAt: {
           gte: sevenDaysAgo,
         },

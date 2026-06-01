@@ -72,6 +72,7 @@ model User {
   cart      Cart?
 
   @@unique([tenantId, email]) // Email unique per tenant
+  @@index([tenantId, createdAt]) // Admin user listing (filter tenant, sort recent)
   @@map("users")
 }
 
@@ -93,6 +94,7 @@ model Address {
   // Used for delivery addresses in orders
   deliveryOrders Order[]
 
+  @@index([userId])
   @@map("addresses")
 }
 
@@ -145,6 +147,8 @@ model MenuItem {
   cartItems      CartItem[]
 
   @@unique([tenantId, categoryId, name]) // Menu item name unique per category per tenant
+  @@index([tenantId, createdAt]) // Admin menu listing (filter tenant, sort recent)
+  @@index([categoryId]) // FK lookup / category filtering
   @@map("menu_items")
 }
 
@@ -175,6 +179,7 @@ model CustomizationOption {
   customizationId String
   customization   Customization @relation(fields: [customizationId], references: [id], onDelete: Cascade)
 
+  @@index([customizationId])
   @@map("customization_options")
 }
 
@@ -204,6 +209,7 @@ model Package {
   includedItems PackageItem[]
 
   @@unique([tenantId, slug]) // Slug unique per tenant
+  @@index([tenantId, createdAt]) // Admin package listing (filter tenant, sort recent)
   @@map("packages")
 }
 
@@ -218,6 +224,8 @@ model PackageItem {
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
 
+  @@index([packageId])
+  @@index([menuItemId])
   @@map("package_items")
 }
 
@@ -255,6 +263,8 @@ model CartItem {
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
 
+  @@index([cartId])
+  @@index([menuItemId])
   @@map("cart_items")
 }
 
@@ -289,6 +299,9 @@ model Order {
   items OrderItem[]
 
   @@unique([tenantId, orderNumber]) // Order number unique per tenant
+  @@index([tenantId, createdAt]) // Admin order listing + stats (filter tenant, sort recent)
+  @@index([customerId]) // Customer order history
+  @@index([deliveryAddressId]) // FK lookup
   @@map("orders")
 }
 
@@ -306,6 +319,8 @@ model OrderItem {
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
 
+  @@index([orderId])
+  @@index([menuItemId])
   @@map("order_items")
 }
 

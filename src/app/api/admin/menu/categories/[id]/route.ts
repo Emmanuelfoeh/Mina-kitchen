@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { z } from 'zod';
 
 const updateCategorySchema = z.object({
@@ -25,8 +26,16 @@ export const GET = requireAdmin(async (request: NextRequest) => {
       );
     }
 
-    const category = await db.menuCategory.findUnique({
-      where: { id: id },
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 404 }
+      );
+    }
+
+    const category = await db.menuCategory.findFirst({
+      where: { id: id, tenantId },
       include: {
         _count: {
           select: {
@@ -71,12 +80,20 @@ export const PATCH = requireAdmin(async (request: NextRequest) => {
       );
     }
 
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 404 }
+      );
+    }
+
     const body = await request.json();
     const validatedData = updateCategorySchema.parse(body);
 
     // Check if category exists
-    const existingCategory = await db.menuCategory.findUnique({
-      where: { id: id },
+    const existingCategory = await db.menuCategory.findFirst({
+      where: { id: id, tenantId },
     });
 
     if (!existingCategory) {
@@ -90,6 +107,7 @@ export const PATCH = requireAdmin(async (request: NextRequest) => {
     if (validatedData.name && validatedData.name !== existingCategory.name) {
       const nameExists = await db.menuCategory.findFirst({
         where: {
+          tenantId,
           name: {
             equals: validatedData.name,
             mode: 'insensitive',
@@ -159,9 +177,17 @@ export const DELETE = requireAdmin(async (request: NextRequest) => {
       );
     }
 
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 404 }
+      );
+    }
+
     // Check if category exists
-    const existingCategory = await db.menuCategory.findUnique({
-      where: { id: id },
+    const existingCategory = await db.menuCategory.findFirst({
+      where: { id: id, tenantId },
       include: {
         _count: {
           select: {

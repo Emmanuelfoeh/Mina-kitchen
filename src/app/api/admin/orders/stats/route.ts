@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -18,20 +24,22 @@ export const GET = requireAdmin(async (request: NextRequest) => {
       todayOrders,
       todayRevenue,
     ] = await Promise.all([
-      db.order.count(),
-      db.order.count({ where: { status: 'PENDING' } }),
+      db.order.count({ where: { tenantId } }),
+      db.order.count({ where: { tenantId, status: 'PENDING' } }),
       db.order.count({
         where: {
+          tenantId,
           status: 'DELIVERED',
           createdAt: { gte: today, lt: tomorrow },
         },
       }),
-      db.order.count({ where: { status: 'OUT_FOR_DELIVERY' } }),
+      db.order.count({ where: { tenantId, status: 'OUT_FOR_DELIVERY' } }),
       db.order.count({
-        where: { createdAt: { gte: today, lt: tomorrow } },
+        where: { tenantId, createdAt: { gte: today, lt: tomorrow } },
       }),
       db.order.aggregate({
         where: {
+          tenantId,
           createdAt: { gte: today, lt: tomorrow },
           status: { not: 'CANCELLED' },
         },
@@ -45,7 +53,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 
     // Calculate average order value
     const avgOrderResult = await db.order.aggregate({
-      where: { status: { not: 'CANCELLED' } },
+      where: { tenantId, status: { not: 'CANCELLED' } },
       _avg: { total: true },
     });
 

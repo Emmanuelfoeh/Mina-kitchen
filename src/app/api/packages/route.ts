@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 export async function GET() {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     // Fetch active packages from database
     const packages = await db.package.findMany({
-      where: { isActive: true },
+      where: { tenantId, isActive: true },
+      take: 100,
       include: {
         includedItems: {
           include: {

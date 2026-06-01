@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { z } from 'zod';
 
 const syncCartSchema = z.object({
@@ -19,6 +20,11 @@ const syncCartSchema = z.object({
 // POST /api/cart/sync - Sync local cart with server (for guest -> user conversion)
 export const POST = requireAuth(async (request: NextRequest, user) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return Response.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const validatedData = syncCartSchema.parse(body);
 
@@ -32,7 +38,7 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
 
     if (!cart) {
       cart = await db.cart.create({
-        data: { userId: user.id },
+        data: { userId: user.id, tenantId },
         include: {
           items: true,
         },
@@ -46,8 +52,8 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
 
     for (const localItem of validatedData.items) {
       // Validate menu item exists and is active
-      const menuItem = await db.menuItem.findUnique({
-        where: { id: localItem.menuItemId },
+      const menuItem = await db.menuItem.findFirst({
+        where: { id: localItem.menuItemId, tenantId },
       });
 
       if (!menuItem || menuItem.status !== 'ACTIVE') {
@@ -121,8 +127,10 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
       );
     }
 
-    // Execute all operations
-    await Promise.all(operations);
+    // Execute all operations atomically so a partial merge can't corrupt the cart
+    if (operations.length > 0) {
+      await db.$transaction(operations);
+    }
 
     // Fetch updated cart
     const updatedCart = await db.cart.findUnique({

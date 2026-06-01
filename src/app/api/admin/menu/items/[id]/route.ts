@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getCurrentTenantId } from '@/lib/tenant-context';
@@ -160,95 +161,91 @@ export const PATCH = requireAdmin(
         );
       }
 
-      // Handle customizations update
-      if (validatedData.customizations) {
-        // Delete existing customizations
-        await db.customization.deleteMany({
-          where: { menuItemId: id },
-        });
+      // Apply the customization replacement and the item update atomically so
+      // a mid-update failure can never leave the item without its options.
+      const updatedItem = await db.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          // Replace customizations (delete-then-recreate) inside the transaction.
+          if (validatedData.customizations) {
+            await tx.customization.deleteMany({
+              where: { menuItemId: id },
+            });
 
-        // Create new customizations
-        if (validatedData.customizations.length > 0) {
-          await db.customization.createMany({
-            data: validatedData.customizations.map(custom => ({
-              menuItemId: id,
-              name: custom.name,
-              type: custom.type.toUpperCase() as 'RADIO' | 'CHECKBOX' | 'TEXT',
-              required: custom.required,
-              maxSelections: custom.maxSelections,
-            })),
-          });
-
-          // Get created customizations to add options
-          const createdCustomizations = await db.customization.findMany({
-            where: { menuItemId: id },
-          });
-
-          // Create options for each customization
-          for (let i = 0; i < validatedData.customizations.length; i++) {
-            const customization = validatedData.customizations[i];
-            const createdCustomization = createdCustomizations[i];
-
-            if (customization.options.length > 0) {
-              await db.customizationOption.createMany({
-                data: customization.options.map((option: any) => ({
-                  customizationId: createdCustomization.id,
-                  name: option.name,
-                  priceModifier: option.priceModifier,
-                  isAvailable: option.isAvailable,
-                })),
+            // Create each customization with its options nested, so options are
+            // always attached to the correct parent (no index correlation).
+            for (const custom of validatedData.customizations) {
+              await tx.customization.create({
+                data: {
+                  menuItemId: id,
+                  name: custom.name,
+                  type: custom.type.toUpperCase() as
+                    | 'RADIO'
+                    | 'CHECKBOX'
+                    | 'TEXT',
+                  required: custom.required,
+                  maxSelections: custom.maxSelections,
+                  ...(custom.options.length > 0 && {
+                    options: {
+                      create: custom.options.map((option: any) => ({
+                        name: option.name,
+                        priceModifier: option.priceModifier,
+                        isAvailable: option.isAvailable,
+                      })),
+                    },
+                  }),
+                },
               });
             }
           }
-        }
-      }
 
-      // Update menu item basic fields
-      const updatedItem = await db.menuItem.update({
-        where: { id },
-        data: {
-          ...(validatedData.name && { name: validatedData.name }),
-          ...(validatedData.description && {
-            description: validatedData.description,
-          }),
-          ...(validatedData.basePrice !== undefined && {
-            basePrice: validatedData.basePrice,
-          }),
-          ...(validatedData.categoryId && {
-            categoryId: validatedData.categoryId,
-          }),
-          ...(validatedData.status && { status: validatedData.status }),
-          ...(validatedData.image !== undefined && {
-            image: validatedData.image,
-          }),
-          ...(validatedData.tags && {
-            tags: JSON.stringify(validatedData.tags),
-          }),
-          ...(validatedData.chefNotes !== undefined && {
-            chefNotes: validatedData.chefNotes,
-          }),
-          ...(validatedData.preparationTime !== undefined && {
-            preparationTime: validatedData.preparationTime,
-          }),
-          ...(validatedData.allergens && {
-            allergens: validatedData.allergens,
-          }),
-          ...(validatedData.seoTitle !== undefined && {
-            seoTitle: validatedData.seoTitle,
-          }),
-          ...(validatedData.seoDescription !== undefined && {
-            seoDescription: validatedData.seoDescription,
-          }),
-        },
-        include: {
-          category: true,
-          customizations: {
-            include: {
-              options: true,
+          // Update menu item basic fields
+          return tx.menuItem.update({
+            where: { id },
+            data: {
+              ...(validatedData.name && { name: validatedData.name }),
+              ...(validatedData.description && {
+                description: validatedData.description,
+              }),
+              ...(validatedData.basePrice !== undefined && {
+                basePrice: validatedData.basePrice,
+              }),
+              ...(validatedData.categoryId && {
+                categoryId: validatedData.categoryId,
+              }),
+              ...(validatedData.status && { status: validatedData.status }),
+              ...(validatedData.image !== undefined && {
+                image: validatedData.image,
+              }),
+              ...(validatedData.tags && {
+                tags: JSON.stringify(validatedData.tags),
+              }),
+              ...(validatedData.chefNotes !== undefined && {
+                chefNotes: validatedData.chefNotes,
+              }),
+              ...(validatedData.preparationTime !== undefined && {
+                preparationTime: validatedData.preparationTime,
+              }),
+              ...(validatedData.allergens && {
+                allergens: validatedData.allergens,
+              }),
+              ...(validatedData.seoTitle !== undefined && {
+                seoTitle: validatedData.seoTitle,
+              }),
+              ...(validatedData.seoDescription !== undefined && {
+                seoDescription: validatedData.seoDescription,
+              }),
             },
-          },
-        },
-      });
+            include: {
+              category: true,
+              customizations: {
+                include: {
+                  options: true,
+                },
+              },
+            },
+          });
+        }
+      );
 
       return NextResponse.json({
         success: true,

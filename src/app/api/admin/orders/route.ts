@@ -146,6 +146,11 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 
 export const PATCH = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const { orderIds, status, bulkAction } = body;
 
@@ -156,6 +161,7 @@ export const PATCH = requireAdmin(async (request: NextRequest) => {
           id: {
             in: orderIds,
           },
+          tenantId,
         },
         include: {
           customer: {
@@ -174,6 +180,7 @@ export const PATCH = requireAdmin(async (request: NextRequest) => {
           id: {
             in: orderIds,
           },
+          tenantId,
         },
         data: {
           status: status as OrderStatus,

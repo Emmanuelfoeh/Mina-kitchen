@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { generateSlug } from '@/lib/utils';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 export async function GET(request: NextRequest) {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const search = searchParams.get('search');
@@ -11,6 +17,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: any = {
+      tenantId,
       status: status,
     };
 

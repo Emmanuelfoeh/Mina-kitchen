@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { NotificationService } from '@/lib/notifications';
 
 type OrderStatus =
@@ -14,13 +15,18 @@ type OrderStatus =
 
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     // Extract order ID from URL path
     const url = new URL(request.url);
     const pathSegments = url.pathname.split('/');
     const id = pathSegments[pathSegments.length - 1];
 
-    const order = await db.order.findUnique({
-      where: { id },
+    const order = await db.order.findFirst({
+      where: { id, tenantId },
       include: {
         customer: {
           select: {
@@ -80,6 +86,11 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 
 export const PATCH = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     // Extract order ID from URL path
     const url = new URL(request.url);
     const pathSegments = url.pathname.split('/');
@@ -109,9 +120,9 @@ export const PATCH = requireAdmin(async (request: NextRequest) => {
       );
     }
 
-    // Check if order exists
-    const existingOrder = await db.order.findUnique({
-      where: { id },
+    // Check if order exists within this tenant
+    const existingOrder = await db.order.findFirst({
+      where: { id, tenantId },
       include: {
         customer: {
           select: {

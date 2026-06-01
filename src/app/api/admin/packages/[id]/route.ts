@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, AuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { z } from 'zod';
 import { generateSlug } from '@/lib/utils';
 
 // Helper function to generate unique slug (excluding current package)
 async function generateUniqueSlug(
   name: string,
+  tenantId: string,
   excludeId?: string
 ): Promise<string> {
   const baseSlug = generateSlug(name);
@@ -15,8 +17,8 @@ async function generateUniqueSlug(
 
   // Ensure slug is unique
   while (true) {
-    const existingPackage = await db.package.findUnique({
-      where: { slug },
+    const existingPackage = await db.package.findFirst({
+      where: { slug, tenantId },
     });
 
     if (!existingPackage || (excludeId && existingPackage.id === excludeId)) {
@@ -73,8 +75,16 @@ export const GET = requireAdmin(
 
       const { id } = await context.params;
 
-      const packageData = await db.package.findUnique({
-        where: { id },
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) {
+        return NextResponse.json(
+          { error: 'Tenant not found' },
+          { status: 404 }
+        );
+      }
+
+      const packageData = await db.package.findFirst({
+        where: { id, tenantId },
         include: {
           includedItems: {
             include: {
@@ -145,12 +155,21 @@ export const PUT = requireAdmin(
       }
 
       const { id } = await context.params;
+
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) {
+        return NextResponse.json(
+          { error: 'Tenant not found' },
+          { status: 404 }
+        );
+      }
+
       const body = await request.json();
       const validatedData = packageUpdateSchema.parse(body);
 
       // Check if package exists
-      const existingPackage = await db.package.findUnique({
-        where: { id },
+      const existingPackage = await db.package.findFirst({
+        where: { id, tenantId },
         include: { includedItems: true },
       });
 
@@ -182,7 +201,11 @@ export const PUT = requireAdmin(
             validatedData.name &&
             validatedData.name !== existingPackage.name
           ) {
-            newSlug = await generateUniqueSlug(validatedData.name, id);
+            newSlug = await generateUniqueSlug(
+              validatedData.name,
+              tenantId,
+              id
+            );
           }
 
           // Update package
@@ -305,11 +328,59 @@ export const PATCH = requireAdmin(
       }
 
       const { id } = await context.params;
+
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) {
+        return NextResponse.json(
+          { error: 'Tenant not found' },
+          { status: 404 }
+        );
+      }
+
       const body = await request.json();
+
+      // Verify package ownership before updating
+      const existingPackage = await db.package.findFirst({
+        where: { id, tenantId },
+      });
+
+      if (!existingPackage) {
+        return NextResponse.json(
+          { error: 'Package not found' },
+          { status: 404 }
+        );
+      }
+
+      // Whitelist allowed fields only - never trust raw body (prevents
+      // mass-assignment of id, tenantId, createdAt, updatedAt, etc.)
+      const allowedFields = [
+        'name',
+        'slug',
+        'description',
+        'type',
+        'price',
+        'image',
+        'isActive',
+        'features',
+        'seoTitle',
+        'seoDescription',
+      ] as const;
+
+      const data: Record<string, unknown> = {};
+      for (const field of allowedFields) {
+        if (body[field] !== undefined) {
+          // Match how PUT/POST store features (stringified JSON)
+          if (field === 'features' && typeof body[field] !== 'string') {
+            data[field] = JSON.stringify(body[field]);
+          } else {
+            data[field] = body[field];
+          }
+        }
+      }
 
       const updatedPackage = await db.package.update({
         where: { id },
-        data: body,
+        data,
         include: {
           includedItems: {
             include: {
@@ -378,9 +449,17 @@ export const DELETE = requireAdmin(
 
       const { id } = await context.params;
 
+      const tenantId = await getCurrentTenantId();
+      if (!tenantId) {
+        return NextResponse.json(
+          { error: 'Tenant not found' },
+          { status: 404 }
+        );
+      }
+
       // Check if package exists
-      const existingPackage = await db.package.findUnique({
-        where: { id },
+      const existingPackage = await db.package.findFirst({
+        where: { id, tenantId },
       });
 
       if (!existingPackage) {

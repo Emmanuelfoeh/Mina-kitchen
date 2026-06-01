@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     // Extract order ID from URL path
     const url = new URL(request.url);
     const pathSegments = url.pathname.split('/');
@@ -11,8 +17,8 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 
     // For now, we'll return a basic timeline based on order creation and updates
     // In the future, you can implement a proper audit log table
-    const order = await db.order.findUnique({
-      where: { id: orderId },
+    const order = await db.order.findFirst({
+      where: { id: orderId, tenantId },
       select: {
         id: true,
         status: true,

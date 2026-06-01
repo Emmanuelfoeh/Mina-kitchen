@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
 import { db } from '@/lib/db';
+import { getJwtSecret } from '@/lib/auth';
+import { getTenantFromHostname } from '@/lib/tenant';
 import { SecurityMiddleware, SecurityHeaders } from '@/lib/security';
 import { z } from 'zod';
 
@@ -9,8 +11,6 @@ const loginSchema = z.object({
   email: z.string().email('Invalid email format').max(254),
   password: z.string().min(1, 'Password is required').max(128),
 });
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Track failed login attempts (in production, use Redis or database)
 const failedAttempts = new Map<
@@ -65,9 +65,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user
-    const user = await db.user.findUnique({
-      where: { email: normalizedEmail },
+    // Resolve the tenant (store) this login is being made against.
+    const hostname =
+      request.headers.get('x-tenant-hostname') ||
+      request.headers.get('host') ||
+      '';
+    const tenant = await getTenantFromHostname(hostname);
+
+    if (!tenant) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json({ error: 'Store not found' }, { status: 404 })
+      );
+    }
+
+    // Find user scoped to this tenant (email is unique per tenant).
+    const user = await db.user.findFirst({
+      where: { tenantId: tenant.id, email: normalizedEmail },
       include: {
         addresses: true,
       },
@@ -117,12 +130,14 @@ export async function POST(request: NextRequest) {
     // Clear failed attempts on successful login
     failedAttempts.delete(clientId);
 
-    // Generate JWT token with shorter expiry for security using jose
-    const secret = new TextEncoder().encode(JWT_SECRET);
+    // Generate JWT token with shorter expiry for security using jose.
+    // tenantId binds the token to the store it was issued for.
+    const secret = getJwtSecret();
     const token = await new SignJWT({
       userId: user.id,
       email: user.email,
       role: user.role,
+      tenantId: user.tenantId,
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
@@ -132,12 +147,11 @@ export async function POST(request: NextRequest) {
     // Remove sensitive data from response
     const { passwordHash, ...userResponse } = user;
 
-    // Log successful login for security monitoring
+    // Log successful login for security monitoring (no PII).
     console.log('User login:', {
       userId: user.id,
-      email: user.email,
+      tenantId: user.tenantId,
       timestamp: new Date().toISOString(),
-      ip: clientId,
     });
 
     // Create response with httpOnly cookie

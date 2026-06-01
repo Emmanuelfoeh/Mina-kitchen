@@ -1,17 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { generateSlug } from '@/lib/utils';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const { slug } = await params;
 
     // First, try to find package by slug
     let pkg = await db.package.findFirst({
       where: {
+        tenantId,
         slug: slug,
         isActive: true,
       },
@@ -36,7 +43,7 @@ export async function GET(
     // If not found by slug, try to find by generated slug from name
     if (!pkg) {
       const packages = await db.package.findMany({
-        where: { isActive: true },
+        where: { tenantId, isActive: true },
         include: {
           includedItems: {
             include: {

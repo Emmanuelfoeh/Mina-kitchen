@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { z } from 'zod';
 
 const updateUserSchema = z.object({
@@ -22,6 +23,11 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
       );
     }
 
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const url = new URL(request.url);
     const userId = url.pathname.split('/').pop();
 
@@ -32,8 +38,8 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
       );
     }
 
-    const user = await db.user.findUnique({
-      where: { id: userId },
+    const user = await db.user.findFirst({
+      where: { id: userId, tenantId },
       include: {
         addresses: true,
         orders: {
@@ -87,6 +93,11 @@ export const PATCH = requireAuth(async (request: NextRequest, authUser) => {
       );
     }
 
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const url = new URL(request.url);
     const userId = url.pathname.split('/').pop();
 
@@ -100,9 +111,9 @@ export const PATCH = requireAuth(async (request: NextRequest, authUser) => {
     const body = await request.json();
     const validatedData = updateUserSchema.parse(body);
 
-    // Check if user exists
-    const existingUser = await db.user.findUnique({
-      where: { id: userId },
+    // Check if user exists within this tenant
+    const existingUser = await db.user.findFirst({
+      where: { id: userId, tenantId },
     });
 
     if (!existingUser) {
@@ -130,6 +141,7 @@ export const PATCH = requireAuth(async (request: NextRequest, authUser) => {
       const emailExists = await db.user.findFirst({
         where: {
           email: validatedData.email.toLowerCase(),
+          tenantId,
           NOT: { id: userId },
         },
       });
@@ -198,6 +210,11 @@ export const DELETE = requireAuth(async (request: NextRequest, authUser) => {
       );
     }
 
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const url = new URL(request.url);
     const userId = url.pathname.split('/').pop();
 
@@ -216,9 +233,9 @@ export const DELETE = requireAuth(async (request: NextRequest, authUser) => {
       );
     }
 
-    // Check if user exists
-    const existingUser = await db.user.findUnique({
-      where: { id: userId },
+    // Check if user exists within this tenant
+    const existingUser = await db.user.findFirst({
+      where: { id: userId, tenantId },
     });
 
     if (!existingUser) {

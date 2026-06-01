@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { generateSlug } from '@/lib/utils';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 export async function GET(request: NextRequest) {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     // Extract slug from URL pathname
     const url = new URL(request.url);
     const pathSegments = url.pathname.split('/');
@@ -22,6 +28,7 @@ export async function GET(request: NextRequest) {
     // First, find the current menu item
     const currentItem = await db.menuItem.findFirst({
       where: {
+        tenantId,
         name: { equals: nameFromSlug, mode: 'insensitive' },
       },
       include: {
@@ -39,6 +46,7 @@ export async function GET(request: NextRequest) {
     // Find related items from the same category, excluding the current item
     const relatedItems = await db.menuItem.findMany({
       where: {
+        tenantId,
         AND: [
           { categoryId: currentItem.categoryId },
           { id: { not: currentItem.id } },
@@ -63,6 +71,7 @@ export async function GET(request: NextRequest) {
     if (relatedItems.length < 4) {
       const additionalItems = await db.menuItem.findMany({
         where: {
+          tenantId,
           AND: [
             { categoryId: { not: currentItem.categoryId } },
             { id: { not: currentItem.id } },

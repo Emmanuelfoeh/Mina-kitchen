@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
+import { getTenantFromHostname } from '@/lib/tenant';
 import { userSchema, passwordSchema } from '@/lib/validations';
 import {
   SecurityMiddleware,
@@ -46,10 +47,24 @@ export async function POST(request: NextRequest) {
     // Validate and sanitize input
     const validatedData = registerSchema.parse(body);
     const { email, password, name, phone } = validatedData;
+    const normalizedEmail = email.toLowerCase();
 
-    // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email },
+    // Resolve the tenant (store) this registration is being made against.
+    const hostname =
+      request.headers.get('x-tenant-hostname') ||
+      request.headers.get('host') ||
+      '';
+    const tenant = await getTenantFromHostname(hostname);
+
+    if (!tenant) {
+      return SecurityHeaders.applyHeaders(
+        NextResponse.json({ error: 'Store not found' }, { status: 404 })
+      );
+    }
+
+    // Check if user already exists within this tenant
+    const existingUser = await db.user.findFirst({
+      where: { tenantId: tenant.id, email: normalizedEmail },
     });
 
     if (existingUser) {
@@ -64,13 +79,14 @@ export async function POST(request: NextRequest) {
     // Hash password with high cost factor
     const hashedPassword = await bcrypt.hash(password, 14);
 
-    // Create user
+    // Create user scoped to the tenant. role/isVerified are server-controlled.
     const user = await db.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         name,
         phone,
         passwordHash: hashedPassword,
+        tenantId: tenant.id,
       },
       include: {
         addresses: true,
@@ -80,12 +96,11 @@ export async function POST(request: NextRequest) {
     // Remove sensitive data from response
     const { passwordHash, ...userResponse } = user;
 
-    // Log registration for security monitoring
+    // Log registration for security monitoring (no PII).
     console.log('User registration:', {
       userId: user.id,
-      email: user.email,
+      tenantId: user.tenantId,
       timestamp: new Date().toISOString(),
-      ip: request.headers.get('x-forwarded-for') || 'unknown',
     });
 
     return SecurityHeaders.applyHeaders(

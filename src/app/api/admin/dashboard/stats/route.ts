@@ -1,9 +1,15 @@
 import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { db } from '@/lib/db';
 
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return Response.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     // Get current date for calculations
     const now = new Date();
     const startOfDay = new Date(
@@ -21,6 +27,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
         total: true,
       },
       where: {
+        tenantId,
         status: {
           in: [
             'CONFIRMED',
@@ -42,6 +49,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
         total: true,
       },
       where: {
+        tenantId,
         status: {
           in: [
             'CONFIRMED',
@@ -61,6 +69,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     // Calculate total orders
     const totalOrders = await db.order.count({
       where: {
+        tenantId,
         status: {
           not: 'CANCELLED',
         },
@@ -70,6 +79,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     // Calculate previous month orders for comparison
     const previousMonthOrders = await db.order.count({
       where: {
+        tenantId,
         status: {
           not: 'CANCELLED',
         },
@@ -95,6 +105,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     // Count pending deliveries
     const pendingDeliveries = await db.order.count({
       where: {
+        tenantId,
         status: {
           in: ['CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'],
         },
@@ -127,6 +138,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
         total: true,
       },
       where: {
+        tenantId,
         status: {
           in: [
             'CONFIRMED',
@@ -148,6 +160,11 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     // Get popular dishes (top 5 by order count)
     const popularDishes = await db.orderItem.groupBy({
       by: ['menuItemId'],
+      where: {
+        order: {
+          tenantId,
+        },
+      },
       _count: {
         menuItemId: true,
       },
@@ -171,6 +188,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
         id: {
           in: menuItemIds,
         },
+        tenantId,
       },
       include: {
         category: true,
@@ -197,6 +215,9 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 
     // Get recent orders (last 10)
     const recentOrders = await db.order.findMany({
+      where: {
+        tenantId,
+      },
       take: 10,
       orderBy: {
         createdAt: 'desc',

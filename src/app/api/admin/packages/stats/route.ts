@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 // GET /api/admin/packages/stats - Get package statistics
 export const GET = requireAdmin(async (_request: NextRequest) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Tenant not found' },
+        { status: 404 }
+      );
+    }
+
     const [totalPackages, activePackages, packagePrices] = await Promise.all([
-      db.package.count(),
-      db.package.count({ where: { isActive: true } }),
+      db.package.count({ where: { tenantId } }),
+      db.package.count({ where: { tenantId, isActive: true } }),
       db.package.findMany({
         select: { price: true },
-        where: { isActive: true },
+        where: { tenantId, isActive: true },
       }),
     ]);
 

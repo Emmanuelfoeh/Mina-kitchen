@@ -1,10 +1,19 @@
 import { NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 // GET /api/cart - Get user's cart
 export const GET = requireAuth(async (request: NextRequest, user) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return Response.json(
+        { error: 'Tenant not found' },
+        { status: 404 }
+      );
+    }
+
     const cart = await db.cart.findUnique({
       where: { userId: user.id },
       include: {
@@ -73,18 +82,27 @@ export const GET = requireAuth(async (request: NextRequest, user) => {
 // DELETE /api/cart - Clear user's cart
 export const DELETE = requireAuth(async (request: NextRequest, user) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return Response.json(
+        { error: 'Tenant not found' },
+        { status: 404 }
+      );
+    }
+
     // Delete all cart items (cart will be deleted if empty)
     await db.cartItem.deleteMany({
       where: {
         cart: {
           userId: user.id,
+          tenantId,
         },
       },
     });
 
     // Delete the cart itself
     await db.cart.deleteMany({
-      where: { userId: user.id },
+      where: { userId: user.id, tenantId },
     });
 
     return Response.json({

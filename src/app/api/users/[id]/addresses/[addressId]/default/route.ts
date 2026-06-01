@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 export const PATCH = requireAuth(async (request: NextRequest, authUser) => {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const url = new URL(request.url);
     const pathParts = url.pathname.split('/');
     const userId = pathParts[3]; // /api/users/[id]/addresses/[addressId]/default
@@ -22,6 +28,15 @@ export const PATCH = requireAuth(async (request: NextRequest, authUser) => {
         { error: 'Unauthorized to update this address' },
         { status: 403 }
       );
+    }
+
+    // Confirm the authenticated user belongs to the current tenant
+    const user = await db.user.findFirst({
+      where: { id: userId, tenantId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Verify the address belongs to the user

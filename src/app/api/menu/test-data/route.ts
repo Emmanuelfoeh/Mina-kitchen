@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 
 export async function POST() {
-  // Skip database operations during build time
-  if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  // Skip database operations when no database is configured (e.g. build time)
+  if (!process.env.DATABASE_URL) {
     return NextResponse.json({
       success: false,
-      message: 'Test data creation is not available in production build',
+      message: 'Test data creation is not available without a database',
     });
   }
 

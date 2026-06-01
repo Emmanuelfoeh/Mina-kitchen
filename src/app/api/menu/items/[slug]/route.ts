@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { generateSlug } from '@/lib/utils';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 export async function GET(request: NextRequest) {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     // Extract slug from URL pathname
     const url = new URL(request.url);
     const pathSegments = url.pathname.split('/');
@@ -21,6 +27,7 @@ export async function GET(request: NextRequest) {
 
     const menuItem = await db.menuItem.findFirst({
       where: {
+        tenantId,
         name: { equals: nameFromSlug, mode: 'insensitive' },
       },
       include: {

@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const { id } = await params;
 
-    const packageData = await db.package.findUnique({
-      where: { id },
+    const packageData = await db.package.findFirst({
+      where: { id, tenantId },
       include: {
         includedItems: {
           include: {

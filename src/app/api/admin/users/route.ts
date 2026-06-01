@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
+import { getCurrentTenantId } from '@/lib/tenant-context';
 import { userSchema } from '@/lib/validations';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
@@ -27,6 +28,11 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
       );
     }
 
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -47,7 +53,8 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
       }>;
       role?: 'CUSTOMER' | 'ADMIN';
       isVerified?: boolean;
-    } = {};
+      tenantId?: string;
+    } = { tenantId };
 
     // Search filter
     if (search) {
@@ -133,12 +140,17 @@ export const POST = requireAuth(async (request: NextRequest, authUser) => {
       );
     }
 
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const validatedData = createUserSchema.parse(body);
 
-    // Check if email already exists
-    const existingUser = await db.user.findUnique({
-      where: { email: validatedData.email.toLowerCase() },
+    // Check if email already exists within this tenant
+    const existingUser = await db.user.findFirst({
+      where: { email: validatedData.email.toLowerCase(), tenantId },
     });
 
     if (existingUser) {
@@ -160,6 +172,7 @@ export const POST = requireAuth(async (request: NextRequest, authUser) => {
         role: validatedData.role,
         isVerified: validatedData.isVerified ?? true,
         passwordHash,
+        tenantId,
       },
       select: {
         id: true,
@@ -208,6 +221,11 @@ export const PATCH = requireAuth(async (request: NextRequest, authUser) => {
       );
     }
 
+    const tenantId = await getCurrentTenantId();
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const validatedData = bulkUpdateSchema.parse(body);
 
@@ -245,6 +263,7 @@ export const PATCH = requireAuth(async (request: NextRequest, authUser) => {
     const updatedUsers = await db.user.updateMany({
       where: {
         id: { in: validatedData.userIds },
+        tenantId,
       },
       data: updateData,
     });
