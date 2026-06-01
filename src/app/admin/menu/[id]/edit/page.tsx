@@ -12,71 +12,33 @@ interface EditMenuItemPageProps {
   }>;
 }
 
-// Type for the database result with relations
-type MenuItemWithRelations = {
-  id: string;
-  name: string;
-  description: string;
-  basePrice: number;
-  image: string;
-  status: string;
-  tags: string;
-  chefNotes: string | null;
-  preparationTime: number | null;
-  allergens: string[];
-  seoTitle: string | null;
-  seoDescription: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  categoryId: string;
-  category: {
-    id: string;
-    name: string;
-    description: string;
-    displayOrder: number;
-    isActive: boolean;
-  };
-  customizations: Array<{
-    id: string;
-    name: string;
-    type: string;
-    required: boolean;
-    maxSelections: number | null;
-    options: Array<{
-      id: string;
-      name: string;
-      priceModifier: number;
-      isAvailable: boolean;
-    }>;
-  }>;
-};
-
 export default async function EditMenuItemPage({
   params,
 }: EditMenuItemPageProps) {
   const { id } = await params;
 
   // Fetch the menu item from database
-  const rawMenuItem: MenuItemWithRelations | null =
-    await db.menuItem.findUnique({
-      where: { id },
-      include: {
-        category: true,
-        customizations: {
-          include: {
-            options: true,
-          },
+  const rawMenuItem = await db.menuItem.findUnique({
+    where: { id },
+    include: {
+      category: true,
+      customizations: {
+        include: {
+          options: true,
         },
       },
-    });
+    },
+  });
 
   if (!rawMenuItem) {
     notFound();
   }
 
-  // Transform the data to match the form interface
+  // Transform the data to match the form interface. Convert Decimal money
+  // fields to numbers so they can cross the server->client (form) boundary.
   const menuItem = {
     ...rawMenuItem,
+    basePrice: Number(rawMenuItem.basePrice),
     tags: rawMenuItem.tags ? JSON.parse(rawMenuItem.tags) : [],
     allergens: rawMenuItem.allergens || [],
     preparationTime: rawMenuItem.preparationTime || undefined,
@@ -92,6 +54,10 @@ export default async function EditMenuItemPage({
       ...customization,
       type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
       maxSelections: customization.maxSelections || undefined,
+      options: customization.options.map(option => ({
+        ...option,
+        priceModifier: Number(option.priceModifier),
+      })),
     })),
   };
 

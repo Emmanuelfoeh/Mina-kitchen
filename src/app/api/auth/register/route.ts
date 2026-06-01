@@ -3,11 +3,7 @@ import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { getTenantFromHostname } from '@/lib/tenant';
 import { userSchema, passwordSchema } from '@/lib/validations';
-import {
-  SecurityMiddleware,
-  SecurityHeaders,
-  DataEncryption,
-} from '@/lib/security';
+import { SecurityMiddleware, SecurityHeaders } from '@/lib/security';
 import { z } from 'zod';
 
 const registerSchema = userSchema
@@ -94,7 +90,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Remove sensitive data from response
-    const { passwordHash, ...userResponse } = user;
+    const userResponse = { ...user };
+    delete (userResponse as { passwordHash?: string }).passwordHash;
 
     // Log registration for security monitoring (no PII).
     console.log('User registration:', {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, type AuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 
@@ -22,19 +22,21 @@ const tenantUpdateSchema = z.object({
 function requireSuperAdmin(
   handler: (
     request: NextRequest,
-    user: any,
+    user: AuthUser,
     context?: { params: Promise<{ id: string }> }
   ) => Promise<NextResponse>
 ) {
-  return requireAuth(async (request: NextRequest, user, context) => {
-    if (user.role !== 'SUPER_ADMIN') {
-      return NextResponse.json(
-        { error: 'Forbidden: Super admin access required' },
-        { status: 403 }
-      );
+  return requireAuth<{ params: Promise<{ id: string }> }>(
+    async (request: NextRequest, user, context) => {
+      if (user.role !== 'SUPER_ADMIN') {
+        return NextResponse.json(
+          { error: 'Forbidden: Super admin access required' },
+          { status: 403 }
+        );
+      }
+      return handler(request, user, context);
     }
-    return handler(request, user, context);
-  });
+  );
 }
 
 // GET /api/admin/tenants/[id] - Get single tenant

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,8 @@ export function ProductGallery({
 
   // Set loading to false after component mounts
   useEffect(() => {
+    // Intentionally clear the initial loading skeleton once mounted on the client.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time mount flag to hide skeleton
     setIsLoading(false);
   }, []);
 
@@ -82,7 +84,7 @@ export function ProductGallery({
             onLoad={() => {
               console.log('Image loaded:', displayImages[selectedImageIndex]);
             }}
-            onError={e => {
+            onError={() => {
               console.error(
                 'Image failed to load:',
                 displayImages[selectedImageIndex]

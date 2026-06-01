@@ -133,7 +133,7 @@ export function EditUserForm({ user }: EditUserFormProps) {
   const handleQuickAction = async (action: 'toggleStatus' | 'toggleRole') => {
     setLoading(true);
     try {
-      let updateData: Partial<UserFormData> = {};
+      const updateData: Partial<UserFormData> = {};
 
       if (action === 'toggleStatus') {
         updateData.isVerified = !formData.isVerified;

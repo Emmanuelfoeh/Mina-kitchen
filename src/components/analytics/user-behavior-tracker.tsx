@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   useUserBehaviorTracking,
@@ -21,11 +21,12 @@ export function UserBehaviorTracker({ children }: UserBehaviorTrackerProps) {
     useUserBehaviorTracking();
   const { trackElementClick, trackFormInteraction } = useInteractionTracking();
 
-  const pageStartTime = useRef<number>(Date.now());
+  // Initialized in the pathname effect below (which runs on mount).
+  const pageStartTime = useRef<number>(0);
   const maxScrollDepth = useRef<number>(0);
   const engagementTracked = useRef<boolean>(false);
   const interactionCount = useRef<number>(0);
-  const lastActivityTime = useRef<number>(Date.now());
+  const lastActivityTime = useRef<number>(0);
 
   // Reset tracking state when pathname changes
   useEffect(() => {
@@ -56,7 +57,6 @@ export function UserBehaviorTracker({ children }: UserBehaviorTrackerProps) {
         // Track deep engagement (75%+ scroll)
         if (scrollDepth >= 75 && !engagementTracked.current) {
           engagementTracked.current = true;
-          const engagementTime = Date.now() - pageStartTime.current;
           trackEngagement(scrollDepth);
         }
       }
@@ -166,7 +166,6 @@ export function UserBehaviorTracker({ children }: UserBehaviorTrackerProps) {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        const engagementTime = Date.now() - pageStartTime.current;
         trackExitPoint('visibility_change', maxScrollDepth.current);
       } else {
         // User returned to the page
@@ -182,9 +181,6 @@ export function UserBehaviorTracker({ children }: UserBehaviorTrackerProps) {
   // Track page unload (user leaving the page)
   useEffect(() => {
     const handleBeforeUnload = () => {
-      const engagementTime = Date.now() - pageStartTime.current;
-      const inactiveTime = Date.now() - lastActivityTime.current;
-
       trackExitPoint('page_unload', maxScrollDepth.current);
 
       // Track session summary
@@ -216,14 +212,22 @@ export function UserBehaviorTracker({ children }: UserBehaviorTrackerProps) {
       if (typeof window !== 'undefined' && window.performance) {
         // Track memory usage (if available)
         if ('memory' in performance) {
-          const memory = (performance as any).memory;
+          const memory = (
+            performance as Performance & {
+              memory: { usedJSHeapSize: number; totalJSHeapSize: number };
+            }
+          ).memory;
           trackPerformance('memory_used', memory.usedJSHeapSize);
           trackPerformance('memory_total', memory.totalJSHeapSize);
         }
 
         // Track connection information (if available)
         if ('connection' in navigator) {
-          const connection = (navigator as any).connection;
+          const connection = (
+            navigator as Navigator & {
+              connection?: { downlink: number; rtt: number };
+            }
+          ).connection;
           if (connection) {
             trackPerformance('connection_downlink', connection.downlink);
             trackPerformance('connection_rtt', connection.rtt);

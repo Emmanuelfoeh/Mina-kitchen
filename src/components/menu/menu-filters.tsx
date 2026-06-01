@@ -100,7 +100,7 @@ export function MenuFilters({
               className="cursor-pointer bg-[#f2330d]/10 text-[#f2330d] hover:bg-[#f2330d]/20"
               onClick={() => onSearchChange('')}
             >
-              "{searchQuery}" ×
+              &quot;{searchQuery}&quot; ×
             </Badge>
           )}
 

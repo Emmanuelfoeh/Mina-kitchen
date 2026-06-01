@@ -20,7 +20,7 @@ export function EngagementTracker() {
   const pathname = usePathname();
   const { trackEngagement, trackExitPoint } = useUserBehaviorTracking();
 
-  const [metrics, setMetrics] = useState<EngagementMetrics>({
+  const [, setMetrics] = useState<EngagementMetrics>({
     timeOnPage: 0,
     scrollDepth: 0,
     interactionCount: 0,
@@ -28,9 +28,10 @@ export function EngagementTracker() {
     idleTime: 0,
   });
 
-  const pageStartTime = useRef<number>(Date.now());
-  const lastActivityTime = useRef<number>(Date.now());
-  const focusStartTime = useRef<number>(Date.now());
+  // Initialized in the pathname effect below (which runs on mount).
+  const pageStartTime = useRef<number>(0);
+  const lastActivityTime = useRef<number>(0);
+  const focusStartTime = useRef<number>(0);
   const totalFocusTime = useRef<number>(0);
   const maxScrollDepth = useRef<number>(0);
   const interactionCount = useRef<number>(0);
@@ -46,6 +47,7 @@ export function EngagementTracker() {
     interactionCount.current = 0;
     engagementMilestones.current.clear();
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset accumulated engagement metrics when navigating to a new route
     setMetrics({
       timeOnPage: 0,
       scrollDepth: 0,
@@ -141,7 +143,7 @@ export function EngagementTracker() {
 
   // Track user interactions
   useEffect(() => {
-    const trackInteraction = (eventType: string) => {
+    const trackInteraction = () => {
       interactionCount.current += 1;
       lastActivityTime.current = Date.now();
 
@@ -158,14 +160,14 @@ export function EngagementTracker() {
       });
     };
 
-    const handleClick = () => trackInteraction('click');
-    const handleKeyDown = () => trackInteraction('keydown');
-    const handleTouchStart = () => trackInteraction('touch');
+    const handleClick = () => trackInteraction();
+    const handleKeyDown = () => trackInteraction();
+    const handleTouchStart = () => trackInteraction();
     const handleMouseMove = () => {
       // Only count significant mouse movements to avoid noise
       const now = Date.now();
       if (now - lastActivityTime.current > 1000) {
-        trackInteraction('mousemove');
+        trackInteraction();
       }
     };
 
@@ -234,7 +236,6 @@ export function EngagementTracker() {
           'p, h1, h2, h3, h4, h5, h6, li'
         );
         const viewportHeight = window.innerHeight;
-        const scrollTop = window.scrollY;
 
         let visibleTextLength = 0;
         contentElements.forEach(element => {
@@ -293,31 +294,6 @@ export function EngagementTracker() {
   // Track final engagement summary on page unload
   useEffect(() => {
     const handleBeforeUnload = () => {
-      const finalMetrics = {
-        timeOnPage: Date.now() - pageStartTime.current,
-        scrollDepth: maxScrollDepth.current,
-        interactionCount: interactionCount.current,
-        focusTime:
-          totalFocusTime.current +
-          (document.hasFocus() ? Date.now() - focusStartTime.current : 0),
-        idleTime: Date.now() - lastActivityTime.current,
-      };
-
-      // Calculate engagement score (0-100)
-      const engagementScore = Math.min(
-        100,
-        Math.round(
-          finalMetrics.scrollDepth * 0.3 +
-            Math.min(finalMetrics.interactionCount * 5, 50) * 0.3 +
-            Math.min(finalMetrics.timeOnPage / 1000 / 60, 10) * 4 * 0.2 + // Max 10 minutes
-            Math.min(
-              (finalMetrics.focusTime / finalMetrics.timeOnPage) * 100,
-              100
-            ) *
-              0.2
-        )
-      );
-
       trackEngagement(maxScrollDepth.current);
       trackExitPoint('page_unload', maxScrollDepth.current);
     };

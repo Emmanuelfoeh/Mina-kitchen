@@ -39,6 +39,7 @@ After changing `prisma/schema.prisma`, run `npx prisma migrate dev --name <desc>
 Tenancy is resolved per-request and threaded through almost every data access path. Every tenant-scoped model (`User`, `MenuCategory`, `MenuItem`, `Package`, `Order`, `Cart`) carries a `tenantId` FK to `Tenant`, with uniqueness constraints scoped per tenant (e.g. `@@unique([tenantId, email])`).
 
 Request flow:
+
 1. **`middleware.ts`** runs on all non-static routes. It parses the hostname, extracts the subdomain (or `default` for `localhost`), and injects `x-tenant-subdomain` + `x-tenant-hostname` request headers.
 2. **`src/lib/tenant.ts`** — pure resolution helpers: `extractSubdomain`, `getTenantBySubdomain`, `getTenantByDomain`, `getTenantFromHostname` (custom domain first, then subdomain), `isTenantActive`.
 3. **`src/lib/tenant-context.ts`** — server-side accessors that read the middleware headers via `next/headers`: `getCurrentTenant()`, **`getCurrentTenantId()`**, `requireTenant()`, `getTenantSubdomain()`. Use these in Server Components and API routes.
@@ -48,8 +49,9 @@ Request flow:
 
 ```ts
 const tenantId = await getCurrentTenantId();
-if (!tenantId) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
-const where = { tenantId, /* ...other filters */ };
+if (!tenantId)
+  return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+const where = { tenantId /* ...other filters */ };
 ```
 
 `SUPER_ADMIN` is the platform-level role that manages all tenants (see `src/app/admin/super-admin/`, `src/app/api/admin/tenants/`); it operates across tenants rather than within one.
@@ -57,6 +59,7 @@ const where = { tenantId, /* ...other filters */ };
 ### Auth
 
 JWT-based, in `src/lib/auth.ts`, using `jose` (Edge-compatible) for verification. Token comes from the `auth-token` cookie or `Authorization: Bearer` header. Wrap route handlers with:
+
 - `requireAuth(handler)` — requires any authenticated user.
 - `requireAdmin(handler)` — requires `role === 'ADMIN'`.
 
@@ -70,6 +73,7 @@ Note: `requireAdmin` currently checks `role !== 'ADMIN'` exactly, so it does **n
 ### Data layer on the client
 
 State and server-cache are split:
+
 - **TanStack Query** is the source of truth for server data. Hooks live in `src/hooks/queries/` (reads) and `src/hooks/mutations/` (writes); query key factories in `src/lib/query-keys.ts`; client config in `src/lib/query-client.ts` and `src/components/providers/query-provider.tsx`.
 - **Zustand** stores in `src/stores/` hold UI/client state: `cart-store.ts` (persisted, with server sync), `user-store.ts`, `admin-store.ts`, `subscription-store.ts`.
 - The cart is the trickiest piece: `cart-store` persists to localStorage and syncs to the server for authenticated users (`use-cart-sync.ts`, `use-integrated-cart.ts`, `/api/cart`).

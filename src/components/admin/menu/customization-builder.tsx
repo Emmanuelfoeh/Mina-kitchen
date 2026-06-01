@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -47,6 +46,9 @@ interface CustomizationBuilderProps {
   disabled?: boolean;
 }
 
+const generateId = () =>
+  `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
 export function CustomizationBuilder({
   customizations,
   onChange,
@@ -56,9 +58,6 @@ export function CustomizationBuilder({
     string | null
   >(null);
   const [editingOption, setEditingOption] = useState<string | null>(null);
-
-  const generateId = () =>
-    `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   const addCustomization = () => {
     const newCustomization: Customization = {
@@ -119,13 +118,6 @@ export function CustomizationBuilder({
 
     const updatedOptions = customization.options.filter(o => o.id !== optionId);
     updateCustomization(customizationId, { options: updatedOptions });
-  };
-
-  const moveCustomization = (fromIndex: number, toIndex: number) => {
-    const newCustomizations = [...customizations];
-    const [moved] = newCustomizations.splice(fromIndex, 1);
-    newCustomizations.splice(toIndex, 0, moved);
-    onChange(newCustomizations);
   };
 
   const validateCustomization = (customization: Customization): string[] => {
@@ -200,7 +192,7 @@ export function CustomizationBuilder({
         </Card>
       ) : (
         <div className="space-y-4">
-          {customizations.map((customization, index) => {
+          {customizations.map(customization => {
             const errors = validateCustomization(customization);
             const isEditing = editingCustomization === customization.id;
 
@@ -418,8 +410,8 @@ export function CustomizationBuilder({
 
                       {customization.options.length === 0 ? (
                         <div className="rounded-lg border-2 border-dashed border-gray-200 py-4 text-center text-sm text-gray-500">
-                          No options added yet. Click "Add Option" to get
-                          started.
+                          No options added yet. Click &quot;Add Option&quot; to
+                          get started.
                         </div>
                       ) : (
                         <div className="space-y-2">

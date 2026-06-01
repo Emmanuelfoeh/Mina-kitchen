@@ -49,21 +49,24 @@ export class InputSanitizer {
   /**
    * Sanitize numeric input
    */
-  static sanitizeNumber(input: any): number | null {
-    const num = parseFloat(input);
+  static sanitizeNumber(input: unknown): number | null {
+    const num = parseFloat(String(input));
     return isNaN(num) ? null : num;
   }
 
   /**
    * Sanitize and validate JSON input
    */
-  static sanitizeJSON(input: unknown): Record<string, any> | null {
+  static sanitizeJSON(input: unknown): Record<string, unknown> | null {
     try {
       if (typeof input === 'string') {
         const parsed = JSON.parse(input);
-        return this.deepSanitizeObject(parsed);
+        return this.deepSanitizeObject(parsed) as Record<
+          string,
+          unknown
+        > | null;
       }
-      return this.deepSanitizeObject(input);
+      return this.deepSanitizeObject(input) as Record<string, unknown> | null;
     } catch {
       return null;
     }
@@ -72,7 +75,7 @@ export class InputSanitizer {
   /**
    * Deep sanitize object properties
    */
-  private static deepSanitizeObject(obj: unknown): any {
+  private static deepSanitizeObject(obj: unknown): unknown {
     if (obj === null || obj === undefined) return obj;
 
     if (typeof obj === 'string') {
@@ -88,7 +91,7 @@ export class InputSanitizer {
     }
 
     if (typeof obj === 'object' && obj !== null) {
-      const sanitized: Record<string, any> = {};
+      const sanitized: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(obj)) {
         const sanitizedKey = this.sanitizeString(key);
         sanitized[sanitizedKey] = this.deepSanitizeObject(value);
@@ -503,7 +506,7 @@ export class SecurityMiddleware {
 
     // Rate limiting
     if (options.rateLimit) {
-      const { allowed, remaining, resetTime } = RateLimiter.checkRateLimit(
+      const { allowed, resetTime } = RateLimiter.checkRateLimit(
         clientId,
         options.rateLimit.maxRequests,
         options.rateLimit.windowMs

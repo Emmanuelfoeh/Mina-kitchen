@@ -77,7 +77,6 @@ export function MenuItemForm({
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [allergens, setAllergens] = useState<string[]>([]);
-  const [newAllergen, setNewAllergen] = useState('');
   const [customizations, setCustomizations] = useState<Customization[]>([]);
 
   const [formData, setFormData] = useState({
@@ -185,28 +184,10 @@ export function MenuItemForm({
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const addAllergen = () => {
-    if (newAllergen.trim() && !allergens.includes(newAllergen.trim())) {
-      setAllergens([...allergens, newAllergen.trim()]);
-      setNewAllergen('');
-    }
-  };
-
-  const removeAllergen = (allergenToRemove: string) => {
-    setAllergens(allergens.filter(allergen => allergen !== allergenToRemove));
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       addTag();
-    }
-  };
-
-  const handleAllergenKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addAllergen();
     }
   };
 
@@ -281,9 +262,9 @@ export function MenuItemForm({
                   <Label htmlFor="status">Status</Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value: any) =>
-                      setFormData({ ...formData, status: value })
-                    }
+                    onValueChange={(
+                      value: 'ACTIVE' | 'INACTIVE' | 'SOLD_OUT' | 'LOW_STOCK'
+                    ) => setFormData({ ...formData, status: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -331,7 +312,7 @@ export function MenuItemForm({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="chefNotes">Chef's Notes</Label>
+                <Label htmlFor="chefNotes">Chef&apos;s Notes</Label>
                 <Textarea
                   id="chefNotes"
                   value={formData.chefNotes}

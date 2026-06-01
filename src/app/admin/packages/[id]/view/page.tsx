@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { Button } from '@/components/ui/button';
@@ -59,6 +60,11 @@ export default async function ViewPackagePage({
   }
 
   const { data: packageData } = (await response.json()) as { data: Package };
+  // Timestamps aren't on the Package type; read them via a narrow local.
+  const pkgMeta = packageData as {
+    createdAt?: string | Date;
+    updatedAt?: string | Date;
+  };
 
   const getTypeBadge = (type: Package['type']) => {
     const colors = {
@@ -124,9 +130,11 @@ export default async function ViewPackagePage({
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
                 {packageData.image ? (
-                  <img
+                  <Image
                     src={packageData.image}
                     alt={packageData.name}
+                    width={80}
+                    height={80}
                     className="h-20 w-20 rounded-lg object-cover"
                   />
                 ) : (
@@ -306,27 +314,23 @@ export default async function ViewPackagePage({
                   {packageData.id}
                 </p>
               </div>
-              {(packageData as any).createdAt && (
+              {pkgMeta.createdAt && (
                 <div>
                   <label className="text-sm font-medium text-gray-700">
                     Created
                   </label>
                   <p className="mt-1 text-sm text-gray-900">
-                    {new Date(
-                      (packageData as any).createdAt
-                    ).toLocaleDateString()}
+                    {new Date(pkgMeta.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               )}
-              {(packageData as any).updatedAt && (
+              {pkgMeta.updatedAt && (
                 <div>
                   <label className="text-sm font-medium text-gray-700">
                     Last Updated
                   </label>
                   <p className="mt-1 text-sm text-gray-900">
-                    {new Date(
-                      (packageData as any).updatedAt
-                    ).toLocaleDateString()}
+                    {new Date(pkgMeta.updatedAt).toLocaleDateString()}
                   </p>
                 </div>
               )}

@@ -67,7 +67,8 @@ export const GET = requireAuth(async (request: NextRequest, authUser) => {
     }
 
     // Remove sensitive data
-    const { passwordHash, ...userResponse } = user;
+    const userResponse = { ...user };
+    delete (userResponse as { passwordHash?: string }).passwordHash;
 
     return NextResponse.json({
       success: true,
@@ -173,7 +174,8 @@ export const PATCH = requireAuth(async (request: NextRequest, authUser) => {
     });
 
     // Remove sensitive data
-    const { passwordHash, ...userResponse } = updatedUser;
+    const userResponse = { ...updatedUser };
+    delete (userResponse as { passwordHash?: string }).passwordHash;
 
     return NextResponse.json({
       success: true,

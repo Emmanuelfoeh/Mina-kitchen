@@ -14,45 +14,6 @@ interface ViewMenuItemPageProps {
   }>;
 }
 
-// Type for the database result with relations
-type MenuItemWithRelations = {
-  id: string;
-  name: string;
-  description: string;
-  basePrice: number;
-  image: string;
-  status: string;
-  tags: string;
-  chefNotes: string | null;
-  preparationTime: number | null;
-  allergens: string[];
-  seoTitle: string | null;
-  seoDescription: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  categoryId: string;
-  category: {
-    id: string;
-    name: string;
-    description: string;
-    displayOrder: number;
-    isActive: boolean;
-  };
-  customizations: Array<{
-    id: string;
-    name: string;
-    type: string;
-    required: boolean;
-    maxSelections: number | null;
-    options: Array<{
-      id: string;
-      name: string;
-      priceModifier: number;
-      isAvailable: boolean;
-    }>;
-  }>;
-};
-
 const statusColors = {
   ACTIVE: 'bg-green-100 text-green-800 border-green-200',
   INACTIVE: 'bg-gray-100 text-gray-800 border-gray-200',
@@ -73,31 +34,39 @@ export default async function ViewMenuItemPage({
   const { id } = await params;
 
   // Fetch the menu item from database
-  const rawMenuItem: MenuItemWithRelations | null =
-    await db.menuItem.findUnique({
-      where: { id },
-      include: {
-        category: true,
-        customizations: {
-          include: {
-            options: true,
-          },
+  const rawMenuItem = await db.menuItem.findUnique({
+    where: { id },
+    include: {
+      category: true,
+      customizations: {
+        include: {
+          options: true,
         },
       },
-    });
+    },
+  });
 
   if (!rawMenuItem) {
     notFound();
   }
 
-  // Transform the data to ensure proper typing
+  // Transform the data to ensure proper typing. Convert Decimal money fields
+  // to numbers so the typed view model holds plain numbers.
   const menuItem = {
     ...rawMenuItem,
+    basePrice: Number(rawMenuItem.basePrice),
     status: rawMenuItem.status as
       | 'ACTIVE'
       | 'INACTIVE'
       | 'SOLD_OUT'
       | 'LOW_STOCK',
+    customizations: rawMenuItem.customizations.map(customization => ({
+      ...customization,
+      options: customization.options.map(option => ({
+        ...option,
+        priceModifier: Number(option.priceModifier),
+      })),
+    })),
   };
 
   // Parse tags from JSON string

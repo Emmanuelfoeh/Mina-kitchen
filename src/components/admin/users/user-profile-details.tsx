@@ -8,12 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   MapPin,
   ShoppingBag,
-  Calendar,
   DollarSign,
   Package,
   Truck,
   CheckCircle,
   Clock,
+  type LucideIcon,
 } from 'lucide-react';
 
 interface UserProfileDetailsProps {
@@ -59,7 +59,7 @@ const statusColors: Record<string, string> = {
   CANCELLED: 'bg-red-100 text-red-700 border-red-200',
 };
 
-const statusIcons: Record<string, any> = {
+const statusIcons: Record<string, LucideIcon> = {
   PENDING: Clock,
   CONFIRMED: CheckCircle,
   PREPARING: Package,
@@ -244,7 +244,7 @@ export function UserProfileDetails({ user }: UserProfileDetailsProps) {
                 <ShoppingBag className="mx-auto mb-4 h-12 w-12 text-gray-400" />
                 <p className="text-gray-500">No orders found</p>
                 <p className="text-sm text-gray-400">
-                  This user hasn't placed any orders yet.
+                  This user hasn&apos;t placed any orders yet.
                 </p>
               </div>
             )}
@@ -291,7 +291,7 @@ export function UserProfileDetails({ user }: UserProfileDetailsProps) {
                 <MapPin className="mx-auto mb-4 h-12 w-12 text-gray-400" />
                 <p className="text-gray-500">No addresses found</p>
                 <p className="text-sm text-gray-400">
-                  This user hasn't saved any addresses yet.
+                  This user hasn&apos;t saved any addresses yet.
                 </p>
               </div>
             )}

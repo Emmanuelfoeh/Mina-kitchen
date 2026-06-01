@@ -3,7 +3,7 @@
  * Tests browser-specific features and polyfills
  */
 
-import { mockMenuItems, mockPackages } from '../lib/mock-data';
+import { mockMenuItems } from '../lib/mock-data';
 import { generateSlug } from '../lib/utils';
 
 describe('Cross-Browser Compatibility Tests', () => {
@@ -71,7 +71,7 @@ describe('Cross-Browser Compatibility Tests', () => {
     it('should handle missing localStorage gracefully', () => {
       // Mock missing localStorage
       const originalLocalStorage = global.localStorage;
-      delete (global as any).localStorage;
+      delete (global as Record<string, unknown>).localStorage;
 
       // Test localStorage fallback
       const hasLocalStorage = typeof global.localStorage !== 'undefined';
@@ -94,7 +94,7 @@ describe('Cross-Browser Compatibility Tests', () => {
     it('should handle missing fetch API gracefully', () => {
       // Mock missing fetch
       const originalFetch = global.fetch;
-      delete (global as any).fetch;
+      delete (global as Record<string, unknown>).fetch;
 
       // Test fetch detection
       const hasFetch = typeof fetch !== 'undefined';
@@ -111,7 +111,7 @@ describe('Cross-Browser Compatibility Tests', () => {
     it('should handle missing IntersectionObserver gracefully', () => {
       // Mock missing IntersectionObserver
       const originalIntersectionObserver = global.IntersectionObserver;
-      delete (global as any).IntersectionObserver;
+      delete (global as Record<string, unknown>).IntersectionObserver;
 
       // Test IntersectionObserver detection
       const hasIntersectionObserver =
@@ -134,7 +134,7 @@ describe('Cross-Browser Compatibility Tests', () => {
     it('should handle missing ResizeObserver gracefully', () => {
       // Mock missing ResizeObserver
       const originalResizeObserver = global.ResizeObserver;
-      delete (global as any).ResizeObserver;
+      delete (global as Record<string, unknown>).ResizeObserver;
 
       // Test ResizeObserver detection
       const hasResizeObserver = typeof ResizeObserver !== 'undefined';
@@ -157,7 +157,7 @@ describe('Cross-Browser Compatibility Tests', () => {
     it('should handle CSS Grid support detection', () => {
       // Mock CSS.supports
       const mockCSSSupports = jest.fn();
-      global.CSS = { supports: mockCSSSupports } as any;
+      global.CSS = { supports: mockCSSSupports } as unknown as typeof CSS;
 
       // Test CSS Grid support
       mockCSSSupports.mockReturnValue(true);
@@ -174,7 +174,7 @@ describe('Cross-Browser Compatibility Tests', () => {
 
     it('should handle CSS Flexbox support detection', () => {
       const mockCSSSupports = jest.fn();
-      global.CSS = { supports: mockCSSSupports } as any;
+      global.CSS = { supports: mockCSSSupports } as unknown as typeof CSS;
 
       // Test Flexbox support
       mockCSSSupports.mockReturnValue(true);
@@ -186,7 +186,7 @@ describe('Cross-Browser Compatibility Tests', () => {
 
     it('should handle CSS Custom Properties support', () => {
       const mockCSSSupports = jest.fn();
-      global.CSS = { supports: mockCSSSupports } as any;
+      global.CSS = { supports: mockCSSSupports } as unknown as typeof CSS;
 
       // Test CSS Custom Properties support
       mockCSSSupports.mockReturnValue(true);
@@ -267,7 +267,9 @@ describe('Cross-Browser Compatibility Tests', () => {
       };
 
       // Test touch event handling
-      const handleTouch = (event: any) => {
+      const handleTouch = (event: {
+        touches?: Array<{ clientX: number; clientY: number }>;
+      }) => {
         if (event.touches && event.touches.length > 0) {
           return { x: event.touches[0].clientX, y: event.touches[0].clientY };
         }
@@ -288,7 +290,7 @@ describe('Cross-Browser Compatibility Tests', () => {
       };
 
       // Test mouse event handling
-      const handleMouse = (event: any) => {
+      const handleMouse = (event: { clientX: number; clientY: number }) => {
         return { x: event.clientX, y: event.clientY };
       };
 
@@ -362,15 +364,7 @@ describe('Cross-Browser Compatibility Tests', () => {
 
   describe('Image Format Support', () => {
     it('should handle WebP support detection', () => {
-      // Mock WebP support detection
-      const supportsWebP = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1;
-        canvas.height = 1;
-        return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
-      };
-
-      // In test environment, this might not work, so we'll mock it
+      // In test environment, canvas-based WebP detection may not work, so we mock it
       const mockSupportsWebP = true;
       expect(typeof mockSupportsWebP).toBe('boolean');
 

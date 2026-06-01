@@ -11,10 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin, Clock, CreditCard, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreateOrder } from '@/hooks/mutations';
+import type { Address } from '@/types';
 
 interface CheckoutData {
   deliveryType: 'delivery' | 'pickup';
-  deliveryAddress?: any;
+  deliveryAddress?: Address;
   scheduledFor?: Date;
   specialInstructions?: string;
 }
@@ -128,7 +129,7 @@ export function OrderSummary({
                           )}
                           {customization.textValue && (
                             <span className="ml-1 italic">
-                              "{customization.textValue}"
+                              &quot;{customization.textValue}&quot;
                             </span>
                           )}
                         </div>

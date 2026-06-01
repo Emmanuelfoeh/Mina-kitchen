@@ -22,7 +22,7 @@ export function BackButton({
   className = '',
   showIcon = true,
 }: BackButtonProps) {
-  const { goBack, canGoBack } = useBackNavigation();
+  const { goBack } = useBackNavigation();
 
   const handleClick = () => {
     goBack(fallbackUrl);

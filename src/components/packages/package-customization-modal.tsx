@@ -14,8 +14,6 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCartStore } from '@/stores/cart-store';
-import { useSubscriptionStore } from '@/stores/subscription-store';
-import { useUserStore } from '@/stores/user-store';
 import {
   X,
   Plus,
@@ -23,7 +21,6 @@ import {
   ShoppingCart,
   Clock,
   Users,
-  Calendar,
   Repeat,
 } from 'lucide-react';
 import type { Package, MenuItem, SelectedCustomization } from '@/types';
@@ -49,7 +46,6 @@ export function PackageCustomizationModal({
   onClose,
 }: PackageCustomizationModalProps) {
   const { addItem } = useCartStore();
-  const { user } = useUserStore();
   const [activeTab, setActiveTab] = useState('one-time');
   const [customizations, setCustomizations] = useState<
     PackageItemCustomization[]

@@ -599,7 +599,7 @@ export const useCartStore = create<CartStore>()(
         }),
         version: 4,
         // Handle migration from previous versions
-        migrate: (persistedState: any, version: number) => {
+        migrate: (persistedState: unknown, version: number) => {
           if (
             version === 0 ||
             version === 1 ||
@@ -653,7 +653,7 @@ export const useCartStore = create<CartStore>()(
               return null;
             }
           },
-          setItem: (name: string, value: any) => {
+          setItem: (name: string, value: unknown) => {
             // Check if we're on the client side
             if (typeof window === 'undefined') {
               return;

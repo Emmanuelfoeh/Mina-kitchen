@@ -116,7 +116,7 @@ export function useCartTracking() {
  */
 export function useUserBehaviorTracking() {
   const pathname = usePathname();
-  const engagementStartTime = useRef<number>(Date.now());
+  const engagementStartTime = useRef<number>(0);
   const hasTrackedEngagement = useRef<boolean>(false);
 
   // Reset engagement tracking when pathname changes

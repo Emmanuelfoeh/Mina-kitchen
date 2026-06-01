@@ -61,7 +61,7 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
       }
 
       // Check if item with same customizations exists
-      const existingItem = existingItems.find((item: any) => {
+      const existingItem = existingItems.find(item => {
         const itemCustomizations = item.selectedCustomizations
           ? JSON.parse(item.selectedCustomizations)
           : [];
@@ -154,7 +154,7 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
     }
 
     // Transform cart items
-    const transformedItems = updatedCart.items.map((item: any) => ({
+    const transformedItems = updatedCart.items.map(item => ({
       id: item.id,
       menuItemId: item.menuItemId,
       name: item.menuItem.name,
@@ -169,11 +169,11 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
     }));
 
     const totalItems = updatedCart.items.reduce(
-      (sum: any, item: any) => sum + item.quantity,
+      (sum, item) => sum + item.quantity,
       0
     );
     const subtotal = updatedCart.items.reduce(
-      (sum: any, item: any) => sum + item.totalPrice,
+      (sum, item) => sum + Number(item.totalPrice),
       0
     );
 

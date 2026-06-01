@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getCurrentTenantId } from '@/lib/tenant-context';
@@ -28,7 +29,11 @@ const updateSubscriptionSchema = z.object({
   customizations: z.array(z.any()).optional(),
 });
 
-function serialize(sub: any) {
+type SubscriptionWithPackage = Prisma.SubscriptionGetPayload<{
+  include: { package: { select: { name: true } } };
+}>;
+
+function serialize(sub: SubscriptionWithPackage) {
   return {
     id: sub.id,
     packageId: sub.packageId,

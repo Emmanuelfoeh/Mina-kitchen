@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -165,9 +166,11 @@ export function PackageItemsBuilder({
                     className="flex items-center justify-between rounded-lg border p-4"
                   >
                     <div className="flex items-center gap-4">
-                      <img
+                      <Image
                         src={menuItem.image}
                         alt={menuItem.name}
+                        width={48}
+                        height={48}
                         className="h-12 w-12 rounded-md object-cover"
                       />
                       <div>

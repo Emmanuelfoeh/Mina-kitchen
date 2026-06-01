@@ -12,7 +12,7 @@ export interface AnalyticsEvent {
   action: string;
   label?: string;
   value?: number;
-  custom_parameters?: Record<string, any>;
+  custom_parameters?: Record<string, unknown>;
 }
 
 // Page view tracking
@@ -22,7 +22,7 @@ export interface PageViewEvent {
   page_path: string;
   content_group1?: string; // Category (menu, packages, etc.)
   content_group2?: string; // Subcategory
-  custom_parameters?: Record<string, any>;
+  custom_parameters?: Record<string, unknown>;
 }
 
 // Customization tracking
@@ -131,10 +131,10 @@ class AnalyticsManager {
 
     // Initialize gtag
     window.dataLayer = window.dataLayer || [];
-    function gtag(...args: [string, ...any[]]) {
+    function gtag(...args: [string, ...unknown[]]) {
       window.dataLayer.push(args);
     }
-    (window as any).gtag = gtag;
+    window.gtag = gtag;
 
     gtag('js', new Date());
     gtag('config', this.config.trackingId, {
@@ -236,12 +236,15 @@ class AnalyticsManager {
       // Track First Input Delay (FID)
       new PerformanceObserver(entryList => {
         const entries = entryList.getEntries();
-        entries.forEach((entry: any) => {
+        entries.forEach(entry => {
+          const fidEntry = entry as PerformanceEntry & {
+            processingStart: number;
+          };
           this.trackUserBehavior({
             event_type: 'performance',
             page_path: window.location.pathname,
             performance_metric: 'FID',
-            performance_value: entry.processingStart - entry.startTime,
+            performance_value: fidEntry.processingStart - fidEntry.startTime,
           });
         });
       }).observe({ entryTypes: ['first-input'] });
@@ -250,9 +253,13 @@ class AnalyticsManager {
       let clsValue = 0;
       new PerformanceObserver(entryList => {
         const entries = entryList.getEntries();
-        entries.forEach((entry: any) => {
-          if (!entry.hadRecentInput) {
-            clsValue += entry.value;
+        entries.forEach(entry => {
+          const clsEntry = entry as PerformanceEntry & {
+            hadRecentInput: boolean;
+            value: number;
+          };
+          if (!clsEntry.hadRecentInput) {
+            clsValue += clsEntry.value;
           }
         });
         this.trackUserBehavior({
@@ -432,9 +439,9 @@ class AnalyticsManager {
       if (
         this.config.trackingId &&
         typeof window !== 'undefined' &&
-        (window as any).gtag
+        window.gtag
       ) {
-        (window as any).gtag('event', event.event, {
+        window.gtag('event', event.event, {
           event_category: event.category,
           event_label: event.label,
           value: event.value,
@@ -532,7 +539,7 @@ export default analytics;
 // Extend window type for gtag
 declare global {
   interface Window {
-    dataLayer: any[];
-    gtag: (...args: [string, ...any[]]) => void;
+    dataLayer: unknown[];
+    gtag: (...args: [string, ...unknown[]]) => void;
   }
 }

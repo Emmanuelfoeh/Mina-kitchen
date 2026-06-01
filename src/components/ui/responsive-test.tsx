@@ -128,7 +128,8 @@ const ResponsiveTest = () => {
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base md:text-lg">
               This paragraph adjusts its size based on screen size. On mobile
-              it's smaller, on tablet it's medium, and on desktop it's larger.
+              it&apos;s smaller, on tablet it&apos;s medium, and on desktop
+              it&apos;s larger.
             </p>
           </CardContent>
         </Card>

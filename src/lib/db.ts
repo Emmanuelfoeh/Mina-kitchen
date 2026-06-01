@@ -1,8 +1,7 @@
-// Dynamic import to handle Prisma Client generation
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { PrismaClient, Prisma } = require('@prisma/client');
+import { PrismaClient, Prisma } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import dotenv from 'dotenv';
 
 type PrismaClientType = InstanceType<typeof PrismaClient>;
 
@@ -10,18 +9,19 @@ type PrismaClientType = InstanceType<typeof PrismaClient>;
 // *string*; the API contract (and the frontend) expect JSON *numbers*. Make
 // Decimal serialize as a number so every NextResponse.json(...) that returns a
 // price/total stays numeric. Decimal(10,2) values fit exactly in a JS number.
-if (Prisma?.Decimal && !Prisma.Decimal.prototype.__toJSONPatched) {
-  Prisma.Decimal.prototype.toJSON = function toJSON(this: {
-    toNumber: () => number;
-  }) {
+const decimalProto = Prisma?.Decimal?.prototype as unknown as
+  | { toJSON?: () => number; __toJSONPatched?: boolean; toNumber: () => number }
+  | undefined;
+if (decimalProto && !decimalProto.__toJSONPatched) {
+  decimalProto.toJSON = function toJSON(this: { toNumber: () => number }) {
     return this.toNumber();
   };
-  Prisma.Decimal.prototype.__toJSONPatched = true;
+  decimalProto.__toJSONPatched = true;
 }
 
 // Load environment variables
 if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
+  dotenv.config();
 }
 
 const globalForPrisma = globalThis as unknown as {

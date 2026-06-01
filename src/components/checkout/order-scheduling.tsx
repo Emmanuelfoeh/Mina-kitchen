@@ -198,7 +198,7 @@ export function OrderScheduling({
               </strong>
             </p>
             <p className="mt-1 text-sm text-green-700">
-              We'll send you updates as your order is prepared.
+              We&apos;ll send you updates as your order is prepared.
             </p>
           </CardContent>
         </Card>

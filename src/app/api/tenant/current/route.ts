@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getCurrentTenant } from '@/lib/tenant-context';
 
 /**
  * GET /api/tenant/current - Get current tenant information
  * This is accessible to all users (authenticated or not) for displaying branding
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const tenant = await getCurrentTenant();
 

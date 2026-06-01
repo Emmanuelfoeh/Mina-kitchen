@@ -2,14 +2,14 @@ import dynamic from 'next/dynamic';
 import { ComponentType } from 'react';
 
 // Dynamic import wrapper with loading states
-export function createDynamicComponent<T = {}>(
+export function createDynamicComponent<T = Record<string, unknown>>(
   importFn: () => Promise<{ default: ComponentType<T> }>,
   options: {
     ssr?: boolean;
     suspense?: boolean;
   } = {}
 ) {
-  const { ssr = true, suspense = false } = options;
+  const { ssr = true } = options;
 
   return dynamic(importFn, {
     ssr,

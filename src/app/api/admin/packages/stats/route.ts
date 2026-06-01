@@ -1,17 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getCurrentTenantId } from '@/lib/tenant-context';
 
 // GET /api/admin/packages/stats - Get package statistics
-export const GET = requireAdmin(async (_request: NextRequest) => {
+export const GET = requireAdmin(async () => {
   try {
     const tenantId = await getCurrentTenantId();
     if (!tenantId) {
-      return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     const [totalPackages, activePackages, packagePrices] = await Promise.all([
@@ -25,7 +22,8 @@ export const GET = requireAdmin(async (_request: NextRequest) => {
 
     // Calculate total revenue (this would be from actual orders in a real system)
     const totalRevenue = packagePrices.reduce(
-      (sum: number, pkg: (typeof packagePrices)[number]) => sum + pkg.price,
+      (sum: number, pkg: (typeof packagePrices)[number]) =>
+        sum + Number(pkg.price),
       0
     );
 

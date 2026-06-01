@@ -145,7 +145,8 @@ export async function POST(request: NextRequest) {
       .sign(secret);
 
     // Remove sensitive data from response
-    const { passwordHash, ...userResponse } = user;
+    const userResponse = { ...user };
+    delete (userResponse as { passwordHash?: string }).passwordHash;
 
     // Log successful login for security monitoring (no PII).
     console.log('User login:', {

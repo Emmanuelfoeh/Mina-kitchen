@@ -2,11 +2,12 @@ import type { NextRequest } from 'next/server';
 import { TextEncoder as NodeTextEncoder } from 'util';
 
 // jsdom test env lacks some Node/web globals auth.ts relies on.
-if (!(globalThis as any).TextEncoder) {
-  (globalThis as any).TextEncoder = NodeTextEncoder;
+const mutableGlobalThis = globalThis as unknown as Record<string, unknown>;
+if (!mutableGlobalThis.TextEncoder) {
+  mutableGlobalThis.TextEncoder = NodeTextEncoder;
 }
-if (!(globalThis as any).Response) {
-  (globalThis as any).Response = class {
+if (!mutableGlobalThis.Response) {
+  mutableGlobalThis.Response = class {
     status: number;
     body: unknown;
     constructor(body: unknown, init?: { status?: number }) {

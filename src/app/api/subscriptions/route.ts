@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { requireAuth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getCurrentTenantId } from '@/lib/tenant-context';
@@ -32,8 +33,12 @@ const createSubscriptionSchema = z.object({
   customizations: z.array(z.any()).default([]),
 });
 
+type SubscriptionWithPackage = Prisma.SubscriptionGetPayload<{
+  include: { package: { select: { name: true } } };
+}>;
+
 // Map a DB subscription row to the client-facing shape used by the store.
-function serialize(sub: any) {
+function serialize(sub: SubscriptionWithPackage) {
   return {
     id: sub.id,
     packageId: sub.packageId,

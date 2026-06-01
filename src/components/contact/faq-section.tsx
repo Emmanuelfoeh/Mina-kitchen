@@ -165,7 +165,8 @@ export function FAQSection() {
               Still have questions?
             </h4>
             <p className="mb-4 text-gray-600">
-              Can't find what you're looking for? We're here to help!
+              Can&apos;t find what you&apos;re looking for? We&apos;re here to
+              help!
             </p>
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <a

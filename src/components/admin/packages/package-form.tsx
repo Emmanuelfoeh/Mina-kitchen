@@ -109,7 +109,7 @@ export function PackageForm({ initialData }: PackageFormProps) {
     setValue('features', updatedFeatures);
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: PackageFormData) => {
     setIsLoading(true);
 
     try {
@@ -185,7 +185,9 @@ export function PackageForm({ initialData }: PackageFormProps) {
                   <Label htmlFor="type">Package Type</Label>
                   <Select
                     value={watch('type')}
-                    onValueChange={value => setValue('type', value as any)}
+                    onValueChange={value =>
+                      setValue('type', value as PackageFormData['type'])
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select package type" />

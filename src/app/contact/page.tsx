@@ -40,8 +40,8 @@ export default function ContactPage() {
                 Get in <span className="text-primary">Touch</span>
               </h1>
               <p className="text-sm font-medium text-gray-300 md:text-lg">
-                Have questions about our catering or daily menu? We're here to
-                bring the taste of Africa to your doorstep in Canada.
+                Have questions about our catering or daily menu? We&apos;re here
+                to bring the taste of Africa to your doorstep in Canada.
               </p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function ContactPage() {
             <div className="dark:bg-surface-dark contact-card-shadow border-neutral-light dark:border-neutral-dark h-full rounded-3xl border bg-white p-8 md:p-12">
               <h3 className="mb-2 text-2xl font-bold">Send us a Message</h3>
               <p className="text-text-muted mb-8">
-                We'll get back to you within 24 hours.
+                We&apos;ll get back to you within 24 hours.
               </p>
               <form className="space-y-6">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

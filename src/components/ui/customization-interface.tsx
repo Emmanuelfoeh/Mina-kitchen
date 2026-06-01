@@ -7,22 +7,15 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AddToCartSection } from '@/components/ui/add-to-cart-section';
-import { TouchArea } from '@/components/ui/touch-target';
 import { Flame, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '@/utils';
 import {
   announceCustomizationChange,
   announcePriceUpdate,
   announceValidationError,
-  getKeyboardInstructions,
 } from '@/lib/screen-reader';
 import { useCustomizationTracking } from '@/hooks/use-analytics';
-import type {
-  MenuItem,
-  SelectedCustomization,
-  CartItem,
-  Customization,
-} from '@/types';
+import type { MenuItem, SelectedCustomization, CartItem } from '@/types';
 
 interface CustomizationInterfaceProps {
   item: MenuItem;
@@ -137,6 +130,10 @@ export function CustomizationInterface({
     // Announce price updates
     const newPrice = item.basePrice + calculateCustomizationPrice();
     announcePriceUpdate(newPrice, 'with customizations');
+    // calculateCustomizationPrice/validateCustomizations are recomputed from
+    // selectedCustomizations and item.customizations, which are already deps;
+    // validationErrors.length is only read for change detection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers derive only from listed deps
   }, [selectedCustomizations, item.customizations]);
 
   const handleCustomizationChange = (
@@ -419,6 +416,7 @@ export function CustomizationInterface({
             )}
 
             {customization.type === 'checkbox' && (
+              // eslint-disable-next-line jsx-a11y/role-supports-aria-props -- preserve required indication for the checkbox group
               <div
                 className="space-y-2 sm:space-y-3"
                 role="group"

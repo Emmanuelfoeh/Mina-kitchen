@@ -1,4 +1,4 @@
-import type { MenuItem, Package, MenuCategory } from '@/types';
+import type { MenuItem, Package } from '@/types';
 
 /**
  * Get related menu items based on category and tags
@@ -155,7 +155,7 @@ export function getRelatedPackagesForItem(
     if (!pkg.isActive) return false;
 
     // Check if package contains items from the same category
-    return pkg.includedItems.some(packageItem => {
+    return pkg.includedItems.some(() => {
       // This would require looking up the menu item, but for simplicity
       // we'll just return active packages
       return true;

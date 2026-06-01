@@ -1,4 +1,4 @@
-import type { APIResponse, APIError } from '@/types';
+import type { APIResponse } from '@/types';
 
 /**
  * Custom API Error class for better error handling

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import {
   Phone,
   Mail,
@@ -8,7 +9,6 @@ import {
   Clock,
   Package,
   Truck,
-  CheckCircle,
   User,
   DollarSign,
   FileText,
@@ -87,11 +87,7 @@ export function OrderDetailsView({ orderId }: OrderDetailsViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchOrderDetails();
-  }, [orderId]);
-
-  async function fetchOrderDetails() {
+  const fetchOrderDetails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/admin/orders/${orderId}`);
@@ -109,7 +105,11 @@ export function OrderDetailsView({ orderId }: OrderDetailsViewProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [orderId]);
+
+  useEffect(() => {
+    fetchOrderDetails();
+  }, [fetchOrderDetails]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -122,7 +122,9 @@ export function OrderDetailsView({ orderId }: OrderDetailsViewProps) {
     });
   };
 
-  const parseCustomizations = (customizationsString: string) => {
+  const parseCustomizations = (
+    customizationsString: string
+  ): Array<{ name: string; value: string; price?: number }> => {
     try {
       return JSON.parse(customizationsString || '[]');
     } catch {
@@ -249,14 +251,16 @@ export function OrderDetailsView({ orderId }: OrderDetailsViewProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {order.items.map((item, index) => {
+            {order.items.map(item => {
               const customizations = parseCustomizations(item.customizations);
 
               return (
                 <div key={item.id} className="flex gap-4">
-                  <img
+                  <Image
                     src={item.menuItem.image || '/placeholder-food.svg'}
                     alt={item.menuItem.name}
+                    width={80}
+                    height={80}
                     className="h-20 w-20 rounded-lg object-cover"
                   />
                   <div className="flex-1">
@@ -287,7 +291,7 @@ export function OrderDetailsView({ orderId }: OrderDetailsViewProps) {
                           Customizations:
                         </h5>
                         <ul className="space-y-1 text-xs text-gray-600">
-                          {customizations.map((custom: any, idx: number) => (
+                          {customizations.map((custom, idx: number) => (
                             <li key={idx} className="flex items-center gap-2">
                               <span className="h-1 w-1 rounded-full bg-gray-400"></span>
                               <span>

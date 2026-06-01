@@ -29,40 +29,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAdminMenuItems } from '@/hooks/queries/use-admin-queries';
-import {
-  useUpdateMenuItemStatus,
-  useDeleteMenuItem,
-  useDuplicateMenuItem,
-} from '@/hooks/mutations';
+import { useUpdateMenuItemStatus, useDeleteMenuItem } from '@/hooks/mutations';
 import type { MenuItem } from '@/types';
-
-interface MenuItemData {
-  id: string;
-  name: string;
-  description: string;
-  basePrice: number;
-  image: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'SOLD_OUT' | 'LOW_STOCK';
-  tags: string;
-  category: {
-    id: string;
-    name: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface MenuItemsResponse {
-  items: MenuItemData[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
 
 interface MenuItemsTableProps {
   searchTerm?: string;
@@ -101,7 +69,6 @@ export function MenuItemsTable({
 
   const updateStatusMutation = useUpdateMenuItemStatus();
   const deleteMutation = useDeleteMenuItem();
-  const duplicateMutation = useDuplicateMenuItem();
 
   const items = data?.items || [];
   const pagination = data?.pagination || null;

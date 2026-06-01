@@ -32,8 +32,9 @@ const mockDocument = {
 };
 
 // Mock globals
-(global as any).window = mockWindow;
-(global as any).document = mockDocument;
+const mutableGlobal = global as unknown as Record<string, unknown>;
+mutableGlobal.window = mockWindow;
+mutableGlobal.document = mockDocument;
 
 describe('Analytics System', () => {
   beforeEach(() => {
@@ -185,8 +186,8 @@ describe('Analytics System', () => {
   describe('Error Handling', () => {
     it('should handle missing window object gracefully', () => {
       // Temporarily remove window
-      const originalWindow = (global as any).window;
-      delete (global as any).window;
+      const originalWindow = mutableGlobal.window;
+      delete mutableGlobal.window;
 
       const pageData = {
         page_title: 'Test',
@@ -197,7 +198,7 @@ describe('Analytics System', () => {
       expect(() => trackPageView(pageData)).not.toThrow();
 
       // Restore window
-      (global as any).window = originalWindow;
+      mutableGlobal.window = originalWindow;
     });
 
     it('should handle invalid data gracefully', () => {
@@ -205,7 +206,7 @@ describe('Analytics System', () => {
         item_id: '',
         item_name: '',
         item_category: '',
-        customization_type: 'invalid' as any,
+        customization_type: 'invalid' as unknown as 'text',
         customization_name: '',
         price_modifier: NaN,
         total_customizations: -1,

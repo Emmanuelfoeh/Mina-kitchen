@@ -17,12 +17,13 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { Address } from '@/types';
 
 type CheckoutStep = 'delivery' | 'address' | 'scheduling' | 'summary';
 
 interface CheckoutData {
   deliveryType: 'delivery' | 'pickup';
-  deliveryAddress?: any;
+  deliveryAddress?: Address;
   scheduledFor?: Date;
   specialInstructions?: string;
 }
@@ -36,7 +37,6 @@ export function CheckoutFlow() {
     syncError,
     isAuthenticated: cartIsAuthenticated,
     syncCart,
-    loadServerCart,
   } = useCartStore();
   const { isAuthenticated } = useUserStore();
 
@@ -97,7 +97,8 @@ export function CheckoutFlow() {
               <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
               <h3 className="mb-2 text-lg font-semibold">Cart Sync Error</h3>
               <p className="mb-4 text-gray-600">
-                We couldn't sync your cart with the server. Please try again.
+                We couldn&apos;t sync your cart with the server. Please try
+                again.
               </p>
               <div className="space-y-2">
                 <Button

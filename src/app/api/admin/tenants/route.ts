@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import type { Prisma } from '@prisma/client';
+import { requireAuth, type AuthUser } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 
@@ -32,7 +33,7 @@ const tenantSchema = z.object({
 
 // Require SUPER_ADMIN role
 function requireSuperAdmin(
-  handler: (request: NextRequest, user: any) => Promise<NextResponse>
+  handler: (request: NextRequest, user: AuthUser) => Promise<NextResponse>
 ) {
   return requireAuth(async (request: NextRequest, user) => {
     if (user.role !== 'SUPER_ADMIN') {
@@ -58,7 +59,7 @@ export const GET = requireSuperAdmin(async (request: NextRequest) => {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: Record<string, any> = {};
+    const where: Prisma.TenantWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -69,11 +70,11 @@ export const GET = requireSuperAdmin(async (request: NextRequest) => {
     }
 
     if (status && status !== 'all') {
-      where.status = status;
+      where.status = status as Prisma.TenantWhereInput['status'];
     }
 
     if (plan && plan !== 'all') {
-      where.plan = plan;
+      where.plan = plan as Prisma.TenantWhereInput['plan'];
     }
 
     const [tenants, totalCount] = await Promise.all([
@@ -100,7 +101,7 @@ export const GET = requireSuperAdmin(async (request: NextRequest) => {
     return NextResponse.json({
       success: true,
       data: {
-        tenants: tenants.map((tenant: any) => ({
+        tenants: tenants.map(tenant => ({
           ...tenant,
           settings: JSON.parse(tenant.settings),
         })),

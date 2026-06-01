@@ -14,8 +14,6 @@ interface ProductInformationProps {
 export function ProductInformation({
   name,
   price,
-  originalPrice,
-  savings,
   description,
   tags = [],
   chefNotes,
@@ -79,7 +77,7 @@ export function ProductInformation({
       {chefNotes && (
         <div>
           <h3 className="mb-2 text-lg font-semibold" id="chef-notes-heading">
-            Chef's Notes
+            Chef&apos;s Notes
           </h3>
           <p
             className="text-gray-700 italic"

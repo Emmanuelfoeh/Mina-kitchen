@@ -25,7 +25,7 @@ export function AccessibilityProvider({
 
     // Handle reduced motion preference
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handleMotionChange = (e: MediaQueryListEvent) => {
+    const handleMotionChange = (e: MediaQueryListEvent | MediaQueryList) => {
       document.documentElement.style.setProperty(
         '--animation-duration',
         e.matches ? '0.01ms' : '300ms'
@@ -33,16 +33,16 @@ export function AccessibilityProvider({
     };
 
     mediaQuery.addEventListener('change', handleMotionChange);
-    handleMotionChange(mediaQuery as any);
+    handleMotionChange(mediaQuery);
 
     // Handle high contrast preference
     const contrastQuery = window.matchMedia('(prefers-contrast: high)');
-    const handleContrastChange = (e: MediaQueryListEvent) => {
+    const handleContrastChange = (e: MediaQueryListEvent | MediaQueryList) => {
       document.documentElement.classList.toggle('high-contrast', e.matches);
     };
 
     contrastQuery.addEventListener('change', handleContrastChange);
-    handleContrastChange(contrastQuery as any);
+    handleContrastChange(contrastQuery);
 
     return () => {
       mediaQuery.removeEventListener('change', handleMotionChange);

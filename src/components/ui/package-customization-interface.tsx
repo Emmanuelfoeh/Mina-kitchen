@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,68 +55,6 @@ export function PackageCustomizationInterface({
       customizations: item.includedCustomizations,
     })),
   });
-
-  // Handle empty packages
-  if (pkg.includedItems.length === 0) {
-    return (
-      <div className="space-y-6">
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-yellow-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
-                Package Configuration Incomplete
-              </h3>
-              <div className="mt-2 text-sm text-yellow-700">
-                <p>
-                  This package doesn't have any menu items configured yet.
-                  Please contact the restaurant to add items to this package, or
-                  choose a different package.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Price Summary for empty package */}
-        <div className="rounded-lg bg-gray-50 p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm text-gray-600">Package Price</span>
-            <span className="font-medium text-gray-900">
-              {formatCurrency(pkg.price)}
-            </span>
-          </div>
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm text-gray-600">Items Total</span>
-            <span className="font-medium text-gray-900">
-              {formatCurrency(0)}
-            </span>
-          </div>
-        </div>
-
-        {/* Disabled Add to Cart Button */}
-        <Button
-          disabled={true}
-          className="w-full cursor-not-allowed bg-gray-300 text-gray-500"
-        >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Package Not Available
-        </Button>
-      </div>
-    );
-  }
 
   const [customizations, setCustomizations] = useState<
     PackageItemCustomization[]
@@ -313,7 +252,72 @@ export function PackageCustomizationInterface({
   useEffect(() => {
     const errors = validateCustomizations();
     setValidationErrors(errors);
+    // validateCustomizations derives only from customizations and menuItems,
+    // both already listed as dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- helper derives only from listed deps
   }, [customizations, menuItems]);
+
+  // Handle empty packages
+  if (pkg.includedItems.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-yellow-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">
+                Package Configuration Incomplete
+              </h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p>
+                  This package doesn&apos;t have any menu items configured yet.
+                  Please contact the restaurant to add items to this package, or
+                  choose a different package.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Price Summary for empty package */}
+        <div className="rounded-lg bg-gray-50 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm text-gray-600">Package Price</span>
+            <span className="font-medium text-gray-900">
+              {formatCurrency(pkg.price)}
+            </span>
+          </div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm text-gray-600">Items Total</span>
+            <span className="font-medium text-gray-900">
+              {formatCurrency(0)}
+            </span>
+          </div>
+        </div>
+
+        {/* Disabled Add to Cart Button */}
+        <Button
+          disabled={true}
+          className="w-full cursor-not-allowed bg-gray-300 text-gray-500"
+        >
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          Package Not Available
+        </Button>
+      </div>
+    );
+  }
 
   const updateQuantity = (menuItemId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -611,10 +615,12 @@ export function PackageCustomizationInterface({
           >
             <div className="flex items-start space-x-4">
               <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg">
-                <img
+                <Image
                   src={menuItem.image}
                   alt={menuItem.name}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="80px"
+                  className="object-cover"
                 />
               </div>
 

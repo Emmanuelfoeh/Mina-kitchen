@@ -259,7 +259,6 @@ export function CustomizationSkeleton() {
 // Related items skeleton
 export function RelatedItemsSkeleton({
   itemCount = 4,
-  title = 'You Might Also Like',
 }: {
   itemCount?: number;
   title?: string;

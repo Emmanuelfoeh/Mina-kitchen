@@ -4,7 +4,6 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  getOptimizedImageProps,
   generateBlurDataURL,
   ImagePerformanceMonitor,
   IMAGE_SIZES,
@@ -68,6 +67,8 @@ export function ProgressiveImage({
 
   // Reset states when src changes
   useEffect(() => {
+    // Resetting load/error state in response to a new `src` prop is intentional.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync internal state to changed src prop
     setIsLoading(true);
     setHasError(false);
     setCurrentSrc(src);
@@ -132,7 +133,7 @@ export function ProgressiveImage({
           height,
           quality: IMAGE_QUALITY[quality],
           priority: priority || recommendations.priority,
-          placeholder: placeholder as any,
+          placeholder: placeholder,
           blurDataURL:
             placeholder === 'blur'
               ? blurDataURL || generateBlurDataURL()
@@ -150,7 +151,7 @@ export function ProgressiveImage({
           fill,
           quality: IMAGE_QUALITY[quality],
           priority: priority || recommendations.priority,
-          placeholder: placeholder as any,
+          placeholder: placeholder,
           blurDataURL:
             placeholder === 'blur'
               ? blurDataURL || generateBlurDataURL()
@@ -178,7 +179,10 @@ export function ProgressiveImage({
       )}
 
       {/* Image */}
-      <Image ref={imageRef} {...optimizedProps} />
+      {(() => {
+        const { alt: imageAlt, ...imageProps } = optimizedProps;
+        return <Image ref={imageRef} alt={imageAlt} {...imageProps} />;
+      })()}
 
       {/* Error state indicator */}
       {hasError && currentSrc === fallbackSrc && (

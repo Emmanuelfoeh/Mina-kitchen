@@ -4,15 +4,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAdminDashboardStats } from '@/hooks/queries/use-admin-queries';
 
-interface PopularDish {
-  id: string;
-  name: string;
-  image: string;
-  category: { name: string };
-  orderCount: number;
-  totalQuantity: number;
-}
-
 export function PopularDishes() {
   const { data, isLoading: loading } = useAdminDashboardStats();
   const popularItems = data?.popularDishes || [];
@@ -26,11 +17,7 @@ export function PopularDishes() {
         </div>
         <div className="flex-1 space-y-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              // eslint-disable-next-line react/no-array-index-key
-              key={index}
-              className="flex animate-pulse items-center gap-4"
-            >
+            <div key={index} className="flex animate-pulse items-center gap-4">
               <div className="h-16 w-16 rounded-xl bg-gray-200"></div>
               <div className="flex-1">
                 <div className="mb-2 h-4 w-24 rounded bg-gray-200"></div>

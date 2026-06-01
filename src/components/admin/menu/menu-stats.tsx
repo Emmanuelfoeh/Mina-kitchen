@@ -5,35 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Package, AlertTriangle, Clock, Layers } from 'lucide-react';
 import { useAdminMenuStats } from '@/hooks/queries/use-admin-queries';
 
-interface MenuStatsData {
-  overview: {
-    totalItems: number;
-    activeItems: number;
-    inactiveItems: number;
-    soldOutItems: number;
-    lowStockItems: number;
-    totalCategories: number;
-    activeCategories: number;
-    recentItems: number;
-  };
-  pricing: {
-    averagePrice: number;
-    minPrice: number;
-    maxPrice: number;
-  };
-  distribution: {
-    byCategory: Array<{
-      categoryId: string;
-      categoryName: string;
-      itemCount: number;
-    }>;
-    byStatus: Array<{
-      status: string;
-      count: number;
-    }>;
-  };
-}
-
 export function MenuStats() {
   const { data: stats, isLoading: loading, error } = useAdminMenuStats();
 

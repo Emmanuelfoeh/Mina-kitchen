@@ -3,6 +3,13 @@
  * from collected analytics data
  */
 
+/** Shape of a collected analytics event consumed by the report functions. */
+export interface AnalyticsEvent {
+  event: string;
+  custom_parameters?: Record<string, string | number | undefined>;
+  [key: string]: unknown;
+}
+
 export interface AnalyticsReport {
   summary: {
     totalPageViews: number;
@@ -50,7 +57,9 @@ export async function generateAnalyticsReport(
   endDate: Date
 ): Promise<AnalyticsReport> {
   // In a real implementation, this would query your analytics database
-  // For now, we'll return a mock report structure
+  // using the provided date range. For now, we return a mock report.
+  void startDate;
+  void endDate;
 
   const mockReport: AnalyticsReport = {
     summary: {
@@ -86,7 +95,7 @@ export async function generateAnalyticsReport(
  * Export analytics data to CSV format
  */
 export function exportAnalyticsToCSV(
-  data: Record<string, any>[],
+  data: Record<string, unknown>[],
   filename: string
 ): void {
   if (data.length === 0) return;
@@ -135,7 +144,7 @@ export interface FunnelMetrics {
 }
 
 export function calculateConversionFunnel(
-  events: Record<string, any>[]
+  events: AnalyticsEvent[]
 ): FunnelMetrics {
   const pageViews = events.filter(e => e.event === 'page_view').length;
   const itemViews = events.filter(
@@ -195,7 +204,7 @@ export interface EngagementAnalysis {
 }
 
 export function analyzeUserEngagement(
-  events: Record<string, any>[]
+  events: AnalyticsEvent[]
 ): EngagementAnalysis {
   const engagementEvents = events.filter(e => e.event.includes('engagement'));
   const exitEvents = events.filter(e => e.event.includes('exit_point'));
@@ -222,8 +231,9 @@ export function analyzeUserEngagement(
 
   const bounceRate =
     exitEvents.length > 0
-      ? (exitEvents.filter(e => e.custom_parameters?.engagement_time < 10000)
-          .length /
+      ? (exitEvents.filter(
+          e => Number(e.custom_parameters?.engagement_time) < 10000
+        ).length /
           exitEvents.length) *
         100
       : 0;
@@ -243,13 +253,13 @@ export function analyzeUserEngagement(
     { totalScore: number; count: number }
   >();
   engagementEvents.forEach(event => {
-    const page = event.custom_parameters?.page_path || 'unknown';
+    const page = String(event.custom_parameters?.page_path || 'unknown');
     const score = Math.min(
       100,
       Math.round(
-        (event.custom_parameters?.scroll_depth || 0) * 0.4 +
+        Number(event.custom_parameters?.scroll_depth || 0) * 0.4 +
           Math.min(
-            (event.custom_parameters?.engagement_time || 0) / 1000 / 60,
+            Number(event.custom_parameters?.engagement_time || 0) / 1000 / 60,
             5
           ) *
             20 *
@@ -299,7 +309,7 @@ export interface PerformanceInsights {
 }
 
 export function generatePerformanceInsights(
-  events: Record<string, any>[]
+  events: AnalyticsEvent[]
 ): PerformanceInsights {
   const performanceEvents = events.filter(e => e.event.includes('performance'));
 

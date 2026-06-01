@@ -8,10 +8,7 @@ export const GET = requireAuth(async (request: NextRequest, user) => {
   try {
     const tenantId = await getCurrentTenantId();
     if (!tenantId) {
-      return Response.json(
-        { error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return Response.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     const cart = await db.cart.findUnique({
@@ -44,7 +41,7 @@ export const GET = requireAuth(async (request: NextRequest, user) => {
     }
 
     // Transform cart items to match frontend CartItem interface
-    const transformedItems = cart.items.map((item: any) => ({
+    const transformedItems = cart.items.map(item => ({
       id: item.id,
       menuItemId: item.menuItemId,
       name: item.menuItem.name,
@@ -58,8 +55,11 @@ export const GET = requireAuth(async (request: NextRequest, user) => {
       totalPrice: item.totalPrice,
     }));
 
-    const totalItems = cart.items.reduce((sum: any, item: any) => sum + item.quantity, 0);
-    const subtotal = cart.items.reduce((sum: any, item: any) => sum + item.totalPrice, 0);
+    const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+    const subtotal = cart.items.reduce(
+      (sum, item) => sum + Number(item.totalPrice),
+      0
+    );
 
     return Response.json({
       success: true,
@@ -84,10 +84,7 @@ export const DELETE = requireAuth(async (request: NextRequest, user) => {
   try {
     const tenantId = await getCurrentTenantId();
     if (!tenantId) {
-      return Response.json(
-        { error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return Response.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     // Delete all cart items (cart will be deleted if empty)

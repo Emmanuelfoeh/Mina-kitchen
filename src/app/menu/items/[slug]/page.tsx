@@ -59,10 +59,10 @@ async function getMenuItemBySlug(slug: string): Promise<MenuItem | null> {
         | 'sold_out'
         | 'low_stock',
       slug: generateSlug(menuItem.name),
-      customizations: menuItem.customizations.map((customization: any) => ({
+      customizations: menuItem.customizations.map(customization => ({
         ...customization,
         type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
-        options: customization.options.map((option: any) => ({
+        options: customization.options.map(option => ({
           ...option,
           priceModifier: Number(option.priceModifier),
           isAvailable: true, // Default to available
@@ -133,7 +133,7 @@ async function getRelatedItems(
 
     // Transform the data to match the expected format. Convert Decimal money
     // fields to numbers so they can cross the server->client component boundary.
-    return relatedItems.map((item: any) => ({
+    return relatedItems.map(item => ({
       ...item,
       basePrice: Number(item.basePrice),
       image: item.image || '/placeholder-food.svg',
@@ -145,10 +145,10 @@ async function getRelatedItems(
         | 'sold_out'
         | 'low_stock',
       slug: generateSlug(item.name),
-      customizations: item.customizations.map((customization: any) => ({
+      customizations: item.customizations.map(customization => ({
         ...customization,
         type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
-        options: customization.options.map((option: any) => ({
+        options: customization.options.map(option => ({
           ...option,
           priceModifier: Number(option.priceModifier),
           isAvailable: true, // Default to available
@@ -170,7 +170,7 @@ export async function generateStaticParams() {
       },
     });
 
-    return menuItems.map((item: any) => ({
+    return menuItems.map(item => ({
       slug: generateSlug(item.name),
     }));
   } catch (error) {

@@ -43,7 +43,7 @@ export function PopularDishes() {
                 Popular Dishes
               </h2>
               <p className="mt-2 text-[#5c4a45]">
-                Local favorites that our customers can't get enough of.
+                Local favorites that our customers can&apos;t get enough of.
               </p>
             </div>
             <Link
@@ -87,7 +87,7 @@ export function PopularDishes() {
               Popular Dishes
             </h2>
             <p className="mt-2 text-[#5c4a45]">
-              Local favorites that our customers can't get enough of.
+              Local favorites that our customers can&apos;t get enough of.
             </p>
           </div>
           <Link

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { NotificationService } from '@/lib/notifications';
-import { orderSchema, orderItemSchema } from '@/lib/validations';
 import {
   SecurityMiddleware,
   SecurityHeaders,
@@ -10,7 +9,6 @@ import {
 import { getAuthUser } from '@/lib/auth';
 import { getCurrentTenantId } from '@/lib/tenant-context';
 import { z } from 'zod';
-import type { Order, OrderItem, OrderStatus, PaymentStatus } from '@/types';
 
 const createOrderSchema = z.object({
   customerId: z.string().min(1, 'Customer ID is required'),
@@ -176,7 +174,7 @@ export async function POST(request: NextRequest) {
     let deliveryAddress = null;
     if (validatedData.deliveryAddressId) {
       deliveryAddress = customer.addresses.find(
-        (addr: any) => addr.id === validatedData.deliveryAddressId
+        addr => addr.id === validatedData.deliveryAddressId
       );
 
       if (!deliveryAddress) {
@@ -206,7 +204,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify menu items exist and calculate prices
-    const menuItemIds = validatedData.items.map((item: any) => item.menuItemId);
+    const menuItemIds = validatedData.items.map(item => item.menuItemId);
 
     const menuItems = await db.menuItem.findMany({
       where: {
@@ -217,7 +215,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (menuItems.length !== menuItemIds.length) {
-      const foundIds = menuItems.map((item: any) => item.id);
+      const foundIds = menuItems.map(item => item.id);
       const missingIds = menuItemIds.filter(id => !foundIds.includes(id));
 
       return SecurityHeaders.applyHeaders(
@@ -234,7 +232,7 @@ export async function POST(request: NextRequest) {
     // Validate pricing (prevent price manipulation)
     let calculatedSubtotal = 0;
     for (const item of validatedData.items) {
-      const menuItem = menuItems.find((mi: any) => mi.id === item.menuItemId);
+      const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
       if (!menuItem) continue;
 
       const expectedTotal = item.quantity * item.unitPrice;
@@ -309,7 +307,7 @@ export async function POST(request: NextRequest) {
         paymentStatus: 'PENDING',
         specialInstructions: validatedData.specialInstructions,
         items: {
-          create: validatedData.items.map((item: any) => ({
+          create: validatedData.items.map(item => ({
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             customizations: JSON.stringify(item.customizations || []),

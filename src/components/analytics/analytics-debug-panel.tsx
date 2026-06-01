@@ -13,8 +13,10 @@ interface AnalyticsEvent {
   label?: string;
   value?: number;
   timestamp: number;
-  custom_parameters?: Record<string, any>;
+  custom_parameters?: Record<string, unknown>;
 }
+
+type AnalyticsConfig = ReturnType<typeof getAnalyticsConfig>;
 
 /**
  * Analytics debug panel for development - shows tracked events and metrics
@@ -23,27 +25,25 @@ interface AnalyticsEvent {
 export function AnalyticsDebugPanel() {
   const [isVisible, setIsVisible] = useState(false);
   const [events, setEvents] = useState<AnalyticsEvent[]>([]);
-  const [config, setConfig] = useState<any>(null);
+  const [config] = useState<AnalyticsConfig | null>(() =>
+    process.env.NODE_ENV === 'development' ? getAnalyticsConfig() : null
+  );
 
   useEffect(() => {
     // Only show in development mode
     if (process.env.NODE_ENV !== 'development') return;
 
-    setConfig(getAnalyticsConfig());
-
     // Listen for analytics events (this would need to be implemented in the analytics system)
-    const handleAnalyticsEvent = (event: CustomEvent<AnalyticsEvent>) => {
-      setEvents(prev => [...prev.slice(-49), event.detail]); // Keep last 50 events
+    const handleAnalyticsEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<AnalyticsEvent>;
+      setEvents(prev => [...prev.slice(-49), customEvent.detail]); // Keep last 50 events
     };
 
     // This would be dispatched from the analytics system
-    window.addEventListener('analytics-event' as any, handleAnalyticsEvent);
+    window.addEventListener('analytics-event', handleAnalyticsEvent);
 
     return () => {
-      window.removeEventListener(
-        'analytics-event' as any,
-        handleAnalyticsEvent
-      );
+      window.removeEventListener('analytics-event', handleAnalyticsEvent);
     };
   }, []);
 

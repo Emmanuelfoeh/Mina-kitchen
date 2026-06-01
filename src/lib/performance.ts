@@ -4,6 +4,39 @@ import * as React from 'react';
  * Performance monitoring and optimization utilities
  */
 
+// Minimal structural types for browser PerformanceEntry subtypes that are not
+// fully covered by the standard lib DOM typings.
+type FirstInputEntry = PerformanceEntry & { processingStart: number };
+type LayoutShiftEntry = PerformanceEntry & {
+  hadRecentInput: boolean;
+  value: number;
+};
+type ResourceEntry = PerformanceEntry & {
+  responseEnd: number;
+  initiatorType: string;
+};
+type NavigationEntry = PerformanceEntry & {
+  responseStart: number;
+  requestStart: number;
+  firstContentfulPaint?: number;
+  domContentLoadedEventEnd: number;
+  domContentLoadedEventStart: number;
+  loadEventEnd: number;
+  loadEventStart: number;
+};
+
+// Optional `Analytics` global injected by third-party scripts.
+interface AnalyticsGlobal {
+  track: (event: string, payload: Record<string, unknown>) => void;
+}
+
+// Web Vitals metric shape (matches Next.js `reportWebVitals` argument).
+interface WebVitalMetric {
+  name: string;
+  value: number;
+  id?: string;
+}
+
 // Performance thresholds (in milliseconds)
 export const PERFORMANCE_THRESHOLDS = {
   // Core Web Vitals
@@ -59,7 +92,7 @@ export class PerformanceMonitor {
     if ('PerformanceObserver' in window) {
       const lcpObserver = new PerformanceObserver(list => {
         const entries = list.getEntries();
-        const lastEntry = entries[entries.length - 1] as any;
+        const lastEntry = entries[entries.length - 1];
 
         if (lastEntry) {
           const lcp = lastEntry.startTime;
@@ -76,14 +109,15 @@ export class PerformanceMonitor {
       try {
         lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
         this.observers.set('lcp', lcpObserver);
-      } catch (e) {
+      } catch {
         console.warn('LCP observation not supported');
       }
 
       // First Input Delay (FID)
       const fidObserver = new PerformanceObserver(list => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
+        entries.forEach(rawEntry => {
+          const entry = rawEntry as FirstInputEntry;
           const fid = entry.processingStart - entry.startTime;
           this.recordMetric('FID', fid);
 
@@ -98,7 +132,7 @@ export class PerformanceMonitor {
       try {
         fidObserver.observe({ entryTypes: ['first-input'] });
         this.observers.set('fid', fidObserver);
-      } catch (e) {
+      } catch {
         console.warn('FID observation not supported');
       }
 
@@ -106,7 +140,8 @@ export class PerformanceMonitor {
       let clsValue = 0;
       const clsObserver = new PerformanceObserver(list => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
+        entries.forEach(rawEntry => {
+          const entry = rawEntry as LayoutShiftEntry;
           if (!entry.hadRecentInput) {
             clsValue += entry.value;
           }
@@ -124,7 +159,7 @@ export class PerformanceMonitor {
       try {
         clsObserver.observe({ entryTypes: ['layout-shift'] });
         this.observers.set('cls', clsObserver);
-      } catch (e) {
+      } catch {
         console.warn('CLS observation not supported');
       }
     }
@@ -137,7 +172,8 @@ export class PerformanceMonitor {
     if ('PerformanceObserver' in window) {
       const resourceObserver = new PerformanceObserver(list => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
+        entries.forEach(rawEntry => {
+          const entry = rawEntry as ResourceEntry;
           const duration = entry.responseEnd - entry.startTime;
 
           // Categorize resources
@@ -164,7 +200,7 @@ export class PerformanceMonitor {
       try {
         resourceObserver.observe({ entryTypes: ['resource'] });
         this.observers.set('resource', resourceObserver);
-      } catch (e) {
+      } catch {
         console.warn('Resource timing observation not supported');
       }
     }
@@ -177,7 +213,8 @@ export class PerformanceMonitor {
     if ('PerformanceObserver' in window) {
       const navigationObserver = new PerformanceObserver(list => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
+        entries.forEach(rawEntry => {
+          const entry = rawEntry as NavigationEntry;
           // Time to First Byte
           const ttfb = entry.responseStart - entry.requestStart;
           this.recordMetric('TTFB', ttfb);
@@ -201,7 +238,7 @@ export class PerformanceMonitor {
       try {
         navigationObserver.observe({ entryTypes: ['navigation'] });
         this.observers.set('navigation', navigationObserver);
-      } catch (e) {
+      } catch {
         console.warn('Navigation timing observation not supported');
       }
     }
@@ -214,7 +251,7 @@ export class PerformanceMonitor {
     if ('PerformanceObserver' in window) {
       const longTaskObserver = new PerformanceObserver(list => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
+        entries.forEach(entry => {
           console.warn(
             `Long task detected: ${entry.duration.toFixed(2)}ms at ${entry.startTime.toFixed(2)}ms`
           );
@@ -225,7 +262,7 @@ export class PerformanceMonitor {
       try {
         longTaskObserver.observe({ entryTypes: ['longtask'] });
         this.observers.set('longtask', longTaskObserver);
-      } catch (e) {
+      } catch {
         console.warn('Long task observation not supported');
       }
     }
@@ -239,14 +276,16 @@ export class PerformanceMonitor {
 
     // Send to analytics if available
     try {
-      if (typeof window !== 'undefined' && (window as any).Analytics) {
-        (window as any).Analytics.track('performance_metric', {
+      const analytics = (window as unknown as { Analytics?: AnalyticsGlobal })
+        .Analytics;
+      if (typeof window !== 'undefined' && analytics) {
+        analytics.track('performance_metric', {
           metric: name,
           value: value,
           timestamp: Date.now(),
         });
       }
-    } catch (error) {
+    } catch {
       // Analytics not available, continue silently
     }
   }
@@ -348,14 +387,16 @@ export class CodeSplittingOptimizer {
   /**
    * Lazy load a component with error boundary
    */
-  static createLazyComponent<T extends React.ComponentType<any>>(
+  static createLazyComponent<T extends React.ComponentType<unknown>>(
     importFn: () => Promise<{ default: T }>,
     fallback?: React.ComponentType
   ): React.LazyExoticComponent<T> {
+    // `fallback` is part of the public API but not consumed here yet.
+    void fallback;
     const LazyComponent = React.lazy(async () => {
       try {
         const startTime = performance.now();
-        const module = await importFn();
+        const loadedModule = await importFn();
         const loadTime = performance.now() - startTime;
 
         PerformanceMonitor.recordMetric('Component_Load', loadTime);
@@ -364,7 +405,7 @@ export class CodeSplittingOptimizer {
           console.warn(`Slow component load: ${loadTime.toFixed(2)}ms`);
         }
 
-        return module;
+        return loadedModule;
       } catch (error) {
         console.error('Failed to load component:', error);
         throw error;
@@ -391,7 +432,11 @@ export class MemoryMonitor {
       return {};
     }
 
-    const memory = (performance as any).memory;
+    const memory = (
+      performance as Performance & {
+        memory: { usedJSHeapSize: number; totalJSHeapSize: number };
+      }
+    ).memory;
     const used = memory.usedJSHeapSize;
     const total = memory.totalJSHeapSize;
     const percentage = (used / total) * 100;
@@ -460,22 +505,6 @@ export class BundleAnalyzer {
   }
 }
 
-// Legacy exports for backward compatibility
-interface PerformanceMetrics {
-  loadTime: number;
-  renderTime: number;
-  imageLoadTime: number;
-  interactionTime: number;
-}
-
-interface WebVitals {
-  CLS: number;
-  FID: number;
-  FCP: number;
-  LCP: number;
-  TTFB: number;
-}
-
 // Singleton instance for backward compatibility
 export const performanceMonitor = {
   measureRender<T>(componentName: string, renderFn: () => T): T {
@@ -533,7 +562,7 @@ export function usePerformanceMonitor() {
 // Enhanced optimization utilities
 export const optimizationUtils = {
   // Debounce function for performance
-  debounce<T extends (...args: any[]) => void>(
+  debounce<T extends (...args: unknown[]) => void>(
     func: T,
     wait: number
   ): (...args: Parameters<T>) => void {
@@ -545,7 +574,7 @@ export const optimizationUtils = {
   },
 
   // Throttle function for performance
-  throttle<T extends (...args: any[]) => void>(
+  throttle<T extends (...args: unknown[]) => void>(
     func: T,
     limit: number
   ): (...args: Parameters<T>) => void {
@@ -618,7 +647,11 @@ export const optimizationUtils = {
   // Check if device has slow connection
   isSlowConnection(): boolean {
     if ('connection' in navigator) {
-      const connection = (navigator as any).connection;
+      const connection = (
+        navigator as Navigator & {
+          connection: { effectiveType: string; saveData: boolean };
+        }
+      ).connection;
       return (
         connection.effectiveType === 'slow-2g' ||
         connection.effectiveType === '2g' ||
@@ -631,7 +664,7 @@ export const optimizationUtils = {
   // Get device memory (if available)
   getDeviceMemory(): number {
     if ('deviceMemory' in navigator) {
-      return (navigator as any).deviceMemory;
+      return (navigator as Navigator & { deviceMemory: number }).deviceMemory;
     }
     return 4; // Default assumption
   },
@@ -657,7 +690,7 @@ export const optimizationUtils = {
 };
 
 // Enhanced Web Vitals reporting (for Next.js)
-export function reportWebVitals(metric: any) {
+export function reportWebVitals(metric: WebVitalMetric) {
   PerformanceMonitor.recordMetric(metric.name, metric.value);
 
   if (process.env.NODE_ENV === 'development') {
@@ -667,8 +700,10 @@ export function reportWebVitals(metric: any) {
   // Send to analytics in production
   if (process.env.NODE_ENV === 'production') {
     try {
-      if (typeof window !== 'undefined' && (window as any).Analytics) {
-        (window as any).Analytics.track('web_vital', {
+      const analytics = (window as unknown as { Analytics?: AnalyticsGlobal })
+        .Analytics;
+      if (typeof window !== 'undefined' && analytics) {
+        analytics.track('web_vital', {
           name: metric.name,
           value: Math.round(
             metric.name === 'CLS' ? metric.value * 1000 : metric.value
@@ -677,7 +712,7 @@ export function reportWebVitals(metric: any) {
           timestamp: Date.now(),
         });
       }
-    } catch (error) {
+    } catch {
       // Analytics not available, continue silently
     }
   }

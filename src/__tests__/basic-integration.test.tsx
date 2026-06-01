@@ -3,7 +3,6 @@
  * Tests core functionality without complex mocking
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
 import { mockMenuItems, mockPackages } from '../lib/mock-data';
 import { generateSlug } from '../lib/utils';
 

@@ -1,27 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import { MoreVertical, ChevronDown, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAdminDashboardStats } from '@/hooks/queries/use-admin-queries';
 import type { OrderItem } from '@/types';
-
-interface RecentOrder {
-  id: string;
-  orderNumber: string;
-  customer: {
-    name: string;
-    email: string;
-  };
-  items: Array<{
-    menuItem: {
-      name: string;
-    };
-    quantity: number;
-  }>;
-  total: number;
-  status: string;
-  createdAt: string;
-}
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-700',
@@ -63,7 +46,6 @@ export function RecentOrders() {
         <div className="p-6">
           {Array.from({ length: 5 }).map((_, index) => (
             <div
-              // eslint-disable-next-line react/no-array-index-key
               key={index}
               className="flex animate-pulse items-center gap-4 py-4"
             >
@@ -115,13 +97,15 @@ export function RecentOrders() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <img
+                      <Image
                         src={
                           order.customer?.email
                             ? getCustomerImage(order.customer.email)
                             : '/placeholder-avatar.png'
                         }
                         alt={order.customer?.name || 'Customer'}
+                        width={32}
+                        height={32}
                         className="h-8 w-8 rounded-full object-cover"
                       />
                       <span className="text-sm font-medium text-gray-700">

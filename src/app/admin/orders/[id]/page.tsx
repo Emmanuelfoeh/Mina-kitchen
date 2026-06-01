@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { ArrowLeft, Edit, Printer } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrderStatusUpdater } from '@/components/admin/orders/order-status-updater';

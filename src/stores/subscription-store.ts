@@ -69,8 +69,18 @@ interface SubscriptionStore {
   clearError: () => void;
 }
 
-// API returns ISO strings; the Subscription contract uses Date instances.
-function reviveDates(sub: any): Subscription {
+// API returns ISO strings for date fields; the Subscription contract uses Date instances.
+type SubscriptionResponse = Omit<
+  Subscription,
+  'startDate' | 'nextDelivery' | 'createdAt' | 'updatedAt'
+> & {
+  startDate: string;
+  nextDelivery: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+function reviveDates(sub: SubscriptionResponse): Subscription {
   return {
     ...sub,
     startDate: new Date(sub.startDate),

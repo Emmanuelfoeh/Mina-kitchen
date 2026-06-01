@@ -73,7 +73,7 @@ async function getMenuItemRedirect(pathname: string): Promise<string | null> {
           const data = await response.json();
           if (data.success && data.data) {
             const item = data.data.find(
-              (item: Record<string, any>) => item.slug === slug
+              (item: { slug: string; name: string }) => item.slug === slug
             );
             if (item) {
               return `/menu/items/${item.slug}`;
@@ -114,7 +114,7 @@ async function getPackageRedirect(pathname: string): Promise<string | null> {
           const data = await response.json();
           if (data.success && data.data) {
             const pkg = data.data.find(
-              (pkg: Record<string, any>) => pkg.slug === slug
+              (pkg: { slug: string; name: string }) => pkg.slug === slug
             );
             if (pkg) {
               return `/packages/${pkg.slug}`;
@@ -165,7 +165,7 @@ export async function getSuggestedUrls(
         const data = await response.json();
         if (data.success && data.data) {
           const popularItems = data.data.slice(0, 3);
-          popularItems.forEach((item: Record<string, any>) => {
+          popularItems.forEach((item: { slug: string; name: string }) => {
             suggestions.push({
               label: item.name,
               href: `/menu/items/${item.slug}`,
@@ -184,7 +184,7 @@ export async function getSuggestedUrls(
         const data = await response.json();
         if (data.success && data.data) {
           const popularPackages = data.data.slice(0, 3);
-          popularPackages.forEach((pkg: Record<string, any>) => {
+          popularPackages.forEach((pkg: { slug: string; name: string }) => {
             suggestions.push({
               label: pkg.name,
               href: `/packages/${pkg.slug}`,

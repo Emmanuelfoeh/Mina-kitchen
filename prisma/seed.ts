@@ -1,5 +1,5 @@
 import 'dotenv/config';
-const bcrypt = require('bcryptjs');
+import bcrypt from 'bcryptjs';
 import { db } from '../src/lib/db';
 import type { CustomizationOption } from '@prisma/client';
 

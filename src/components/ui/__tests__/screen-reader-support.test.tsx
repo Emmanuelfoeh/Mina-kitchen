@@ -11,6 +11,11 @@ import { AddToCartSection } from '../add-to-cart-section';
 import { RelatedItems } from '../related-items';
 import { DetailPageLayout } from '../detail-page-layout';
 import { mockMenuItems } from '@/lib/mock-data';
+import {
+  announceCartOperation,
+  announceFormSuccess,
+  announceGalleryNavigation,
+} from '@/lib/screen-reader';
 import type { MenuItem, NutritionalInfo } from '@/types';
 
 // Mock the screen reader utilities
@@ -237,8 +242,6 @@ describe('Screen Reader Support', () => {
     });
 
     it('should announce validation errors', async () => {
-      const { announceValidationError } = require('@/lib/screen-reader');
-
       render(<CustomizationInterface item={mockItem} />);
 
       // Trigger validation by trying to interact without selecting required options
@@ -295,11 +298,6 @@ describe('Screen Reader Support', () => {
     });
 
     it('should announce cart operations', async () => {
-      const {
-        announceCartOperation,
-        announceFormSuccess,
-      } = require('@/lib/screen-reader');
-
       render(<AddToCartSection item={mockItem} />);
 
       const addButton = screen.getByRole('button', { name: /add.*to cart/i });
@@ -401,7 +399,6 @@ describe('Screen Reader Support', () => {
       fireEvent.keyDown(gallery, { key: 'ArrowRight' });
 
       // Should announce navigation (mocked)
-      const { announceGalleryNavigation } = require('@/lib/screen-reader');
       expect(announceGalleryNavigation).toHaveBeenCalled();
     });
   });

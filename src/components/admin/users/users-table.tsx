@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   MoreHorizontal,
   Eye,
@@ -24,13 +24,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -80,15 +73,11 @@ export function UsersTable() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('createdAt');
+  const [roleFilter] = useState('all');
+  const [statusFilter] = useState('all');
+  const [sortBy] = useState('createdAt');
 
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, searchTerm, roleFilter, statusFilter, sortBy]);
-
-  async function fetchUsers() {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -112,7 +101,11 @@ export function UsersTable() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [currentPage, searchTerm, roleFilter, statusFilter, sortBy]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   async function updateUserStatus(userId: string, isVerified: boolean) {
     try {

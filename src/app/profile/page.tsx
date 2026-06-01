@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { ProfileForm } from '@/components/profile/profile-form';
 import { AddressList } from '@/components/profile/address-list';
-import { Button } from '@/components/ui/button';
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'addresses'>(

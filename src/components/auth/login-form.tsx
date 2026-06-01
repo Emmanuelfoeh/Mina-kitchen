@@ -74,7 +74,7 @@ function LoginFormContent() {
       } else {
         setGeneralError(result.error || 'Login failed');
       }
-    } catch (error) {
+    } catch {
       setGeneralError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -145,7 +145,7 @@ function LoginFormContent() {
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <button
                 type="button"
                 onClick={() => router.push('/auth/register')}

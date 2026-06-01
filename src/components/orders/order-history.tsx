@@ -8,7 +8,6 @@ import { Separator } from '@/components/ui/separator';
 import { Clock, MapPin, Package, ChevronRight, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useOrders } from '@/hooks/queries/use-order-queries';
-import type { Order } from '@/types';
 
 export function OrderHistory() {
   const { user, isAuthenticated } = useUserStore();

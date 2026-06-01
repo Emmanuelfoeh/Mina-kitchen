@@ -18,7 +18,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useOrder } from '@/hooks/queries/use-order-queries';
-import type { Order } from '@/types';
 
 export function OrderConfirmation() {
   const router = useRouter();
@@ -133,8 +132,8 @@ export function OrderConfirmation() {
           Order Confirmed!
         </h1>
         <p className="text-lg text-gray-600">
-          Thank you for your order. We've received it and will start preparing
-          it soon.
+          Thank you for your order. We&apos;ve received it and will start
+          preparing it soon.
         </p>
       </div>
 
@@ -376,8 +375,8 @@ export function OrderConfirmation() {
           <p className="text-orange-800">
             Thank you for choosing our authentic West African cuisine! Each dish
             is prepared with love and traditional recipes passed down through
-            generations. We're excited to share the flavors of our heritage with
-            you. Enjoy your meal!
+            generations. We&apos;re excited to share the flavors of our heritage
+            with you. Enjoy your meal!
           </p>
           <p className="mt-2 text-sm text-orange-700 italic">
             - Chef Mina & Team
@@ -424,7 +423,7 @@ export function OrderConfirmation() {
               Email: support@minakitchen.com
             </p>
             <p className="mt-2 text-blue-700">
-              We're here to help with any questions about your order!
+              We&apos;re here to help with any questions about your order!
             </p>
           </div>
         </CardContent>

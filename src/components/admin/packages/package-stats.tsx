@@ -4,13 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, TrendingUp, DollarSign, Users } from 'lucide-react';
 import { useAdminPackageStats } from '@/hooks/queries/use-admin-queries';
 
-interface PackageStatsData {
-  totalPackages: number;
-  activePackages: number;
-  totalRevenue: number;
-  averagePackagePrice: number;
-}
-
 export function PackageStats() {
   const { data: stats, isLoading } = useAdminPackageStats();
 
@@ -18,10 +11,7 @@ export function PackageStats() {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card
-            // eslint-disable-next-line react/no-array-index-key
-            key={i}
-          >
+          <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="h-4 w-20 animate-pulse rounded bg-gray-200" />
               <div className="h-4 w-4 animate-pulse rounded bg-gray-200" />

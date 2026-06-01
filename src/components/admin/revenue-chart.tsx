@@ -6,9 +6,9 @@ import { useAdminDashboardStats } from '@/hooks/queries/use-admin-queries';
 
 const timeframes = ['Week', 'Month', 'Year'];
 
-interface DailyRevenue {
-  date: string;
-  revenue: number;
+interface DailyRevenueGroup {
+  createdAt: string | Date;
+  _sum: { total: number | null };
 }
 
 export function RevenueChart() {
@@ -18,7 +18,7 @@ export function RevenueChart() {
   const dailyRevenue = useMemo(() => {
     if (!data?.dailyRevenue) return [];
 
-    return data.dailyRevenue.map((item: any) => ({
+    return (data.dailyRevenue as unknown as DailyRevenueGroup[]).map(item => ({
       date: new Date(item.createdAt).toLocaleDateString('en-US', {
         weekday: 'short',
       }),

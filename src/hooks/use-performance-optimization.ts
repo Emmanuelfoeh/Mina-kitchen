@@ -78,9 +78,8 @@ export function usePerformanceOptimization(componentName: string) {
 /**
  * Hook for lazy loading components with performance monitoring
  */
-export function useLazyComponent<T extends React.ComponentType<any>>(
-  importFn: () => Promise<{ default: T }>,
-  componentName: string
+export function useLazyComponent<T extends React.ComponentType<unknown>>(
+  importFn: () => Promise<{ default: T }>
 ) {
   return useMemo(() => {
     return CodeSplittingOptimizer.createLazyComponent(importFn);
@@ -150,14 +149,14 @@ export function useMemoryMonitoring(
  */
 export function useOptimizedCallbacks() {
   const debounce = useCallback(
-    <T extends (...args: any[]) => any>(func: T, wait: number) => {
+    <T extends (...args: unknown[]) => void>(func: T, wait: number) => {
       return optimizationUtils.debounce(func, wait);
     },
     []
   );
 
   const throttle = useCallback(
-    <T extends (...args: any[]) => any>(func: T, limit: number) => {
+    <T extends (...args: unknown[]) => void>(func: T, limit: number) => {
       return optimizationUtils.throttle(func, limit);
     },
     []
@@ -321,7 +320,7 @@ export function useErrorBoundaryPerformance(componentName: string) {
   const errorCount = useRef<number>(0);
 
   const trackError = useCallback(
-    (error: Error, errorInfo?: any) => {
+    (error: Error, errorInfo?: React.ErrorInfo) => {
       errorCount.current += 1;
 
       PerformanceMonitor.recordMetric(

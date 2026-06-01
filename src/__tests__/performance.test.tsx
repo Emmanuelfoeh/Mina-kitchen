@@ -175,7 +175,9 @@ describe('Performance Tests', () => {
       const slug = testItem.slug || generateSlug(testItem.name);
 
       // Mock memory usage tracking
-      const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
+      const initialMemory =
+        (performance as Performance & { memory?: { usedJSHeapSize: number } })
+          .memory?.usedJSHeapSize || 0;
 
       // Render and unmount multiple times
       for (let i = 0; i < 5; i++) {
@@ -193,7 +195,9 @@ describe('Performance Tests', () => {
         global.gc();
       }
 
-      const finalMemory = (performance as any).memory?.usedJSHeapSize || 0;
+      const finalMemory =
+        (performance as Performance & { memory?: { usedJSHeapSize: number } })
+          .memory?.usedJSHeapSize || 0;
       const memoryIncrease = finalMemory - initialMemory;
 
       // Memory increase should be reasonable (less than 10MB)
@@ -325,7 +329,7 @@ describe('Performance Tests', () => {
         // Simulate price calculation
         const basePrice = 15.99;
         const modifiers = [2.5, 1.0, 0.75, 3.25];
-        const total = modifiers.reduce((sum, mod) => sum + mod, basePrice);
+        modifiers.reduce((sum, mod) => sum + mod, basePrice);
 
         const calcTime = performance.now() - startTime;
         calculations.push(calcTime);

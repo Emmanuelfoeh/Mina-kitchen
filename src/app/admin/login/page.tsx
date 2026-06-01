@@ -44,8 +44,9 @@ export default function AdminLoginPage() {
           <div className="rounded-lg bg-blue-50 p-4 text-sm text-blue-700">
             <p className="mb-2 font-medium">Authentication System Updated</p>
             <p>
-              Admin users now log in through the regular login page. You'll be
-              automatically redirected to the admin dashboard after signing in.
+              Admin users now log in through the regular login page. You&apos;ll
+              be automatically redirected to the admin dashboard after signing
+              in.
             </p>
           </div>
 

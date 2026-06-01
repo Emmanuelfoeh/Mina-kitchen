@@ -49,8 +49,6 @@ const menuItemSchema = z.object({
     .optional(),
 });
 
-type MenuItemUpdateInput = z.infer<typeof menuItemSchema>;
-
 // GET /api/admin/menu/items/[id] - Get single menu item
 export const GET = requireAdmin(
   async (
@@ -186,7 +184,7 @@ export const PATCH = requireAdmin(
                   maxSelections: custom.maxSelections,
                   ...(custom.options.length > 0 && {
                     options: {
-                      create: custom.options.map((option: any) => ({
+                      create: custom.options.map(option => ({
                         name: option.name,
                         priceModifier: option.priceModifier,
                         isAvailable: option.isAvailable,

@@ -22,7 +22,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { addressSchema } from '@/lib/validations';
 import { z } from 'zod';
 import type { Address } from '@/types';
 

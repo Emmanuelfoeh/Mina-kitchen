@@ -11,6 +11,7 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
+  type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,42 +38,6 @@ import {
   useBulkUpdateOrderStatus,
 } from '@/hooks/mutations';
 
-interface OrderItem {
-  id: string;
-  orderNumber: string;
-  customer: {
-    id: string;
-    name: string;
-    email: string;
-    phone?: string;
-  };
-  items: Array<{
-    id: string;
-    quantity: number;
-    menuItem: {
-      name: string;
-      image: string;
-    };
-  }>;
-  total: number;
-  status: string;
-  deliveryType: string;
-  scheduledFor?: string;
-  createdAt: string;
-}
-
-interface OrdersResponse {
-  orders: OrderItem[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
-
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-700 border-yellow-200',
   CONFIRMED: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -83,7 +48,7 @@ const statusColors: Record<string, string> = {
   CANCELLED: 'bg-red-100 text-red-700 border-red-200',
 };
 
-const statusIcons: Record<string, any> = {
+const statusIcons: Record<string, LucideIcon> = {
   PENDING: Clock,
   CONFIRMED: CheckCircle,
   PREPARING: Package,
@@ -161,7 +126,6 @@ export function OrdersTable() {
       <div className="space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
           <div
-            // eslint-disable-next-line react/no-array-index-key
             key={`skeleton-${i}`}
             className="flex animate-pulse items-center gap-4 p-4"
           >

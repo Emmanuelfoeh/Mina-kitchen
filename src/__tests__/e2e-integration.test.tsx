@@ -3,7 +3,7 @@
  * Tests complete user flows from menu browsing to cart checkout
  */
 
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
 import MenuPage from '@/app/menu/page';
@@ -47,7 +47,7 @@ describe('End-to-End User Flows', () => {
   const mockGetItemById = jest.fn();
   const mockGetSubtotal = jest.fn();
   const mockGetTotalItems = jest.fn();
-  const mockItems: any[] = [];
+  const mockItems: Array<Record<string, unknown>> = [];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -68,13 +68,15 @@ describe('End-to-End User Flows', () => {
     });
 
     // Mock store getState
-    (useCartStore as any).getState = jest.fn(() => ({
-      addItem: mockAddItem,
-      getItemById: mockGetItemById,
-      getSubtotal: mockGetSubtotal,
-      getTotalItems: mockGetTotalItems,
-      items: mockItems,
-    }));
+    (useCartStore as unknown as { getState: jest.Mock }).getState = jest.fn(
+      () => ({
+        addItem: mockAddItem,
+        getItemById: mockGetItemById,
+        getSubtotal: mockGetSubtotal,
+        getTotalItems: mockGetTotalItems,
+        items: mockItems,
+      })
+    );
   });
 
   describe('Menu Browsing to Item Detail Flow', () => {
@@ -233,7 +235,7 @@ describe('End-to-End User Flows', () => {
                     new RegExp(firstOption.name, 'i')
                   );
                   await user.click(optionElement);
-                } catch (error) {
+                } catch {
                   // Option might not be visible or available, continue
                 }
               }
@@ -260,8 +262,6 @@ describe('End-to-End User Flows', () => {
 
   describe('Cross-Page Navigation Flow', () => {
     it('should maintain cart state across page navigation', async () => {
-      const user = userEvent.setup();
-
       // Add item to mock cart
       const cartItem = {
         id: 'test-cart-item',

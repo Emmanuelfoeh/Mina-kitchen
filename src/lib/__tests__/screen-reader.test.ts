@@ -36,7 +36,7 @@ const mockDocument = {
 };
 
 // Mock global document
-(global as any).document = mockDocument;
+(global as unknown as Record<string, unknown>).document = mockDocument;
 
 // Mock setTimeout
 jest.useFakeTimers();

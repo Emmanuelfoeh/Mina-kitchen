@@ -1,14 +1,7 @@
 'use client';
 
-import {
-  X,
-  Plus,
-  Minus,
-  ShoppingCart,
-  Wifi,
-  WifiOff,
-  AlertCircle,
-} from 'lucide-react';
+import { X, Plus, Minus, ShoppingCart, Wifi, WifiOff } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCartSafe } from './cart-provider';
 import { formatCurrency } from '@/utils';
@@ -16,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PriceBreakdown } from './price-breakdown';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { trapFocus, announceToScreenReader } from '@/lib/accessibility';
 import type { CartItem, SelectedCustomization } from '@/types';
 
@@ -45,10 +38,10 @@ export function CartSidebar() {
     announceToScreenReader('Navigating to checkout page');
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     toggleCart();
     announceToScreenReader('Cart closed');
-  };
+  }, [toggleCart]);
 
   // Focus management and keyboard navigation
   useEffect(() => {
@@ -70,7 +63,7 @@ export function CartSidebar() {
       document.addEventListener('keydown', handleEscape);
       return () => document.removeEventListener('keydown', handleEscape);
     }
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   if (!isOpen) return null;
 
@@ -366,9 +359,11 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
       <div className="flex gap-3">
         {/* Item Image */}
         <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-gray-200">
-          <img
+          <Image
             src={item.image || '/placeholder-food.svg'}
             alt={item.name || 'Menu Item'}
+            width={64}
+            height={64}
             className="h-full w-full object-cover"
           />
         </div>
@@ -410,7 +405,7 @@ function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
                       )}
                       {customization.textValue && (
                         <span className="ml-1 italic">
-                          "{customization.textValue}"
+                          &quot;{customization.textValue}&quot;
                         </span>
                       )}
                     </div>

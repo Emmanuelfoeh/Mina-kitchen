@@ -1,12 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Phone, Mail, MapPin } from 'lucide-react';
 
 export function ContactInfo() {
-
-
-//   Contact : 
-// Email : wilmar35000@gmail.com
-// Address: Gloucester Ontario, Ottawa
+  //   Contact :
+  // Email : wilmar35000@gmail.com
+  // Address: Gloucester Ontario, Ottawa
   return (
     <div className="rounded-3xl border border-orange-100 bg-white p-8 shadow-lg">
       <h3 className="mb-6 flex items-center gap-2 text-2xl font-bold">

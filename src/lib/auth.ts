@@ -120,7 +120,7 @@ function forbidden(message: string) {
   });
 }
 
-export function requireAuth<T = any>(
+export function requireAuth<T = unknown>(
   handler: (
     request: NextRequest,
     user: AuthUser,
@@ -142,7 +142,7 @@ export function requireAuth<T = any>(
  * Require an ADMIN or SUPER_ADMIN. SUPER_ADMIN is included because it is the
  * highest privilege level — locking it out of admin endpoints would be wrong.
  */
-export function requireAdmin<T = any>(
+export function requireAdmin<T = unknown>(
   handler: (
     request: NextRequest,
     user: AuthUser,
@@ -167,7 +167,7 @@ export function requireAdmin<T = any>(
 /**
  * Require a platform SUPER_ADMIN. Use for cross-tenant management endpoints.
  */
-export function requireSuperAdmin<T = any>(
+export function requireSuperAdmin<T = unknown>(
   handler: (
     request: NextRequest,
     user: AuthUser,

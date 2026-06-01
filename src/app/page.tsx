@@ -32,7 +32,7 @@ export const metadata: Metadata = generateMetadata({
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background-light">
+    <div className="bg-background-light min-h-screen">
       {/* Hero Section */}
       <section className="relative w-full overflow-hidden px-4 pt-8 pb-12 md:px-10 lg:px-40 lg:py-16">
         <div className="mx-auto max-w-7xl">
@@ -43,15 +43,15 @@ export default function Home() {
                 <Badge className="inline-flex w-fit items-center gap-1 rounded-full border-0 bg-[#f2330d]/10 px-3 py-1 text-xs font-bold tracking-wide text-[#f2330d] uppercase">
                   🇨🇦 Authentic Taste in Canada
                 </Badge>
-                <h1 className="text-4xl leading-[1.1] font-extrabold tracking-[-0.033em] text-text-dark lg:text-6xl">
+                <h1 className="text-text-dark text-4xl leading-[1.1] font-extrabold tracking-[-0.033em] lg:text-6xl">
                   Authentic African{' '}
                   <span className="text-[#f2330d]">Flavors</span>, Delivered to
                   You.
                 </h1>
                 <p className="max-w-135 text-base leading-relaxed font-normal text-[#5c4a45] lg:text-lg">
-                  Experience the comforting taste of home with Chef's signature
-                  Jollof, soups, and grilled specials. Freshly made in Canada,
-                  rooted in tradition.
+                  Experience the comforting taste of home with Chef&apos;s
+                  signature Jollof, soups, and grilled specials. Freshly made in
+                  Canada, rooted in tradition.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 pt-2">
@@ -209,7 +209,7 @@ export default function Home() {
                 </Badge>
               </div>
               <h3 className="mb-2 text-xl font-bold text-[#1c100d]">
-                Couple's Delight
+                Couple&apos;s Delight
               </h3>
               <p className="mb-6 text-sm text-[#5c4a45]">
                 Designed for two. Generous portions of our best sellers.
@@ -310,9 +310,9 @@ export default function Home() {
                 <Star className="fill-current text-[20px]" />
               </div>
               <p className="mb-6 text-sm leading-relaxed text-[#5c4a45]">
-                "Finally found authentic Jollof in Toronto! The smokiness is
-                just right, and the delivery was super fast. Highly
-                recommended!"
+                &quot;Finally found authentic Jollof in Toronto! The smokiness
+                is just right, and the delivery was super fast. Highly
+                recommended!&quot;
               </p>
               <div className="flex items-center gap-3">
                 <div
@@ -338,8 +338,9 @@ export default function Home() {
                 <Star className="fill-current text-[20px]" />
               </div>
               <p className="mb-6 text-sm leading-relaxed text-[#5c4a45]">
-                "The Egusi soup reminds me so much of my grandmother's cooking.
-                It's rich, flavorful, and the portions are generous."
+                &quot;The Egusi soup reminds me so much of my grandmother&apos;s
+                cooking. It&apos;s rich, flavorful, and the portions are
+                generous.&quot;
               </p>
               <div className="flex items-center gap-3">
                 <div
@@ -365,8 +366,9 @@ export default function Home() {
                 <Star className="fill-current text-[16px]" />
               </div>
               <p className="mb-6 text-sm leading-relaxed text-[#5c4a45]">
-                "Subscribed to the Weekly Taste package for work lunches. It
-                saves me so much time and the variety keeps it interesting."
+                &quot;Subscribed to the Weekly Taste package for work lunches.
+                It saves me so much time and the variety keeps it
+                interesting.&quot;
               </p>
               <div className="flex items-center gap-3">
                 <div

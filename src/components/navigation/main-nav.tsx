@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Menu, X, Settings, LogOut } from 'lucide-react';
+import { ShoppingCart, User, Settings, LogOut } from 'lucide-react';
 import { ResponsiveNav } from '@/components/ui/responsive-nav';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +19,7 @@ export function MainNav() {
   const pathname = usePathname();
   const router = useRouter();
   const totalItems = getTotalItems();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [, setIsMobileMenuOpen] = useState(false);
 
   const navLinks = [
     { href: '/', label: 'Home' },
@@ -38,13 +38,6 @@ export function MainNav() {
     );
   };
 
-  const handleMobileMenuToggle = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-    announceToScreenReader(
-      `Mobile menu ${!isMobileMenuOpen ? 'opened' : 'closed'}`
-    );
-  };
-
   const handleLogout = async () => {
     try {
       await logout();
@@ -57,6 +50,7 @@ export function MainNav() {
 
   // Close mobile menu on route change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset transient mobile-menu state when the route changes
     setIsMobileMenuOpen(false);
   }, [pathname]);
 

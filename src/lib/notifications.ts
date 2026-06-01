@@ -14,7 +14,18 @@ export interface NotificationData {
   customerName: string;
   status: string;
   estimatedDelivery?: Date;
-  deliveryAddress?: Record<string, any>;
+  deliveryAddress?: Record<string, unknown>;
+}
+
+/** Minimal shape of an order needed to render confirmation email content. */
+interface ConfirmationEmailOrder {
+  orderNumber: string;
+  deliveryType: string;
+  // Accepts a JS number or a Prisma.Decimal (both expose toFixed).
+  total: { toFixed: (digits: number) => string };
+  scheduledFor?: Date | string | null;
+  customer: { name: string };
+  items: Array<{ quantity: number; menuItem: { name: string } }>;
 }
 
 export class NotificationService {
@@ -322,11 +333,11 @@ export class NotificationService {
   /**
    * Generate order confirmation email content
    */
-  private static generateConfirmationEmailContent(order: Record<string, any>) {
+  private static generateConfirmationEmailContent(
+    order: ConfirmationEmailOrder
+  ) {
     const itemsList = order.items
-      .map(
-        (item: Record<string, any>) => `${item.quantity}x ${item.menuItem.name}`
-      )
+      .map(item => `${item.quantity}x ${item.menuItem.name}`)
       .join(', ');
 
     const html = `

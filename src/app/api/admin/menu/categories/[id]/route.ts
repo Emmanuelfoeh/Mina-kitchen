@@ -28,10 +28,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
 
     const tenantId = await getCurrentTenantId();
     if (!tenantId) {
-      return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     const category = await db.menuCategory.findFirst({
@@ -82,10 +79,7 @@ export const PATCH = requireAdmin(async (request: NextRequest) => {
 
     const tenantId = await getCurrentTenantId();
     if (!tenantId) {
-      return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -179,10 +173,7 @@ export const DELETE = requireAdmin(async (request: NextRequest) => {
 
     const tenantId = await getCurrentTenantId();
     if (!tenantId) {
-      return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     // Check if category exists

@@ -47,14 +47,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       fetch(`${baseUrl}/api/packages`),
     ]);
 
-    let menuItemPages: any[] = [];
-    let packagePages: any[] = [];
+    let menuItemPages: MetadataRoute.Sitemap = [];
+    let packagePages: MetadataRoute.Sitemap = [];
 
     // Add menu item pages if API is available
     if (menuItemsResponse.ok) {
-      const menuItemsData = await menuItemsResponse.json();
+      const menuItemsData: {
+        success?: boolean;
+        data?: Array<{ slug: string; updatedAt?: string }>;
+      } = await menuItemsResponse.json();
       if (menuItemsData.success && menuItemsData.data) {
-        menuItemPages = menuItemsData.data.map((item: any) => ({
+        menuItemPages = menuItemsData.data.map(item => ({
           url: `${baseUrl}/menu/items/${item.slug}`,
           lastModified: new Date(item.updatedAt || Date.now()),
           changeFrequency: 'weekly' as const,
@@ -65,9 +68,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Add package pages if API is available
     if (packagesResponse.ok) {
-      const packagesData = await packagesResponse.json();
+      const packagesData: {
+        success?: boolean;
+        data?: Array<{ slug: string; updatedAt?: string }>;
+      } = await packagesResponse.json();
       if (packagesData.success && packagesData.data) {
-        packagePages = packagesData.data.map((pkg: any) => ({
+        packagePages = packagesData.data.map(pkg => ({
           url: `${baseUrl}/packages/${pkg.slug}`,
           lastModified: new Date(pkg.updatedAt || Date.now()),
           changeFrequency: 'weekly' as const,

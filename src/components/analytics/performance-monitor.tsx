@@ -34,9 +34,10 @@ export function PerformanceMonitor() {
       try {
         const fidObserver = new PerformanceObserver(entryList => {
           const entries = entryList.getEntries();
-          entries.forEach((entry: any) => {
+          entries.forEach(entry => {
             if (!metricsTracked.current.has('FID')) {
-              const fid = entry.processingStart - entry.startTime;
+              const eventEntry = entry as PerformanceEventTiming;
+              const fid = eventEntry.processingStart - eventEntry.startTime;
               trackPerformance('FID', fid);
               metricsTracked.current.add('FID');
             }
@@ -52,9 +53,13 @@ export function PerformanceMonitor() {
         let clsValue = 0;
         const clsObserver = new PerformanceObserver(entryList => {
           const entries = entryList.getEntries();
-          entries.forEach((entry: any) => {
-            if (!entry.hadRecentInput) {
-              clsValue += entry.value;
+          entries.forEach(entry => {
+            const layoutShift = entry as PerformanceEntry & {
+              hadRecentInput: boolean;
+              value: number;
+            };
+            if (!layoutShift.hadRecentInput) {
+              clsValue += layoutShift.value;
             }
           });
 
@@ -195,7 +200,15 @@ export function PerformanceMonitor() {
 
         // Track connection information (if available)
         if ('connection' in navigator) {
-          const connection = (navigator as any).connection;
+          const connection = (
+            navigator as Navigator & {
+              connection?: {
+                downlink?: number;
+                rtt?: number;
+                effectiveType?: string;
+              };
+            }
+          ).connection;
           if (connection) {
             trackPerformance('connection_downlink', connection.downlink || 0);
             trackPerformance('connection_rtt', connection.rtt || 0);
@@ -218,7 +231,15 @@ export function PerformanceMonitor() {
 
         // Track memory information (if available)
         if ('memory' in performance) {
-          const memory = (performance as any).memory;
+          const memory = (
+            performance as Performance & {
+              memory: {
+                jsHeapSizeLimit: number;
+                usedJSHeapSize: number;
+                totalJSHeapSize: number;
+              };
+            }
+          ).memory;
           trackPerformance('memory_limit', memory.jsHeapSizeLimit);
           trackPerformance('memory_used', memory.usedJSHeapSize);
           trackPerformance('memory_total', memory.totalJSHeapSize);

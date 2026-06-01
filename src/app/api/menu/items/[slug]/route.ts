@@ -56,10 +56,10 @@ export async function GET(request: NextRequest) {
       tags: menuItem.tags ? JSON.parse(menuItem.tags) : [],
       status: menuItem.status.toLowerCase(),
       slug: generateSlug(menuItem.name),
-      customizations: menuItem.customizations.map((customization: any) => ({
+      customizations: menuItem.customizations.map(customization => ({
         ...customization,
         type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
-        options: customization.options.map((option: any) => ({
+        options: customization.options.map(option => ({
           ...option,
           isAvailable: true, // Default to available
         })),

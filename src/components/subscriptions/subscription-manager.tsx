@@ -7,7 +7,7 @@ import { SubscriptionEditModal } from './subscription-edit-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Package, Calendar, AlertCircle } from 'lucide-react';
+import { Plus, Package, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import type { Subscription } from '@/stores/subscription-store';
 

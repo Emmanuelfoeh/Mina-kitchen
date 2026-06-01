@@ -1,9 +1,8 @@
-import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { getCurrentTenantId } from '@/lib/tenant-context';
 import { db } from '@/lib/db';
 
-export const GET = requireAdmin(async (request: NextRequest) => {
+export const GET = requireAdmin(async () => {
   try {
     const tenantId = await getCurrentTenantId();
     if (!tenantId) {
@@ -19,7 +18,6 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     );
     const startOfWeek = new Date(startOfDay);
     startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     // Calculate total revenue
     const totalRevenue = await db.order.aggregate({

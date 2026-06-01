@@ -12,7 +12,7 @@ interface AnalyticsEventPayload {
   action: string;
   label?: string;
   value?: number;
-  custom_parameters?: Record<string, any>;
+  custom_parameters?: Record<string, unknown>;
   timestamp: number;
   session_id: string;
   user_agent: string;
@@ -260,7 +260,7 @@ async function handleUserBehavior(
 }
 
 // Handle OPTIONS request for CORS
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

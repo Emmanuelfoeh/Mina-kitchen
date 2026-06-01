@@ -160,7 +160,7 @@ export function getPreferredImageFormat(): 'avif' | 'webp' | 'jpg' {
     const avifSupported =
       canvas.toDataURL('image/avif').indexOf('data:image/avif') === 0;
     if (avifSupported) return 'avif';
-  } catch (e) {
+  } catch {
     // AVIF not supported
   }
 
@@ -168,7 +168,7 @@ export function getPreferredImageFormat(): 'avif' | 'webp' | 'jpg' {
     const webpSupported =
       canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
     if (webpSupported) return 'webp';
-  } catch (e) {
+  } catch {
     // WebP not supported
   }
 

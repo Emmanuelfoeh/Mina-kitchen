@@ -34,22 +34,23 @@ export function MealCustomizationModal({
     SelectedCustomization[]
   >([]);
   const [specialInstructions, setSpecialInstructions] = useState('');
-  const [totalPrice, setTotalPrice] = useState(menuItem.basePrice);
 
   const { addItem } = useCartStore();
 
   // Reset state when modal opens with new item
   useEffect(() => {
     if (isOpen) {
+      // Resetting form state when the modal (re)opens is intentional and only
+      // runs on isOpen/menuItem changes.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional form reset on open
       setQuantity(1);
       setSelectedCustomizations([]);
       setSpecialInstructions('');
-      setTotalPrice(menuItem.basePrice);
     }
   }, [isOpen, menuItem]);
 
-  // Calculate total price when customizations or quantity change
-  useEffect(() => {
+  // Derive total price from current customizations and quantity
+  const totalPrice = (() => {
     let customizationPrice = 0;
 
     selectedCustomizations.forEach(selected => {
@@ -66,8 +67,8 @@ export function MealCustomizationModal({
       }
     });
 
-    setTotalPrice((menuItem.basePrice + customizationPrice) * quantity);
-  }, [selectedCustomizations, quantity, menuItem]);
+    return (menuItem.basePrice + customizationPrice) * quantity;
+  })();
 
   const handleCustomizationChange = (
     customizationId: string,

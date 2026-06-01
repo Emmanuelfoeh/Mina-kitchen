@@ -79,21 +79,22 @@ export default function AboutPage() {
                   <p>
                     Born into a family where the kitchen was the pulse of the
                     home, I grew up surrounded by the intoxicating aromas of
-                    roasted spices and simmering stews. My journey didn't just
-                    start with a recipe; it started with a feeling of community
-                    and shared joy.
+                    roasted spices and simmering stews. My journey didn&apos;t
+                    just start with a recipe; it started with a feeling of
+                    community and shared joy.
                   </p>
                   <p>
                     When I moved to Canada, I brought more than just my luggage.
-                    I brought my mother's secret spice blends, my grandmother's
-                    patience for the perfect Jollof, and a dream to share the
-                    authentic taste of West Africa with my new neighbors.
+                    I brought my mother&apos;s secret spice blends, my
+                    grandmother&apos;s patience for the perfect Jollof, and a
+                    dream to share the authentic taste of West Africa with my
+                    new neighbors.
                   </p>
                   <p>
-                    Chef's Kitchen was born out of a desire to create a bridge
-                    between two worlds—using the incredible bounty of Canadian
-                    produce to showcase the depth and complexity of African
-                    cuisine.
+                    Chef&apos;s Kitchen was born out of a desire to create a
+                    bridge between two worlds—using the incredible bounty of
+                    Canadian produce to showcase the depth and complexity of
+                    African cuisine.
                   </p>
                 </div>
               </div>
@@ -196,8 +197,8 @@ export default function AboutPage() {
                   With over 15 years of experience in both traditional African
                   catering and contemporary Canadian hospitality, Chef Adebayo
                   brings a unique perspective to the plate. Known for his
-                  "no-shortcuts" approach, he personally oversees every spice
-                  blend used in the kitchen.
+                  &quot;no-shortcuts&quot; approach, he personally oversees
+                  every spice blend used in the kitchen.
                 </p>
                 <div className="mb-10 flex flex-wrap gap-4">
                   <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2">

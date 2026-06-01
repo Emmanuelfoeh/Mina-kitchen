@@ -161,9 +161,6 @@ export function addFocusVisibleSupport() {
   // Add focus-visible polyfill behavior
   let hadKeyboardEvent = true;
 
-  const keyboardThrottleTimeout = 100;
-  let keyboardThrottleTimeoutID = 0;
-
   function onPointerDown() {
     hadKeyboardEvent = false;
   }

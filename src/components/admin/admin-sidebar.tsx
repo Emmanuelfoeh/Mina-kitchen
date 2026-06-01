@@ -7,8 +7,6 @@ import {
   ShoppingBag,
   BookOpen,
   Users,
-  BarChart3,
-  Settings,
   LogOut,
   Package,
 } from 'lucide-react';

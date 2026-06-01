@@ -10,7 +10,7 @@ import MenuItemPage from '../[slug]/page';
 import { mockMenuItems } from '../../../../lib/mock-data';
 import { generateSlug } from '../../../../lib/utils';
 import { useCartStore } from '../../../../stores/cart-store';
-import type { MenuItem } from '../../../../types';
+import * as mockData from '@/lib/mock-data';
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -64,13 +64,15 @@ describe('Menu Item Detail Page Integration', () => {
     });
 
     // Mock store getState
-    (useCartStore as any).getState = jest.fn(() => ({
-      addItem: mockAddItem,
-      getItemById: mockGetItemById,
-      getSubtotal: mockGetSubtotal,
-      getTotalItems: mockGetTotalItems,
-      items: [],
-    }));
+    (useCartStore as unknown as { getState: jest.Mock }).getState = jest.fn(
+      () => ({
+        addItem: mockAddItem,
+        getItemById: mockGetItemById,
+        getSubtotal: mockGetSubtotal,
+        getTotalItems: mockGetTotalItems,
+        items: [],
+      })
+    );
   });
 
   describe('Page Rendering and Navigation', () => {
@@ -311,7 +313,6 @@ describe('Menu Item Detail Page Integration', () => {
     it('should navigate to related item when clicked', async () => {
       const testItem = mockMenuItems[0];
       const slug = testItem.slug || generateSlug(testItem.name);
-      const user = userEvent.setup();
 
       render(<MenuItemPage params={{ slug }} />);
 
@@ -438,7 +439,7 @@ describe('Menu Item Detail Page Integration', () => {
 
       // Mock the getMenuItemBySlug to return our test item
       jest
-        .spyOn(require('@/lib/mock-data'), 'mockMenuItems', 'get')
+        .spyOn(mockData, 'mockMenuItems', 'get')
         .mockReturnValue([itemWithoutImage]);
 
       const slug = itemWithoutImage.slug || generateSlug(itemWithoutImage.name);

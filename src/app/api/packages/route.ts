@@ -30,14 +30,14 @@ export async function GET() {
     });
 
     // Transform packages to match frontend expectations
-    const transformedPackages = packages.map((pkg: any) => ({
+    const transformedPackages = packages.map(pkg => ({
       ...pkg,
       type: pkg.type.toLowerCase() as 'daily' | 'weekly' | 'monthly',
       features:
         typeof pkg.features === 'string'
           ? JSON.parse(pkg.features)
           : pkg.features,
-      includedItems: pkg.includedItems.map((item: any) => ({
+      includedItems: pkg.includedItems.map(item => ({
         menuItemId: item.menuItemId,
         quantity: item.quantity,
         includedCustomizations:

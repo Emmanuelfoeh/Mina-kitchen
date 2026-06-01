@@ -450,7 +450,7 @@ export const globalCache = new CacheManager();
 /**
  * Cache decorator for API functions
  */
-export function withCache<T extends (...args: any[]) => Promise<any>>(
+export function withCache<T extends (...args: unknown[]) => Promise<unknown>>(
   fn: T,
   getCacheKey: (...args: Parameters<T>) => string,
   maxAge?: number
@@ -522,6 +522,10 @@ export function useCachedAPI<T>(
     return () => {
       cancelled = true;
     };
+    // `fetcher` is intentionally excluded: callers commonly pass an inline
+    // function, so including it would refetch on every render. Refetch is
+    // keyed on `key`/`maxAge`, preserving the original behavior.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, maxAge]);
 
   const invalidate = React.useCallback(async () => {

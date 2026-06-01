@@ -31,7 +31,7 @@ export function MenuGrid({
           No dishes found
         </h3>
         <p className="text-[#5c4a45]">
-          Try adjusting your search or filter criteria to find what you're
+          Try adjusting your search or filter criteria to find what you&apos;re
           looking for.
         </p>
       </div>

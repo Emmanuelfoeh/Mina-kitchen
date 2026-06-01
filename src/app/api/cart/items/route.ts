@@ -57,13 +57,13 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
         if (customization.optionIds && customization.optionIds.length > 0) {
           // Find the customization and its options to calculate price modifiers
           const menuCustomization = menuItem.customizations.find(
-            (c: any) => c.id === customization.customizationId
+            c => c.id === customization.customizationId
           );
 
           if (menuCustomization) {
             for (const optionId of customization.optionIds) {
               const option = menuCustomization.options.find(
-                (o: any) => o.id === optionId
+                o => o.id === optionId
               );
               if (option) {
                 unitPrice += Number(option.priceModifier);
@@ -98,7 +98,7 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
     let existingItem = null;
     if (existingItems.length > 0) {
       // Find item with matching customizations
-      existingItem = existingItems.find((item: any) => {
+      existingItem = existingItems.find(item => {
         const itemCustomizations = item.selectedCustomizations
           ? JSON.parse(item.selectedCustomizations)
           : [];

@@ -177,7 +177,7 @@ export function RelatedItems({
         aria-labelledby="related-items-heading"
         aria-label={`${items.length} related menu items`}
       >
-        {items.map((item, index) => (
+        {items.map(item => (
           <Card
             key={item.id}
             className="group min-w-[280px] flex-shrink-0 cursor-pointer overflow-hidden rounded-xl border border-transparent bg-white transition-all duration-300 hover:border-[#f2330d]/20 hover:shadow-lg"
@@ -408,7 +408,7 @@ export function RelatedPackages({
         aria-labelledby="related-packages-heading"
         aria-label={`${packages.length} related meal packages`}
       >
-        {packages.map((pkg, index) => (
+        {packages.map(pkg => (
           <Card
             key={pkg.id}
             className="group min-w-[280px] flex-shrink-0 cursor-pointer overflow-hidden rounded-xl border border-transparent bg-white transition-all duration-300 hover:border-[#f2330d]/20 hover:shadow-lg"

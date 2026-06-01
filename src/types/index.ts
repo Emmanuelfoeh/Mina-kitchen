@@ -50,7 +50,7 @@ export interface TenantSettings {
   enableAnalytics?: boolean;
   enableMarketingTools?: boolean;
   customCss?: string;
-  [key: string]: any; // Allow additional settings
+  [key: string]: unknown; // Allow additional settings
 }
 
 // User and Authentication Models
@@ -360,7 +360,7 @@ export interface SearchParams {
 }
 
 // Action Result Types
-export interface ActionResult<T = any> {
+export interface ActionResult<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;

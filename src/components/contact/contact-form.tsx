@@ -46,7 +46,7 @@ export function ContactForm() {
     <div className="h-full rounded-3xl border border-orange-100 bg-white p-8 shadow-lg md:p-12">
       <h3 className="mb-2 text-2xl font-bold">Send us a Message</h3>
       <p className="mb-8 text-gray-500">
-        We'll get back to you within 24 hours.
+        We&apos;ll get back to you within 24 hours.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">

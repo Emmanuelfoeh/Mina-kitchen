@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getCurrentTenantId } from '@/lib/tenant-context';
+import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 
 const menuItemSchema = z.object({
@@ -48,8 +49,6 @@ const menuItemSchema = z.object({
     .default([]),
 });
 
-type MenuItemInput = z.infer<typeof menuItemSchema>;
-
 // GET /api/admin/menu/items - List all menu items
 export const GET = requireAdmin(async (request: NextRequest) => {
   try {
@@ -68,7 +67,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     const skip = (page - 1) * limit;
 
     // Build where clause with tenant filter
-    const where: Record<string, any> = {
+    const where: Prisma.MenuItemWhereInput = {
       tenantId,
     };
 
@@ -84,7 +83,7 @@ export const GET = requireAdmin(async (request: NextRequest) => {
     }
 
     if (status && status !== 'all') {
-      where.status = status;
+      where.status = status as Prisma.MenuItemWhereInput['status'];
     }
 
     const [items, totalCount] = await Promise.all([

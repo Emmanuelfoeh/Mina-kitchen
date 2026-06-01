@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { generateSlug } from '@/lib/utils';
 import { getCurrentTenantId } from '@/lib/tenant-context';
@@ -16,9 +17,9 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || 'ACTIVE';
 
     // Build where clause
-    const where: any = {
+    const where: Prisma.MenuItemWhereInput = {
       tenantId,
-      status: status,
+      status: status as Prisma.MenuItemWhereInput['status'],
     };
 
     // Filter by category if specified
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform the data to match the expected format
-    const transformedItems = menuItems.map((item: any) => ({
+    const transformedItems = menuItems.map(item => ({
       ...item,
       basePrice: item.basePrice,
       image: item.image || '/placeholder-food.svg',
@@ -71,10 +72,10 @@ export async function GET(request: NextRequest) {
       tags: item.tags ? JSON.parse(item.tags) : [],
       status: item.status.toLowerCase(),
       slug: generateSlug(item.name),
-      customizations: item.customizations.map((customization: any) => ({
+      customizations: item.customizations.map(customization => ({
         ...customization,
         type: customization.type.toLowerCase() as 'radio' | 'checkbox' | 'text',
-        options: customization.options.map((option: any) => ({
+        options: customization.options.map(option => ({
           ...option,
           isAvailable: true, // Default to available
         })),

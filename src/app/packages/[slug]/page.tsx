@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
+import Image from 'next/image';
 import { Suspense } from 'react';
 import { generateSlug } from '@/lib/utils';
 import { BreadcrumbGenerator } from '@/lib/navigation';
@@ -159,17 +160,23 @@ export async function generateMetadata({
   };
 }
 
-function getMenuItemById(menuItems: MenuItem[], id: string): MenuItem | null {
-  return menuItems.find(item => item.id === id) || null;
+// Shape of the enriched menu item the packages API embeds on each included
+// item. PackageItem itself does not declare this, so we describe the runtime
+// fields we read here.
+interface IncludedMenuItem {
+  name: string;
+  description?: string;
+  image?: string | null;
+  basePrice: number;
+  category?: { name?: string } | null;
 }
 
 function calculateIndividualPrice(pkg: Package): number {
   return pkg.includedItems.reduce((total, packageItem) => {
     // If the package item includes the menu item data, use it directly
     if ('menuItem' in packageItem && packageItem.menuItem) {
-      return (
-        total + (packageItem.menuItem as any).basePrice * packageItem.quantity
-      );
+      const menuItem = packageItem.menuItem as IncludedMenuItem;
+      return total + menuItem.basePrice * packageItem.quantity;
     }
     return total;
   }, 0);
@@ -250,8 +257,8 @@ export default async function PackagePage({ params }: PackagePageProps) {
                       individually
                     </p>
                     <p className="text-sm text-green-600">
-                      That's a {Math.round((savings / individualPrice) * 100)}%
-                      discount!
+                      That&apos;s a{' '}
+                      {Math.round((savings / individualPrice) * 100)}% discount!
                     </p>
                   </div>
                 )}
@@ -309,7 +316,8 @@ export default async function PackagePage({ params }: PackagePageProps) {
                         pkg.includedItems
                           .map(item => {
                             if ('menuItem' in item && item.menuItem) {
-                              return (item.menuItem as any).category?.name;
+                              return (item.menuItem as IncludedMenuItem)
+                                .category?.name;
                             }
                             return null;
                           })
@@ -339,7 +347,7 @@ export default async function PackagePage({ params }: PackagePageProps) {
                 // Get menu item from the included data
                 const menuItem =
                   'menuItem' in packageItem
-                    ? (packageItem.menuItem as any)
+                    ? (packageItem.menuItem as IncludedMenuItem)
                     : null;
                 if (!menuItem) return null;
 
@@ -348,12 +356,13 @@ export default async function PackagePage({ params }: PackagePageProps) {
                     key={index}
                     className="rounded-lg border p-3 transition-shadow hover:shadow-md sm:p-4"
                   >
-                    <div className="mb-3 aspect-video overflow-hidden rounded-md bg-gray-100">
+                    <div className="relative mb-3 aspect-video overflow-hidden rounded-md bg-gray-100">
                       {menuItem.image ? (
-                        <img
+                        <Image
                           src={menuItem.image}
                           alt={menuItem.name}
-                          className="h-full w-full object-cover"
+                          fill
+                          className="object-cover"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">

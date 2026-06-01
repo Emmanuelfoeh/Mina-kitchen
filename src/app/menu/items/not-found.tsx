@@ -36,8 +36,8 @@ export default function MenuItemNotFound() {
               Menu Item Not Found
             </h1>
             <p className="text-lg text-gray-600">
-              The menu item you're looking for doesn't exist or may have been
-              removed from our menu.
+              The menu item you&apos;re looking for doesn&apos;t exist or may
+              have been removed from our menu.
             </p>
           </div>
 

@@ -8,14 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Users,
-  Building2,
-  TrendingUp,
-  DollarSign,
-  Package,
-  ShoppingCart,
-} from 'lucide-react';
+import { Users, Building2, Package, ShoppingCart } from 'lucide-react';
 
 export function TenantStatistics() {
   const { data: tenants, isLoading } = useTenants();

@@ -36,8 +36,8 @@ export default function PackageNotFound() {
               Package Not Found
             </h1>
             <p className="text-lg text-gray-600">
-              The meal package you're looking for doesn't exist or may no longer
-              be available.
+              The meal package you&apos;re looking for doesn&apos;t exist or may
+              no longer be available.
             </p>
           </div>
 

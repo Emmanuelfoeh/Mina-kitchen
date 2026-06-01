@@ -1,19 +1,20 @@
-import { Download, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { DashboardMetrics } from "@/components/admin/dashboard-metrics"
-import { RevenueChart } from "@/components/admin/revenue-chart"
-import { PopularDishes } from "@/components/admin/popular-dishes"
-import { RecentOrders } from "@/components/admin/recent-orders"
+import { DashboardMetrics } from '@/components/admin/dashboard-metrics';
+import { RevenueChart } from '@/components/admin/revenue-chart';
+import { PopularDishes } from '@/components/admin/popular-dishes';
+import { RecentOrders } from '@/components/admin/recent-orders';
 
 export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-          <p className="text-gray-500 mt-1">
-            Welcome back! Here&apos;s what&apos;s happening at your restaurant today.
+          <h1 className="text-2xl font-bold text-gray-900">
+            Dashboard Overview
+          </h1>
+          <p className="mt-1 text-gray-500">
+            Welcome back! Here&apos;s what&apos;s happening at your restaurant
+            today.
           </p>
         </div>
         {/* <div className="flex gap-3">
@@ -32,7 +33,7 @@ export default function AdminDashboard() {
       <DashboardMetrics />
 
       {/* Analytics Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <RevenueChart />
         </div>
@@ -44,5 +45,5 @@ export default function AdminDashboard() {
       {/* Recent Orders */}
       <RecentOrders />
     </div>
-  )
+  );
 }

@@ -73,18 +73,20 @@ export function RegisterForm() {
       } else {
         if (result.details) {
           // Handle validation errors from server
-          result.details.forEach((err: any) => {
-            if (err.path[0]) {
-              form.setError(err.path[0] as keyof RegisterFormData, {
-                message: err.message,
-              });
+          result.details.forEach(
+            (err: { path: (string | number)[]; message: string }) => {
+              if (err.path[0]) {
+                form.setError(err.path[0] as keyof RegisterFormData, {
+                  message: err.message,
+                });
+              }
             }
-          });
+          );
         } else {
           setGeneralError(result.error || 'Registration failed');
         }
       }
-    } catch (error) {
+    } catch {
       setGeneralError('An unexpected error occurred');
     } finally {
       setIsLoading(false);

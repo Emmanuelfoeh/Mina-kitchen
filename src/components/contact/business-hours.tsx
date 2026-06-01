@@ -99,7 +99,7 @@ export function BusinessHours() {
             </span>
           </div>
           <p className="text-sm text-blue-700">
-            We're ready to serve you delicious African cuisine!
+            We&apos;re ready to serve you delicious African cuisine!
           </p>
         </div>
       </CardContent>

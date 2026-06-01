@@ -66,33 +66,6 @@ export function MenuItemsGrid() {
     }
   };
 
-  const handleStatusChange = async (
-    itemId: string,
-    newStatus: MenuItem['status']
-  ) => {
-    try {
-      const response = await fetch(`/api/admin/menu/items/${itemId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (response.ok) {
-        setItems(prev =>
-          prev.map(item =>
-            item.id === itemId ? { ...item, status: newStatus } : item
-          )
-        );
-      } else {
-        console.error('Failed to update item status');
-      }
-    } catch (error) {
-      console.error('Error updating item status:', error);
-    }
-  };
-
   const handleDelete = async (itemId: string) => {
     if (confirm('Are you sure you want to delete this menu item?')) {
       try {

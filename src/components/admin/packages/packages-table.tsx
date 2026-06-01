@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   Table,
@@ -44,9 +45,8 @@ interface PackagesTableProps {
   initialPackages?: Package[];
 }
 
-export function PackagesTable({
-  initialPackages = [],
-}: Readonly<PackagesTableProps>) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- props are part of the public component API; data is currently fetched internally via useAdminPackages
+export function PackagesTable(_props: Readonly<PackagesTableProps>) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -98,11 +98,7 @@ export function PackagesTable({
       <div className="p-6">
         <div className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              // eslint-disable-next-line react/no-array-index-key
-              key={i}
-              className="flex items-center space-x-4"
-            >
+            <div key={i} className="flex items-center space-x-4">
               <div className="h-4 w-4 animate-pulse rounded bg-gray-200" />
               <div className="h-4 flex-1 animate-pulse rounded bg-gray-200" />
               <div className="h-4 w-20 animate-pulse rounded bg-gray-200" />
@@ -180,9 +176,11 @@ export function PackagesTable({
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {pkg.image ? (
-                        <img
+                        <Image
                           src={pkg.image}
                           alt={pkg.name}
+                          width={40}
+                          height={40}
                           className="h-10 w-10 rounded-md object-cover"
                         />
                       ) : (
@@ -204,7 +202,7 @@ export function PackagesTable({
                   </TableCell>
                   <TableCell>
                     {pkg.includedItems?.reduce(
-                      (sum: number, item: any) => sum + item.quantity,
+                      (sum, item) => sum + item.quantity,
                       0
                     ) || 0}{' '}
                     items

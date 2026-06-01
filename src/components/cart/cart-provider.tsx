@@ -25,6 +25,7 @@ function CartProviderInner({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Ensure the cart store is hydrated from localStorage
     if (isInitialized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional client-only hydration flag set after persistence init to avoid SSR hydration mismatch
       setIsHydrated(true);
     }
   }, [isInitialized]);
@@ -100,6 +101,7 @@ export function useCartSafe() {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional mount-only hydration flag to return SSR-safe defaults before client hydration
     setIsHydrated(true);
   }, []);
 

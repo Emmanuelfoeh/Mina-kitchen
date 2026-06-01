@@ -3,7 +3,6 @@
  */
 
 import { BreadcrumbGenerator } from '../navigation';
-import { generateSlug } from '../utils';
 import type { MenuItem, Package, MenuCategory } from '@/types';
 
 // Mock data for testing

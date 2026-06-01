@@ -1,17 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getCurrentTenantId } from '@/lib/tenant-context';
 
 // GET /api/admin/menu/stats - Get menu statistics
-export const GET = requireAdmin(async (request: NextRequest) => {
+export const GET = requireAdmin(async () => {
   try {
     const tenantId = await getCurrentTenantId();
     if (!tenantId) {
-      return NextResponse.json(
-        { error: 'Tenant not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     // Get total menu items count

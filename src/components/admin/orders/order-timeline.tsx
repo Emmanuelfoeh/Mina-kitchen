@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Clock,
   CheckCircle,
@@ -80,32 +80,7 @@ export function OrderTimeline({ orderId, currentStatus }: OrderTimelineProps) {
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchOrderTimeline();
-  }, [orderId, currentStatus]);
-
-  async function fetchOrderTimeline() {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/admin/orders/${orderId}/timeline`);
-
-      if (response.ok) {
-        const result = await response.json();
-        setTimeline(result.data || []);
-      } else {
-        // If timeline API doesn't exist yet, generate basic timeline from current status
-        generateBasicTimeline();
-      }
-    } catch (error) {
-      console.error('Failed to fetch order timeline:', error);
-      // Fallback to basic timeline generation
-      generateBasicTimeline();
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function generateBasicTimeline() {
+  const generateBasicTimeline = useCallback(() => {
     const now = new Date();
     const events: TimelineEvent[] = [];
 
@@ -132,7 +107,32 @@ export function OrderTimeline({ orderId, currentStatus }: OrderTimelineProps) {
     }
 
     setTimeline(events);
-  }
+  }, [currentStatus]);
+
+  const fetchOrderTimeline = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/admin/orders/${orderId}/timeline`);
+
+      if (response.ok) {
+        const result = await response.json();
+        setTimeline(result.data || []);
+      } else {
+        // If timeline API doesn't exist yet, generate basic timeline from current status
+        generateBasicTimeline();
+      }
+    } catch (error) {
+      console.error('Failed to fetch order timeline:', error);
+      // Fallback to basic timeline generation
+      generateBasicTimeline();
+    } finally {
+      setLoading(false);
+    }
+  }, [orderId, generateBasicTimeline]);
+
+  useEffect(() => {
+    fetchOrderTimeline();
+  }, [fetchOrderTimeline]);
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('en-US', {

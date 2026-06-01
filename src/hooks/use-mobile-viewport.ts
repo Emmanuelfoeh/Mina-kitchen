@@ -96,7 +96,8 @@ export function useTouchDevice(): boolean {
       const hasTouchScreen =
         'ontouchstart' in window ||
         navigator.maxTouchPoints > 0 ||
-        (navigator as any).msMaxTouchPoints > 0;
+        (navigator as Navigator & { msMaxTouchPoints?: number })
+          .msMaxTouchPoints! > 0;
       setIsTouchDevice(hasTouchScreen);
     };
 
@@ -124,7 +125,8 @@ export function useMobileFeatures() {
       ).matches;
       const isStandalone =
         window.matchMedia('(display-mode: standalone)').matches ||
-        (window.navigator as any).standalone === true;
+        (window.navigator as Navigator & { standalone?: boolean })
+          .standalone === true;
 
       setFeatures({
         supportsTouch,

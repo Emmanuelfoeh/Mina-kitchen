@@ -10,7 +10,7 @@ import PackagePage from '../[slug]/page';
 import { mockPackages, mockMenuItems } from '@/lib/mock-data';
 import { generateSlug } from '@/lib/utils';
 import { useCartStore } from '@/stores/cart-store';
-import type { Package } from '@/types';
+import * as mockData from '@/lib/mock-data';
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -64,13 +64,15 @@ describe('Package Detail Page Integration', () => {
     });
 
     // Mock store getState
-    (useCartStore as any).getState = jest.fn(() => ({
-      addItem: mockAddItem,
-      getItemById: mockGetItemById,
-      getSubtotal: mockGetSubtotal,
-      getTotalItems: mockGetTotalItems,
-      items: [],
-    }));
+    (useCartStore as unknown as { getState: jest.Mock }).getState = jest.fn(
+      () => ({
+        addItem: mockAddItem,
+        getItemById: mockGetItemById,
+        getSubtotal: mockGetSubtotal,
+        getTotalItems: mockGetTotalItems,
+        items: [],
+      })
+    );
   });
 
   describe('Page Rendering and Navigation', () => {
@@ -445,7 +447,7 @@ describe('Package Detail Page Integration', () => {
 
       // Mock the package data
       jest
-        .spyOn(require('@/lib/mock-data'), 'mockPackages', 'get')
+        .spyOn(mockData, 'mockPackages', 'get')
         .mockReturnValue([packageWithMissingItems]);
 
       const slug =
